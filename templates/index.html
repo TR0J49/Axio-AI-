@@ -94,6 +94,22 @@
                     <span class="nav-badge" id="reminders-badge">0</span>
                     <span class="nav-indicator"></span>
                 </button>
+                <button class="nav-item dociq-nav" data-view="dociq">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <circle cx="12" cy="15" r="3"></circle>
+                            <path d="M12 12v-1"></path>
+                            <path d="M12 18v1"></path>
+                            <path d="M9 15H8"></path>
+                            <path d="M16 15h-1"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-label">DocIQ</span>
+                    <span class="nav-badge dociq-badge" id="dociq-badge">AI</span>
+                    <span class="nav-indicator"></span>
+                </button>
             </nav>
 
             <div class="sidebar-footer">
@@ -259,6 +275,116 @@
                     <div class="empty-state">
                         <div class="empty-icon">⏰</div>
                         <p>No reminders set. Add one to stay organized!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DocIQ View -->
+            <div class="view" id="dociq-view">
+                <div class="view-header">
+                    <div class="view-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <circle cx="12" cy="15" r="3"></circle>
+                        </svg>
+                        <h2>DocIQ - Document Intelligence</h2>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-icon" id="clear-docs" title="Clear Documents">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dociq-container">
+                    <!-- Upload Section -->
+                    <div class="dociq-upload-section" id="dociq-upload-section">
+                        <div class="upload-area" id="upload-area">
+                            <div class="upload-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </div>
+                            <h3>Upload Your Documents</h3>
+                            <p>Drag & drop PDF or Word files here, or click to browse</p>
+                            <input type="file" id="doc-file-input" accept=".pdf,.doc,.docx,.txt" multiple hidden>
+                            <button class="btn-primary upload-btn" id="browse-files">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                                </svg>
+                                Browse Files
+                            </button>
+                            <div class="supported-formats">
+                                <span>Supported: PDF, DOC, DOCX, TXT</span>
+                            </div>
+                        </div>
+
+                        <!-- Uploaded Documents List -->
+                        <div class="uploaded-docs" id="uploaded-docs">
+                            <h4>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                    <polyline points="13 2 13 9 20 9"></polyline>
+                                </svg>
+                                Uploaded Documents
+                            </h4>
+                            <div class="docs-list" id="docs-list">
+                                <p class="no-docs">No documents uploaded yet</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Section -->
+                    <div class="dociq-chat-section">
+                        <div class="dociq-messages" id="dociq-messages">
+                            <div class="message assistant">
+                                <div class="message-avatar ai-avatar">
+                                    <div class="ai-icon">
+                                        <div class="ai-core"></div>
+                                        <div class="ai-ring"></div>
+                                        <div class="ai-particles">
+                                            <span></span><span></span><span></span><span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="message-content">
+                                    <div class="message-text">
+                                        <strong>Welcome to DocIQ!</strong><br><br>
+                                        I'm your intelligent document assistant. Upload PDF, Word, or text files and ask me anything about their content.<br><br>
+                                        <em>Features:</em>
+                                        <ul>
+                                            <li>Extract key information</li>
+                                            <li>Summarize documents</li>
+                                            <li>Answer specific questions</li>
+                                            <li>Compare multiple documents</li>
+                                        </ul>
+                                    </div>
+                                    <span class="message-time">Just now</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dociq-input-container">
+                            <div class="dociq-input-wrapper">
+                                <textarea id="dociq-input" placeholder="Ask a question about your documents..." rows="1" disabled></textarea>
+                                <button class="btn-send" id="dociq-send" disabled>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="input-hint">Upload documents first to enable chat</div>
+                        </div>
                     </div>
                 </div>
             </div>

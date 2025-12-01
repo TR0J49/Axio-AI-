@@ -10,6 +10,7 @@ class AxioAssistant {
         this.notes = [];
         this.tasks = [];
         this.reminders = [];
+        this.dociqDocuments = [];
         this.init();
     }
 
@@ -19,6 +20,7 @@ class AxioAssistant {
         this.setupTasks();
         this.setupNotes();
         this.setupReminders();
+        this.setupDocIQ();
         this.setupClock();
         this.loadData();
     }
@@ -908,6 +910,457 @@ class AxioAssistant {
                 <button class="reminder-delete" onclick="axio.deleteReminder('${reminder.id}')">×</button>
             </div>
         `).join('');
+    }
+
+    // ================================
+    // DOCIQ - DOCUMENT INTELLIGENCE
+    // ================================
+
+    setupDocIQ() {
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('doc-file-input');
+        const browseBtn = document.getElementById('browse-files');
+        const clearDocsBtn = document.getElementById('clear-docs');
+        const dociqInput = document.getElementById('dociq-input');
+        const dociqSend = document.getElementById('dociq-send');
+
+        // Browse button click
+        browseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            this.handleDocIQFiles(e.target.files);
+            fileInput.value = ''; // Reset input
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            this.handleDocIQFiles(e.dataTransfer.files);
+        });
+
+        // Clear documents button
+        clearDocsBtn.addEventListener('click', () => this.clearDocIQDocuments());
+
+        // Chat input
+        dociqSend.addEventListener('click', () => this.sendDocIQMessage());
+
+        dociqInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendDocIQMessage();
+            }
+        });
+
+        // Auto-resize textarea
+        dociqInput.addEventListener('input', () => {
+            dociqInput.style.height = 'auto';
+            dociqInput.style.height = dociqInput.scrollHeight + 'px';
+        });
+
+        // Load existing documents
+        this.loadDocIQDocuments();
+    }
+
+    async handleDocIQFiles(files) {
+        for (const file of files) {
+            await this.uploadDocIQFile(file);
+        }
+    }
+
+    async uploadDocIQFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Add temporary document entry with processing status
+        const tempId = 'temp-' + Date.now();
+        this.addDocumentToList({
+            id: tempId,
+            name: file.name,
+            extension: file.name.split('.').pop().toLowerCase(),
+            size: file.size,
+            status: 'processing'
+        });
+
+        try {
+            const response = await fetch('/api/dociq/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            // Remove temporary entry
+            this.removeDocumentFromList(tempId);
+
+            if (data.success) {
+                // Add the actual document
+                this.dociqDocuments.push(data.document);
+                this.addDocumentToList(data.document);
+                this.updateDocIQChatState();
+
+                // Add success message to chat
+                this.addDocIQMessage(`Document "${data.document.name}" uploaded successfully! (${this.formatFileSize(data.document.size)}, ${data.document.chunk_count} sections extracted)`, 'system');
+            } else {
+                this.addDocIQMessage(`Failed to upload "${file.name}": ${data.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            this.removeDocumentFromList(tempId);
+            this.addDocIQMessage(`Error uploading "${file.name}": ${error.message}`, 'error');
+        }
+    }
+
+    addDocumentToList(doc) {
+        const docsList = document.getElementById('docs-list');
+
+        // Remove "no documents" message if present
+        const noDocsMsg = docsList.querySelector('.no-docs');
+        if (noDocsMsg) noDocsMsg.remove();
+
+        const docItem = document.createElement('div');
+        docItem.className = `doc-item ${doc.status === 'processing' ? 'processing' : ''}`;
+        docItem.id = `doc-${doc.id}`;
+
+        const iconClass = doc.extension === 'pdf' ? 'pdf' : (doc.extension === 'doc' || doc.extension === 'docx') ? 'word' : '';
+
+        docItem.innerHTML = `
+            <div class="doc-icon ${iconClass}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+            </div>
+            <div class="doc-info">
+                <div class="doc-name" title="${doc.name}">${doc.name}</div>
+                <div class="doc-size">${this.formatFileSize(doc.size)}</div>
+            </div>
+            <span class="doc-status ${doc.status}">${doc.status === 'processing' ? '⏳ Processing' : '✓ Ready'}</span>
+            <button class="doc-remove" onclick="axio.removeDocIQDocument('${doc.id}')" title="Remove document">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        `;
+
+        docsList.appendChild(docItem);
+    }
+
+    removeDocumentFromList(docId) {
+        const docItem = document.getElementById(`doc-${docId}`);
+        if (docItem) {
+            docItem.remove();
+        }
+
+        // Show "no documents" if list is empty
+        const docsList = document.getElementById('docs-list');
+        if (docsList.children.length === 0) {
+            docsList.innerHTML = '<p class="no-docs">No documents uploaded yet</p>';
+        }
+    }
+
+    async removeDocIQDocument(docId) {
+        try {
+            const response = await fetch(`/api/dociq/documents/${docId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.dociqDocuments = this.dociqDocuments.filter(d => d.id !== docId);
+                this.removeDocumentFromList(docId);
+                this.updateDocIQChatState();
+            }
+        } catch (error) {
+            console.error('Error removing document:', error);
+        }
+    }
+
+    async clearDocIQDocuments() {
+        if (!confirm('Are you sure you want to clear all documents and chat history?')) return;
+
+        try {
+            const response = await fetch('/api/dociq/clear', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.dociqDocuments = [];
+                const docsList = document.getElementById('docs-list');
+                docsList.innerHTML = '<p class="no-docs">No documents uploaded yet</p>';
+                this.updateDocIQChatState();
+                this.resetDocIQChat();
+            }
+        } catch (error) {
+            console.error('Error clearing documents:', error);
+        }
+    }
+
+    async loadDocIQDocuments() {
+        try {
+            const response = await fetch('/api/dociq/documents');
+            const data = await response.json();
+
+            if (data.documents && data.documents.length > 0) {
+                this.dociqDocuments = data.documents;
+                const docsList = document.getElementById('docs-list');
+                docsList.innerHTML = '';
+
+                for (const doc of data.documents) {
+                    this.addDocumentToList(doc);
+                }
+
+                this.updateDocIQChatState();
+            }
+        } catch (error) {
+            console.error('Error loading documents:', error);
+        }
+    }
+
+    updateDocIQChatState() {
+        const dociqInput = document.getElementById('dociq-input');
+        const dociqSend = document.getElementById('dociq-send');
+        const inputHint = document.querySelector('.dociq-input-container .input-hint');
+
+        const hasDocuments = this.dociqDocuments.length > 0;
+
+        dociqInput.disabled = !hasDocuments;
+        dociqSend.disabled = !hasDocuments;
+
+        if (hasDocuments) {
+            dociqInput.placeholder = `Ask about your ${this.dociqDocuments.length} document(s)...`;
+            inputHint.textContent = 'Press Enter to send your question';
+        } else {
+            dociqInput.placeholder = 'Ask a question about your documents...';
+            inputHint.textContent = 'Upload documents first to enable chat';
+        }
+
+        // Update badge
+        const dociqBadge = document.getElementById('dociq-badge');
+        if (dociqBadge) {
+            dociqBadge.textContent = hasDocuments ? this.dociqDocuments.length : 'AI';
+        }
+    }
+
+    async sendDocIQMessage() {
+        const input = document.getElementById('dociq-input');
+        const message = input.value.trim();
+
+        if (!message || this.dociqDocuments.length === 0) return;
+
+        // Add user message to UI
+        this.addDocIQMessageToUI(message, 'user');
+        input.value = '';
+        input.style.height = 'auto';
+
+        // Show typing indicator
+        this.showDocIQTypingIndicator();
+
+        try {
+            const response = await fetch('/api/dociq/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+
+            const data = await response.json();
+
+            // Remove typing indicator
+            this.removeDocIQTypingIndicator();
+
+            if (data.response) {
+                this.addDocIQMessageToUI(data.response, 'assistant', true);
+            } else if (data.error) {
+                this.addDocIQMessage(`Error: ${data.error}`, 'error');
+            }
+        } catch (error) {
+            this.removeDocIQTypingIndicator();
+            this.addDocIQMessage('Connection error. Please try again.', 'error');
+        }
+    }
+
+    addDocIQMessage(message, type = 'system') {
+        const messagesContainer = document.getElementById('dociq-messages');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${type === 'error' ? 'error-message' : 'system-message'}`;
+
+        msgDiv.innerHTML = `
+            <div class="message-content">
+                <div class="message-text" style="color: ${type === 'error' ? '#f5576c' : 'var(--text-secondary)'}; font-style: italic;">
+                    ${type === 'error' ? '⚠️ ' : 'ℹ️ '}${message}
+                </div>
+                <span class="message-time">${this.formatTime(new Date())}</span>
+            </div>
+        `;
+
+        messagesContainer.appendChild(msgDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    addDocIQMessageToUI(text, role, typeEffect = false) {
+        const messagesContainer = document.getElementById('dociq-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}`;
+
+        const avatar = document.createElement('div');
+        avatar.className = role === 'user' ? 'message-avatar' : 'message-avatar ai-avatar';
+
+        if (role === 'user') {
+            avatar.textContent = '👤';
+        } else {
+            avatar.innerHTML = `
+                <div class="ai-icon">
+                    <div class="ai-core"></div>
+                    <div class="ai-ring"></div>
+                    <div class="ai-particles">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+        }
+
+        const content = document.createElement('div');
+        content.className = 'message-content';
+
+        // Add document context indicator for assistant messages
+        if (role === 'assistant') {
+            const contextIndicator = document.createElement('div');
+            contextIndicator.className = 'dociq-context';
+            contextIndicator.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                Based on ${this.dociqDocuments.length} document(s)
+            `;
+            content.appendChild(contextIndicator);
+        }
+
+        const textDiv = document.createElement('div');
+        textDiv.className = 'message-text';
+
+        if (role === 'assistant' && typeEffect) {
+            this.typeWriterEffect(textDiv, text, messagesContainer);
+        } else if (role === 'assistant') {
+            this.renderMarkdown(textDiv, text);
+        } else {
+            textDiv.textContent = text;
+        }
+
+        const time = document.createElement('span');
+        time.className = 'message-time';
+        time.textContent = this.formatTime(new Date());
+
+        content.appendChild(textDiv);
+        content.appendChild(time);
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    showDocIQTypingIndicator() {
+        const messagesContainer = document.getElementById('dociq-messages');
+        const indicator = document.createElement('div');
+        indicator.className = 'message assistant typing-indicator-message';
+        indicator.id = 'dociq-typing-indicator';
+
+        indicator.innerHTML = `
+            <div class="message-avatar ai-avatar loading">
+                <div class="ai-icon">
+                    <div class="ai-core"></div>
+                    <div class="ai-ring"></div>
+                    <div class="ai-particles">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="message-content">
+                <div class="dociq-context">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    Analyzing documents...
+                </div>
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+        `;
+
+        messagesContainer.appendChild(indicator);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    removeDocIQTypingIndicator() {
+        const indicator = document.getElementById('dociq-typing-indicator');
+        if (indicator) indicator.remove();
+    }
+
+    resetDocIQChat() {
+        const messagesContainer = document.getElementById('dociq-messages');
+        messagesContainer.innerHTML = `
+            <div class="message assistant">
+                <div class="message-avatar ai-avatar">
+                    <div class="ai-icon">
+                        <div class="ai-core"></div>
+                        <div class="ai-ring"></div>
+                        <div class="ai-particles">
+                            <span></span><span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">
+                        <strong>Welcome to DocIQ!</strong><br><br>
+                        I'm your intelligent document assistant. Upload PDF, Word, or text files and ask me anything about their content.<br><br>
+                        <em>Features:</em>
+                        <ul>
+                            <li>Extract key information</li>
+                            <li>Summarize documents</li>
+                            <li>Answer specific questions</li>
+                            <li>Compare multiple documents</li>
+                        </ul>
+                    </div>
+                    <span class="message-time">${this.formatTime(new Date())}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
     // ================================

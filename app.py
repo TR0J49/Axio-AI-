@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, session
 from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
 import os
 import requests
 import json
@@ -7,6 +8,7 @@ from datetime import datetime, timedelta
 from io import BytesIO
 import threading
 import uuid
+import re
 
 # Load environment variables
 load_dotenv()
@@ -16,6 +18,15 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default-secret-key-change-in-pro
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+
+# DocIQ Configuration
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Create uploads folder if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # -------------------------------
 # Configuration
@@ -31,6 +42,16 @@ user_data = {
     'notes': [],
     'reminders': [],
     'tasks': []
+}
+
+# DocIQ document storage (global, keyed by session ID)
+# Note: In production, use Redis or database for persistence
+dociq_storage = {}
+
+# Simple fallback: single-user mode storage (for development/testing)
+dociq_single_user_storage = {
+    'documents': [],
+    'conversation': []
 }
 
 # -------------------------------
@@ -375,6 +396,228 @@ def web_search_google_scrape(query):
         return None
 
 # -------------------------------
+# DocIQ - Document Intelligence Functions
+# -------------------------------
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_file_extension(filename):
+    """Get file extension"""
+    return filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+
+def extract_text_from_pdf(file_path):
+    """Extract text from PDF file"""
+    try:
+        import PyPDF2
+        text = ""
+        with open(file_path, 'rb') as file:
+            pdf_reader = PyPDF2.PdfReader(file)
+            for page in pdf_reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n\n"
+        return text.strip()
+    except ImportError:
+        # Fallback: try pdfplumber
+        try:
+            import pdfplumber
+            text = ""
+            with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n\n"
+            return text.strip()
+        except ImportError:
+            return "Error: PDF parsing library not installed. Please install PyPDF2 or pdfplumber."
+    except Exception as e:
+        return f"Error extracting PDF text: {str(e)}"
+
+def extract_text_from_docx(file_path):
+    """Extract text from Word document"""
+    try:
+        from docx import Document
+        doc = Document(file_path)
+        text = ""
+        for paragraph in doc.paragraphs:
+            text += paragraph.text + "\n"
+        return text.strip()
+    except ImportError:
+        return "Error: python-docx library not installed. Please install it using: pip install python-docx"
+    except Exception as e:
+        return f"Error extracting Word document text: {str(e)}"
+
+def extract_text_from_txt(file_path):
+    """Extract text from plain text file"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            return file.read()
+    except UnicodeDecodeError:
+        try:
+            with open(file_path, 'r', encoding='latin-1') as file:
+                return file.read()
+        except Exception as e:
+            return f"Error reading text file: {str(e)}"
+    except Exception as e:
+        return f"Error reading text file: {str(e)}"
+
+def extract_text_from_document(file_path, file_extension):
+    """Extract text from document based on file type"""
+    if file_extension == 'pdf':
+        return extract_text_from_pdf(file_path)
+    elif file_extension in ['doc', 'docx']:
+        return extract_text_from_docx(file_path)
+    elif file_extension == 'txt':
+        return extract_text_from_txt(file_path)
+    else:
+        return "Unsupported file format"
+
+def chunk_text(text, chunk_size=1000, overlap=200):
+    """Split text into overlapping chunks for better context retrieval"""
+    if not text:
+        return []
+
+    chunks = []
+    start = 0
+    text_length = len(text)
+
+    while start < text_length:
+        end = start + chunk_size
+
+        # Try to find a natural break point (paragraph or sentence)
+        if end < text_length:
+            # Look for paragraph break
+            para_break = text.rfind('\n\n', start, end)
+            if para_break > start + chunk_size // 2:
+                end = para_break
+            else:
+                # Look for sentence break
+                sentence_break = max(
+                    text.rfind('. ', start, end),
+                    text.rfind('? ', start, end),
+                    text.rfind('! ', start, end)
+                )
+                if sentence_break > start + chunk_size // 2:
+                    end = sentence_break + 1
+
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+
+        start = end - overlap if end < text_length else text_length
+
+    return chunks
+
+def get_dociq_session_id():
+    """Get or create DocIQ session ID"""
+    if 'dociq_session_id' not in session:
+        session['dociq_session_id'] = str(uuid.uuid4())
+        session.modified = True
+        print(f"[DocIQ] Created new session ID: {session['dociq_session_id']}")
+    return session['dociq_session_id']
+
+def get_dociq_documents():
+    """Get documents for current session - uses single-user mode for reliability"""
+    # Use single-user storage for development (avoids session issues)
+    # This is simpler and more reliable for local development
+    doc_count = len(dociq_single_user_storage['documents'])
+    print(f"[DocIQ] Using single-user mode storage with {doc_count} documents")
+    return dociq_single_user_storage
+
+def get_combined_document_context(session_data, max_context_length=8000):
+    """Get combined context from all documents"""
+    all_chunks = []
+    for doc in session_data['documents']:
+        if doc.get('chunks'):
+            all_chunks.extend(doc['chunks'][:5])  # Take first 5 chunks from each doc
+
+    # Combine chunks up to max context length
+    context = ""
+    for chunk in all_chunks:
+        if len(context) + len(chunk) < max_context_length:
+            context += chunk + "\n\n---\n\n"
+        else:
+            break
+
+    return context
+
+def search_documents(query, session_data, max_results=5):
+    """Simple keyword-based search across documents"""
+    query_words = set(query.lower().split())
+    results = []
+
+    for doc in session_data['documents']:
+        for chunk in doc.get('chunks', []):
+            chunk_lower = chunk.lower()
+            # Count matching words
+            matches = sum(1 for word in query_words if word in chunk_lower)
+            if matches > 0:
+                results.append({
+                    'chunk': chunk,
+                    'doc_name': doc['name'],
+                    'score': matches / len(query_words)
+                })
+
+    # Sort by score and return top results
+    results.sort(key=lambda x: x['score'], reverse=True)
+    return results[:max_results]
+
+def generate_dociq_response(user_message, session_data):
+    """Generate AI response based on document context"""
+    # Search for relevant chunks
+    relevant_chunks = search_documents(user_message, session_data)
+
+    # Build context from relevant chunks
+    if relevant_chunks:
+        context = "**Relevant Document Content:**\n\n"
+        for i, result in enumerate(relevant_chunks, 1):
+            context += f"[From: {result['doc_name']}]\n{result['chunk']}\n\n---\n\n"
+    else:
+        # If no specific matches, use general document context
+        context = get_combined_document_context(session_data)
+        if context:
+            context = "**Document Content:**\n\n" + context
+
+    if not context:
+        return "I don't have any document content to reference. Please upload some documents first."
+
+    # Create conversation with document context
+    conversation = [
+        {
+            "role": "system",
+            "content": f"""You are DocIQ, an intelligent document assistant by Perfionix AI.
+You help users understand, analyze, and extract information from their uploaded documents.
+
+IMPORTANT GUIDELINES:
+- Base your answers ONLY on the document content provided below
+- If the information is not in the documents, clearly state that
+- Quote relevant passages when appropriate
+- Be precise and accurate
+- If asked to summarize, provide key points
+- If asked to compare, highlight differences and similarities
+- Always cite which document the information comes from
+
+UPLOADED DOCUMENT CONTENT:
+{context}
+
+Current date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"""
+        },
+        {
+            "role": "user",
+            "content": user_message
+        }
+    ]
+
+    # Add conversation history
+    for msg in session_data['conversation'][-6:]:  # Keep last 6 messages for context
+        if msg['role'] in ['user', 'assistant']:
+            conversation.insert(-1, msg)
+
+    return generate_ai_response(conversation)
+
+# -------------------------------
 # Routes
 # -------------------------------
 
@@ -628,7 +871,7 @@ def stats():
     """Get user statistics"""
     total_tasks = len(user_data['tasks'])
     completed_tasks = len([t for t in user_data['tasks'] if t['completed']])
-    
+
     return jsonify({
         'total_notes': len(user_data['notes']),
         'total_tasks': total_tasks,
@@ -636,6 +879,242 @@ def stats():
         'pending_tasks': total_tasks - completed_tasks,
         'total_reminders': len(user_data['reminders']),
         'current_time': datetime.now().isoformat()
+    })
+
+# -------------------------------
+# DocIQ Routes
+# -------------------------------
+
+@app.route('/api/dociq/upload', methods=['POST'])
+def dociq_upload():
+    """Upload and process document for DocIQ"""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'File type not supported. Use PDF, DOC, DOCX, or TXT.'}), 400
+
+    try:
+        # Secure the filename and save
+        filename = secure_filename(file.filename)
+        file_extension = get_file_extension(filename)
+        unique_filename = f"{uuid.uuid4()}_{filename}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(file_path)
+
+        # Get file size
+        file_size = os.path.getsize(file_path)
+
+        # Extract text from document
+        text = extract_text_from_document(file_path, file_extension)
+
+        if text.startswith('Error'):
+            # Clean up file on error
+            os.remove(file_path)
+            return jsonify({'error': text}), 500
+
+        # Chunk the text for RAG
+        chunks = chunk_text(text)
+
+        # Store document info
+        session_data = get_dociq_documents()
+        doc_id = str(uuid.uuid4())
+
+        doc_info = {
+            'id': doc_id,
+            'name': filename,
+            'original_name': file.filename,
+            'extension': file_extension,
+            'size': file_size,
+            'path': file_path,
+            'text_length': len(text),
+            'chunks': chunks,
+            'chunk_count': len(chunks),
+            'uploaded_at': datetime.now().isoformat(),
+            'status': 'ready'
+        }
+
+        session_data['documents'].append(doc_info)
+
+        # Debug logging
+        print(f"[DocIQ Upload] Successfully added document: {filename}")
+        print(f"[DocIQ Upload] Session now has {len(session_data['documents'])} documents")
+        print(f"[DocIQ Upload] Session ID: {get_dociq_session_id()}")
+
+        return jsonify({
+            'success': True,
+            'document': {
+                'id': doc_id,
+                'name': filename,
+                'extension': file_extension,
+                'size': file_size,
+                'text_length': len(text),
+                'chunk_count': len(chunks),
+                'status': 'ready'
+            }
+        })
+
+    except Exception as e:
+        print(f"DocIQ upload error: {e}")
+        return jsonify({'error': f'Failed to process document: {str(e)}'}), 500
+
+@app.route('/api/dociq/documents', methods=['GET'])
+def dociq_list_documents():
+    """List all uploaded documents"""
+    session_data = get_dociq_documents()
+
+    documents = []
+    for doc in session_data['documents']:
+        documents.append({
+            'id': doc['id'],
+            'name': doc['name'],
+            'extension': doc['extension'],
+            'size': doc['size'],
+            'text_length': doc.get('text_length', 0),
+            'chunk_count': doc.get('chunk_count', 0),
+            'uploaded_at': doc['uploaded_at'],
+            'status': doc['status']
+        })
+
+    return jsonify({'documents': documents})
+
+@app.route('/api/dociq/documents/<doc_id>', methods=['DELETE'])
+def dociq_delete_document(doc_id):
+    """Delete a specific document"""
+    session_data = get_dociq_documents()
+
+    for i, doc in enumerate(session_data['documents']):
+        if doc['id'] == doc_id:
+            # Delete file from disk
+            try:
+                if os.path.exists(doc['path']):
+                    os.remove(doc['path'])
+            except Exception as e:
+                print(f"Error deleting file: {e}")
+
+            # Remove from list
+            session_data['documents'].pop(i)
+
+            return jsonify({'success': True, 'message': 'Document deleted'})
+
+    return jsonify({'error': 'Document not found'}), 404
+
+@app.route('/api/dociq/clear', methods=['POST'])
+def dociq_clear():
+    """Clear all documents and conversation"""
+    session_data = get_dociq_documents()
+
+    # Delete all files
+    for doc in session_data['documents']:
+        try:
+            if os.path.exists(doc['path']):
+                os.remove(doc['path'])
+        except Exception as e:
+            print(f"Error deleting file: {e}")
+
+    # Clear data
+    session_data['documents'] = []
+    session_data['conversation'] = []
+
+    return jsonify({'success': True, 'message': 'All documents cleared'})
+
+@app.route('/api/dociq/chat', methods=['POST'])
+def dociq_chat():
+    """Chat with documents using RAG"""
+    data = request.json
+    user_message = data.get('message', '')
+
+    print(f"[DocIQ Chat] Received message: {user_message[:50]}...")
+
+    if not user_message:
+        return jsonify({'error': 'No message provided'}), 400
+
+    session_data = get_dociq_documents()
+
+    print(f"[DocIQ Chat] Documents found: {len(session_data['documents'])}")
+    for doc in session_data['documents']:
+        print(f"[DocIQ Chat] - {doc['name']}: {doc.get('chunk_count', 0)} chunks")
+
+    if not session_data['documents']:
+        print("[DocIQ Chat] No documents found - returning error")
+        return jsonify({
+            'response': "Please upload some documents first. I need document content to provide accurate answers.",
+            'has_documents': False
+        })
+
+    # Add user message to conversation history
+    session_data['conversation'].append({
+        'role': 'user',
+        'content': user_message
+    })
+
+    # Generate response using RAG
+    ai_response = generate_dociq_response(user_message, session_data)
+
+    # Add AI response to conversation history
+    session_data['conversation'].append({
+        'role': 'assistant',
+        'content': ai_response
+    })
+
+    return jsonify({
+        'response': ai_response,
+        'has_documents': True,
+        'document_count': len(session_data['documents']),
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.route('/api/dociq/summary', methods=['GET'])
+def dociq_summary():
+    """Get summary of uploaded documents"""
+    session_data = get_dociq_documents()
+
+    if not session_data['documents']:
+        return jsonify({'error': 'No documents uploaded'}), 400
+
+    # Build document overview
+    doc_overview = "**Uploaded Documents:**\n\n"
+    total_text_length = 0
+
+    for doc in session_data['documents']:
+        doc_overview += f"- {doc['name']} ({doc['extension'].upper()}, {doc.get('text_length', 0)} chars)\n"
+        total_text_length += doc.get('text_length', 0)
+
+    # Generate summary using AI
+    summary_prompt = f"""Please provide a brief summary of the following documents:
+
+{doc_overview}
+
+Combined document content preview:
+{get_combined_document_context(session_data, max_context_length=4000)}
+
+Provide:
+1. A brief overview of what these documents contain
+2. Key topics covered
+3. Main takeaways"""
+
+    summary_conversation = [
+        {
+            "role": "system",
+            "content": "You are DocIQ, a document analysis assistant. Provide clear, concise summaries."
+        },
+        {
+            "role": "user",
+            "content": summary_prompt
+        }
+    ]
+
+    summary = generate_ai_response(summary_conversation)
+
+    return jsonify({
+        'summary': summary,
+        'document_count': len(session_data['documents']),
+        'total_text_length': total_text_length
     })
 
 # -------------------------------
