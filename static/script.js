@@ -11,6 +11,8 @@ class AxioAssistant {
         this.tasks = [];
         this.reminders = [];
         this.dociqDocuments = [];
+        this.viziqCharts = [];
+        this.viziqData = null;
         this.init();
     }
 
@@ -21,6 +23,7 @@ class AxioAssistant {
         this.setupNotes();
         this.setupReminders();
         this.setupDocIQ();
+        this.setupVizIQ();
         this.setupClock();
         this.loadData();
     }
@@ -1361,6 +1364,429 @@ class AxioAssistant {
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // ================================
+    // VIZIQ - DATA INTELLIGENCE
+    // ================================
+
+    setupVizIQ() {
+        const uploadArea = document.getElementById('viziq-upload-area');
+        const fileInput = document.getElementById('viziq-file-input');
+        const browseBtn = document.getElementById('viziq-browse-files');
+        const clearBtn = document.getElementById('clear-viziq');
+        const refreshBtn = document.getElementById('refresh-viziq');
+
+        // Browse button click
+        browseBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        // Upload area click
+        uploadArea?.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change
+        fileInput?.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                this.uploadVizIQFile(e.target.files[0]);
+            }
+            fileInput.value = '';
+        });
+
+        // Drag and drop
+        uploadArea?.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea?.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea?.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) {
+                this.uploadVizIQFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Clear button
+        clearBtn?.addEventListener('click', () => this.clearVizIQ());
+
+        // Refresh button
+        refreshBtn?.addEventListener('click', () => {
+            if (this.viziqData) {
+                this.renderVizIQDashboard(this.viziqData);
+            }
+        });
+    }
+
+    async uploadVizIQFile(file) {
+        const uploadSection = document.getElementById('viziq-upload-section');
+        const uploadArea = document.getElementById('viziq-upload-area');
+        const processing = document.getElementById('viziq-processing');
+        const dashboard = document.getElementById('viziq-dashboard');
+
+        // Show processing
+        uploadArea.style.display = 'none';
+        processing.style.display = 'block';
+
+        // Animate processing steps
+        this.animateProcessingSteps();
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/viziq/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.viziqData = data;
+
+                // Hide upload, show dashboard
+                uploadSection.style.display = 'none';
+                dashboard.style.display = 'flex';
+
+                // Render dashboard
+                this.renderVizIQDashboard(data);
+
+                // Update badge
+                document.getElementById('viziq-badge').textContent = data.rows;
+            } else {
+                alert('Error: ' + data.error);
+                uploadArea.style.display = 'block';
+                processing.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('VizIQ upload error:', error);
+            alert('Failed to upload file. Please try again.');
+            uploadArea.style.display = 'block';
+            processing.style.display = 'none';
+        }
+    }
+
+    animateProcessingSteps() {
+        const steps = ['step-upload', 'step-preprocess', 'step-analyze', 'step-visualize'];
+        const statusText = document.getElementById('processing-status');
+        const messages = [
+            'Uploading your data...',
+            'Preprocessing and cleaning...',
+            'Analyzing patterns and trends...',
+            'Generating visualizations...'
+        ];
+
+        let currentStep = 0;
+
+        const interval = setInterval(() => {
+            if (currentStep > 0) {
+                document.getElementById(steps[currentStep - 1])?.classList.remove('active');
+                document.getElementById(steps[currentStep - 1])?.classList.add('completed');
+            }
+
+            if (currentStep < steps.length) {
+                document.getElementById(steps[currentStep])?.classList.add('active');
+                statusText.textContent = messages[currentStep];
+                currentStep++;
+            } else {
+                clearInterval(interval);
+            }
+        }, 600);
+    }
+
+    renderVizIQDashboard(data) {
+        // Update header
+        document.getElementById('dashboard-name').textContent = data.dashboard_name;
+        document.getElementById('dashboard-description').textContent = data.description;
+        document.getElementById('data-rows').innerHTML = `<strong>${data.rows.toLocaleString()}</strong> Rows`;
+        document.getElementById('data-cols').innerHTML = `<strong>${data.cols}</strong> Columns`;
+        document.getElementById('data-updated').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+
+        // Render KPIs
+        this.renderKPIs(data.kpis);
+
+        // Render Charts
+        this.renderCharts(data.charts);
+
+        // Render Insights
+        this.renderInsights(data.insights);
+
+        // Render Data Preview
+        this.renderDataPreview(data.columns, data.preview);
+    }
+
+    renderKPIs(kpis) {
+        const grid = document.getElementById('kpi-grid');
+        grid.innerHTML = '';
+
+        const icons = {
+            'database': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>',
+            'trending-up': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
+            'bar-chart': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>',
+            'layers': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>'
+        };
+
+        kpis.forEach(kpi => {
+            const card = document.createElement('div');
+            card.className = 'kpi-card';
+
+            card.innerHTML = `
+                <div class="kpi-header">
+                    <span class="kpi-label">${kpi.label}</span>
+                    <div class="kpi-icon">${icons[kpi.icon] || icons['bar-chart']}</div>
+                </div>
+                <div class="kpi-value">${this.formatKPIValue(kpi.value)}</div>
+                <div class="kpi-description">${kpi.description}</div>
+            `;
+
+            grid.appendChild(card);
+        });
+    }
+
+    formatKPIValue(value) {
+        if (typeof value !== 'number') return value;
+        if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+        if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
+        return value.toLocaleString();
+    }
+
+    renderCharts(charts) {
+        const grid = document.getElementById('charts-grid');
+        grid.innerHTML = '';
+
+        // Destroy existing charts
+        this.viziqCharts.forEach(chart => chart.destroy());
+        this.viziqCharts = [];
+
+        const colors = this.getChartColors();
+
+        charts.forEach((chartConfig, index) => {
+            const card = document.createElement('div');
+            card.className = 'chart-card' + (chartConfig.type === 'line' ? ' full-width' : '');
+
+            const canvasId = `chart-${chartConfig.id}-${index}`;
+
+            card.innerHTML = `
+                <div class="chart-header">
+                    <span class="chart-title">${chartConfig.title}</span>
+                    <span class="chart-type-badge">${chartConfig.type}</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="${canvasId}"></canvas>
+                </div>
+                <div class="chart-insight">
+                    <p><strong>Insight:</strong> ${chartConfig.insight}</p>
+                </div>
+            `;
+
+            grid.appendChild(card);
+
+            // Create chart after DOM update
+            setTimeout(() => {
+                const ctx = document.getElementById(canvasId);
+                if (ctx) {
+                    const chart = this.createChart(ctx, chartConfig, colors);
+                    this.viziqCharts.push(chart);
+                }
+            }, 100);
+        });
+    }
+
+    getChartColors() {
+        return {
+            primary: 'rgba(102, 126, 234, 0.8)',
+            secondary: 'rgba(118, 75, 162, 0.8)',
+            success: 'rgba(0, 242, 254, 0.8)',
+            danger: 'rgba(245, 87, 108, 0.8)',
+            warning: 'rgba(254, 225, 64, 0.8)',
+            gradient: [
+                'rgba(102, 126, 234, 0.8)',
+                'rgba(118, 75, 162, 0.8)',
+                'rgba(0, 242, 254, 0.8)',
+                'rgba(245, 87, 108, 0.8)',
+                'rgba(254, 225, 64, 0.8)',
+                'rgba(79, 172, 254, 0.8)',
+                'rgba(240, 147, 251, 0.8)',
+                'rgba(250, 112, 154, 0.8)'
+            ]
+        };
+    }
+
+    createChart(ctx, config, colors) {
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: config.type === 'doughnut' || config.datasets,
+                    position: 'bottom',
+                    labels: {
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(26, 27, 46, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: 'rgba(102, 126, 234, 0.3)',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || context.label || '';
+                            let value = context.parsed.y !== undefined ? context.parsed.y : context.parsed;
+                            if (typeof value === 'number') {
+                                value = value.toLocaleString();
+                            }
+                            return `${label}: ${value}`;
+                        }
+                    }
+                }
+            },
+            scales: config.type !== 'doughnut' ? {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        maxRotation: 45
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)'
+                    }
+                }
+            } : undefined
+        };
+
+        let chartData;
+
+        if (config.datasets) {
+            // Multi-dataset chart
+            chartData = {
+                labels: config.labels,
+                datasets: config.datasets.map((ds, i) => ({
+                    label: ds.label,
+                    data: ds.data,
+                    backgroundColor: colors.gradient[i % colors.gradient.length],
+                    borderColor: colors.gradient[i % colors.gradient.length],
+                    borderWidth: 2
+                }))
+            };
+        } else {
+            // Single dataset chart
+            chartData = {
+                labels: config.labels,
+                datasets: [{
+                    data: config.data,
+                    backgroundColor: config.type === 'doughnut'
+                        ? colors.gradient.slice(0, config.data.length)
+                        : colors.primary,
+                    borderColor: config.type === 'line' ? colors.primary : 'transparent',
+                    borderWidth: config.type === 'line' ? 3 : 1,
+                    fill: config.type === 'line' ? {
+                        target: 'origin',
+                        above: 'rgba(102, 126, 234, 0.1)'
+                    } : false,
+                    tension: 0.4,
+                    pointBackgroundColor: colors.primary,
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 8
+                }]
+            };
+        }
+
+        return new Chart(ctx, {
+            type: config.type,
+            data: chartData,
+            options: chartOptions
+        });
+    }
+
+    renderInsights(insights) {
+        const list = document.getElementById('insights-list');
+        list.innerHTML = '';
+
+        insights.forEach(insight => {
+            const card = document.createElement('div');
+            card.className = 'insight-card';
+
+            card.innerHTML = `
+                <div class="insight-icon ${insight.type}">${insight.icon}</div>
+                <div class="insight-content">
+                    <h5>${insight.title}</h5>
+                    <p>${insight.description}</p>
+                </div>
+            `;
+
+            list.appendChild(card);
+        });
+    }
+
+    renderDataPreview(columns, data) {
+        const thead = document.getElementById('table-header');
+        const tbody = document.getElementById('table-body');
+
+        // Render header
+        thead.innerHTML = `<tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>`;
+
+        // Render body (limit to 50 rows)
+        tbody.innerHTML = data.slice(0, 50).map(row =>
+            `<tr>${columns.map(col => `<td>${row[col] !== null && row[col] !== undefined ? row[col] : '-'}</td>`).join('')}</tr>`
+        ).join('');
+    }
+
+    async clearVizIQ() {
+        if (!confirm('Are you sure you want to clear all data?')) return;
+
+        try {
+            await fetch('/api/viziq/clear', { method: 'POST' });
+
+            // Destroy charts
+            this.viziqCharts.forEach(chart => chart.destroy());
+            this.viziqCharts = [];
+            this.viziqData = null;
+
+            // Reset UI
+            const uploadSection = document.getElementById('viziq-upload-section');
+            const uploadArea = document.getElementById('viziq-upload-area');
+            const processing = document.getElementById('viziq-processing');
+            const dashboard = document.getElementById('viziq-dashboard');
+
+            uploadSection.style.display = 'flex';
+            uploadArea.style.display = 'block';
+            processing.style.display = 'none';
+            dashboard.style.display = 'none';
+
+            // Reset processing steps
+            ['step-upload', 'step-preprocess', 'step-analyze', 'step-visualize'].forEach(id => {
+                const el = document.getElementById(id);
+                el?.classList.remove('active', 'completed');
+            });
+
+            // Update badge
+            document.getElementById('viziq-badge').textContent = 'AI';
+
+        } catch (error) {
+            console.error('Error clearing VizIQ:', error);
+        }
     }
 
     // ================================
