@@ -13,6 +13,9 @@ import re
 # Load environment variables
 load_dotenv()
 
+# Import database module
+from database import init_database, get_database
+
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default-secret-key-change-in-production')
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -32,20 +35,60 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Configuration
 # -------------------------------
 
+# GPT/Ollama Configuration
 GPT_SERVER_URL = os.getenv('GPT_SERVER_URL', 'http://localhost:11434/api/chat')
 GPT_MODEL = os.getenv('GPT_MODEL', 'gpt-oss:120b-cloud')
+
+# Gemini Configuration
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+
+# Initialize Gemini client
+gemini_client = None
+GEMINI_AVAILABLE = False
+if GEMINI_API_KEY:
+    try:
+        from google import genai
+        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+        GEMINI_AVAILABLE = True
+        print("[OK] Gemini client initialized")
+    except Exception as e:
+        print(f"[WARNING] Failed to initialize Gemini client: {e}")
+        GEMINI_AVAILABLE = False
+
+# Other APIs
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 VOICE_ID = os.getenv('VOICE_ID', '21m00Tcm4TlvDq8ikWAM')
 
-# In-memory storage (replace with database in production)
+# Default AI Model
+DEFAULT_AI_MODEL = os.getenv('DEFAULT_AI_MODEL', 'gemini' if GEMINI_AVAILABLE else 'gpt')
+
+# Available AI Models
+AI_MODELS = {
+    'gpt': {
+        'name': 'AXIO Core',
+        'description': 'Local GPT model via Ollama',
+        'available': True
+    },
+    'gemini': {
+        'name': 'AXIO Lite',
+        'description': 'Perfionix AI',
+        'available': GEMINI_AVAILABLE
+    }
+}
+
+# Initialize MongoDB connection
+USE_MONGODB = init_database()
+db = get_database()
+
+# Fallback in-memory storage (used when MongoDB is not available)
 user_data = {
     'notes': [],
     'reminders': [],
     'tasks': []
 }
 
-# DocIQ document storage (global, keyed by session ID)
-# Note: In production, use Redis or database for persistence
+# DocIQ document storage (fallback)
 dociq_storage = {}
 
 # Simple fallback: single-user mode storage (for development/testing)
@@ -54,7 +97,7 @@ dociq_single_user_storage = {
     'conversation': []
 }
 
-# VizIQ storage
+# VizIQ storage (fallback)
 viziq_storage = {
     'data': None,
     'columns': [],
@@ -96,8 +139,32 @@ IMPORTANT FORMATTING RULES:
 Current date and time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"""
 
 
+def get_session_id():
+    """Get or create session ID"""
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid4())
+        session.modified = True
+    return session['session_id']
+
 def get_conversation():
     """Get or initialize conversation for current session"""
+    session_id = get_session_id()
+
+    # Try to get from MongoDB first
+    if USE_MONGODB and db.is_connected():
+        messages = db.get_chat_history(session_id, limit=50)
+        if messages:
+            # Convert to conversation format
+            conversation = [{"role": "system", "content": get_system_prompt()}]
+            for msg in messages:
+                conversation.append({
+                    "role": msg.get("role"),
+                    "content": msg.get("content"),
+                    "_id": msg.get("id")  # Store MongoDB ID for editing
+                })
+            return conversation
+
+    # Fallback to session storage
     if 'conversation' not in session:
         session['conversation'] = [
             {
@@ -109,12 +176,45 @@ def get_conversation():
     return session['conversation']
 
 def save_conversation(conversation):
-    """Save conversation to session and mark as modified"""
+    """Save conversation to session and MongoDB"""
+    session_id = get_session_id()
+
+    # Save to MongoDB if connected
+    if USE_MONGODB and db.is_connected():
+        # Get the last two messages (user + assistant) to save
+        if len(conversation) >= 2:
+            # Check if these are new messages (don't have _id)
+            for msg in conversation[-2:]:
+                if msg.get("role") in ["user", "assistant"] and "_id" not in msg:
+                    msg_id = db.save_chat_message(
+                        session_id=session_id,
+                        role=msg["role"],
+                        content=msg["content"],
+                        metadata={"searched": msg.get("searched", False)}
+                    )
+                    msg["_id"] = msg_id
+
+    # Also save to session as backup
     session['conversation'] = conversation
     session.modified = True
 
-def generate_ai_response(conversation):
-    """Generate AI response from conversation history"""
+def get_current_model():
+    """Get the current AI model from session"""
+    if 'ai_model' not in session:
+        session['ai_model'] = DEFAULT_AI_MODEL
+        session.modified = True
+    return session['ai_model']
+
+def set_current_model(model):
+    """Set the current AI model in session"""
+    if model in AI_MODELS and AI_MODELS[model]['available']:
+        session['ai_model'] = model
+        session.modified = True
+        return True
+    return False
+
+def generate_gpt_response(conversation):
+    """Generate AI response using GPT/Ollama"""
     headers = {"Content-Type": "application/json"}
     payload = {
         "model": GPT_MODEL,
@@ -127,20 +227,87 @@ def generate_ai_response(conversation):
             "repeat_penalty": 1.1
         }
     }
-    
+
     try:
         response = requests.post(GPT_SERVER_URL, headers=headers, json=payload, timeout=300)
         response.raise_for_status()
         data = response.json()
-        
+
         if "message" in data and "content" in data["message"]:
             return data["message"]["content"]
         return "Sorry, I couldn't process that request."
-            
+
     except requests.exceptions.RequestException as e:
         return f"Connection error: Unable to reach AI server. Please ensure the GPT server is running."
     except Exception as e:
         return f"An error occurred: {str(e)}"
+
+def generate_gemini_response(conversation):
+    """Generate AI response using Google Gemini SDK"""
+    if not gemini_client:
+        return "Gemini client not initialized. Please check your GEMINI_API_KEY in .env file."
+
+    try:
+        # Log which model is being used
+        print(f"[Gemini] Using model: {GEMINI_MODEL}")
+
+        # Extract system prompt
+        system_prompt = next((msg['content'] for msg in conversation if msg.get('role') == 'system'), None)
+
+        # Build the conversation content for Gemini
+        # Combine all messages into a single prompt with context
+        prompt_parts = []
+
+        if system_prompt:
+            prompt_parts.append(f"[System Instructions]\n{system_prompt}\n\n[Conversation]")
+
+        for msg in conversation:
+            role = msg.get('role', '')
+            content = msg.get('content', '')
+
+            if role == 'system':
+                continue
+            elif role == 'user':
+                prompt_parts.append(f"User: {content}")
+            elif role == 'assistant':
+                prompt_parts.append(f"Assistant: {content}")
+
+        # Add instruction to continue as assistant
+        prompt_parts.append("Assistant:")
+
+        full_prompt = "\n\n".join(prompt_parts)
+
+        # Generate response using the SDK
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=full_prompt
+        )
+
+        if response and response.text:
+            return response.text
+        else:
+            return "Sorry, I couldn't generate a response with Gemini."
+
+    except Exception as e:
+        error_msg = str(e)
+        print(f"[ERROR] Gemini API error: {error_msg}")
+
+        if "blocked" in error_msg.lower():
+            return "The response was blocked by Gemini's safety filters. Please try rephrasing your question."
+        elif "quota" in error_msg.lower():
+            return "Gemini API quota exceeded. Please try again later."
+        else:
+            return f"An error occurred with Gemini: {error_msg}"
+
+def generate_ai_response(conversation, model=None):
+    """Generate AI response from conversation history using selected model"""
+    # Use specified model or get current model from session
+    current_model = model or get_current_model()
+
+    if current_model == 'gemini':
+        return generate_gemini_response(conversation)
+    else:
+        return generate_gpt_response(conversation)
 
 def should_search_web(message: str) -> bool:
     """Determine if the message requires a web search"""
@@ -245,54 +412,76 @@ def generate_speech(text):
 # Web Search Function
 # -------------------------------
 
+# Google Custom Search API configuration (optional - for better reliability)
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', '')
+GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID', '')
+
 def web_search(query):
     """Perform web search - tries multiple methods"""
-    print(f"🔍 Starting web search for: {query}")
+    print(f"[SEARCH] Starting web search for: {query}")
 
-    # Method 1: Try googlesearch-python library
-    results = web_search_googlesearch(query)
-    if results:
-        print(f"✅ googlesearch-python returned {len(results)} results")
-        return results
+    # Method 1: Try Google Custom Search API (most reliable if configured)
+    if GOOGLE_API_KEY and GOOGLE_CSE_ID:
+        results = web_search_google_api(query)
+        if results:
+            print(f"[OK] Google Custom Search API returned {len(results)} results")
+            return results
 
-    # Method 2: Try DuckDuckGo
+    # Method 2: Try DuckDuckGo (most reliable free option)
     results = web_search_duckduckgo(query)
     if results:
-        print(f"✅ DuckDuckGo returned {len(results)} results")
+        print(f"[OK] DuckDuckGo returned {len(results)} results")
         return results
 
-    # Method 3: Fallback to direct Google scraping
+    # Method 3: Try googlesearch-python library
+    results = web_search_googlesearch(query)
+    if results:
+        print(f"[OK] googlesearch-python returned {len(results)} results")
+        return results
+
+    # Method 4: Fallback to direct Google scraping
     results = web_search_google_scrape(query)
     if results:
-        print(f"✅ Google scrape returned {len(results)} results")
+        print(f"[OK] Google scrape returned {len(results)} results")
         return results
 
-    print("❌ All search methods failed")
+    print("[ERROR] All search methods failed")
     return []
 
 
-def web_search_googlesearch(query):
-    """Search using googlesearch-python library"""
+def web_search_google_api(query):
+    """Search using Google Custom Search JSON API"""
     try:
-        from googlesearch import search
-        results = []
-        search_results = list(search(query, num_results=5, advanced=True))
+        url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            'key': GOOGLE_API_KEY,
+            'cx': GOOGLE_CSE_ID,
+            'q': query,
+            'num': 5
+        }
 
-        for result in search_results:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        results = []
+        for item in data.get('items', []):
             results.append({
-                'title': result.title if hasattr(result, 'title') else '',
-                'snippet': result.description if hasattr(result, 'description') else '',
-                'link': result.url if hasattr(result, 'url') else ''
+                'title': item.get('title', ''),
+                'snippet': item.get('snippet', ''),
+                'link': item.get('link', '')
             })
+
         return results if results else None
     except Exception as e:
-        print(f"googlesearch error: {e}")
+        print(f"Google API error: {e}")
         return None
 
 
 def web_search_duckduckgo(query):
     """Search using DuckDuckGo HTML"""
     import urllib.parse
+    from bs4 import BeautifulSoup
 
     try:
         search_url = "https://html.duckduckgo.com/html/"
@@ -300,12 +489,16 @@ def web_search_duckduckgo(query):
 
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Origin': 'https://html.duckduckgo.com',
+            'Referer': 'https://html.duckduckgo.com/'
         }
 
         response = requests.post(search_url, data=data, headers=headers, timeout=10)
         response.raise_for_status()
 
-        from bs4 import BeautifulSoup
         soup = BeautifulSoup(response.text, 'html.parser')
         results = []
 
@@ -324,7 +517,7 @@ def web_search_duckduckgo(query):
 
                 snippet = snippet_elem.get_text(strip=True) if snippet_elem else ''
 
-                if title and link:
+                if title and link and link.startswith('http'):
                     results.append({
                         'title': title,
                         'snippet': snippet,
@@ -337,56 +530,124 @@ def web_search_duckduckgo(query):
         return None
 
 
+def web_search_googlesearch(query):
+    """Search using googlesearch-python library"""
+    try:
+        from googlesearch import search
+        import time
+
+        results = []
+        # Add delay to avoid rate limiting
+        time.sleep(1)
+
+        try:
+            search_results = list(search(query, num_results=5, advanced=True, sleep_interval=2))
+        except TypeError:
+            # Fallback for older version without sleep_interval
+            search_results = list(search(query, num_results=5, advanced=True))
+
+        for result in search_results:
+            results.append({
+                'title': result.title if hasattr(result, 'title') else '',
+                'snippet': result.description if hasattr(result, 'description') else '',
+                'link': result.url if hasattr(result, 'url') else ''
+            })
+        return results if results else None
+    except Exception as e:
+        print(f"googlesearch error: {e}")
+        return None
+
+
 def web_search_google_scrape(query):
     """Fallback web search using direct Google scraping"""
     import urllib.parse
     from bs4 import BeautifulSoup
+    import random
+    import time
+
+    # Random delay to avoid detection
+    time.sleep(random.uniform(1, 3))
 
     search_url = "https://www.google.com/search"
     params = {
         'q': query,
         'num': 10,
-        'hl': 'en'
+        'hl': 'en',
+        'safe': 'off'
     }
 
+    # Rotate user agents
+    user_agents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15'
+    ]
+
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
+        'User-Agent': random.choice(user_agents),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
         'DNT': '1',
         'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0'
     }
 
     try:
-        response = requests.get(search_url, params=params, headers=headers, timeout=15)
+        session = requests.Session()
+        response = session.get(search_url, params=params, headers=headers, timeout=15)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
         results = []
 
-        # Find all search result divs
+        # Try multiple selectors for search results
         search_divs = soup.find_all('div', class_='g')
+
+        # Alternative selector if 'g' class doesn't work
+        if not search_divs:
+            search_divs = soup.select('div[data-hveid]')
+
+        # Another fallback
+        if not search_divs:
+            search_divs = soup.find_all('div', {'class': lambda x: x and 'g' in x.split()})
 
         for div in search_divs[:5]:
             try:
-                # Get title
-                title_elem = div.find('h3')
-                title = title_elem.get_text() if title_elem else ''
+                # Get title - try multiple selectors
+                title_elem = div.find('h3') or div.find('h2') or div.select_one('[role="heading"]')
+                title = title_elem.get_text(strip=True) if title_elem else ''
 
                 # Get link
-                link_elem = div.find('a')
+                link_elem = div.find('a', href=True)
                 link = link_elem.get('href', '') if link_elem else ''
 
                 # Clean the link
                 if link.startswith('/url?q='):
                     link = link.split('/url?q=')[1].split('&')[0]
                     link = urllib.parse.unquote(link)
+                elif link.startswith('/search'):
+                    continue  # Skip internal Google links
 
-                # Get snippet
-                snippet_elem = div.find('div', class_='VwiC3b') or div.find('span', class_='aCOpRe')
-                snippet = snippet_elem.get_text() if snippet_elem else ''
+                # Skip if not a valid URL
+                if not link.startswith('http'):
+                    continue
+
+                # Get snippet - try multiple selectors
+                snippet_elem = (
+                    div.find('div', class_='VwiC3b') or
+                    div.find('span', class_='aCOpRe') or
+                    div.select_one('[data-sncf]') or
+                    div.find('div', {'style': lambda x: x and 'line-clamp' in str(x)})
+                )
+                snippet = snippet_elem.get_text(strip=True) if snippet_elem else ''
 
                 if title and link:
                     results.append({
@@ -528,9 +789,21 @@ def get_dociq_session_id():
     return session['dociq_session_id']
 
 def get_dociq_documents():
-    """Get documents for current session - uses single-user mode for reliability"""
-    # Use single-user storage for development (avoids session issues)
-    # This is simpler and more reliable for local development
+    """Get documents for current session - uses MongoDB or fallback storage"""
+    session_id = get_dociq_session_id()
+
+    # Try MongoDB first
+    if USE_MONGODB and db.is_connected():
+        documents = db.get_dociq_documents(session_id)
+        conversation = db.get_dociq_conversation(session_id)
+        doc_count = len(documents)
+        print(f"[DocIQ] Using MongoDB storage with {doc_count} documents")
+        return {
+            'documents': documents,
+            'conversation': [{'role': msg['role'], 'content': msg['content']} for msg in conversation]
+        }
+
+    # Fallback to in-memory storage
     doc_count = len(dociq_single_user_storage['documents'])
     print(f"[DocIQ] Using single-user mode storage with {doc_count} documents")
     return dociq_single_user_storage
@@ -635,6 +908,55 @@ def index():
     """Main page"""
     return render_template('index.html')
 
+# -------------------------------
+# Model Selection Routes
+# -------------------------------
+
+@app.route('/api/models', methods=['GET'])
+def get_models():
+    """Get available AI models"""
+    current_model = get_current_model()
+    models_info = []
+
+    for model_id, model_data in AI_MODELS.items():
+        models_info.append({
+            'id': model_id,
+            'name': model_data['name'],
+            'description': model_data['description'],
+            'available': model_data['available'],
+            'active': model_id == current_model
+        })
+
+    return jsonify({
+        'models': models_info,
+        'current': current_model
+    })
+
+@app.route('/api/models/select', methods=['POST'])
+def select_model():
+    """Select an AI model"""
+    data = request.json
+    model_id = data.get('model', '')
+
+    if not model_id:
+        return jsonify({'error': 'No model specified'}), 400
+
+    if model_id not in AI_MODELS:
+        return jsonify({'error': 'Invalid model'}), 400
+
+    if not AI_MODELS[model_id]['available']:
+        return jsonify({'error': f'{AI_MODELS[model_id]["name"]} is not available. Check API configuration.'}), 400
+
+    if set_current_model(model_id):
+        return jsonify({
+            'success': True,
+            'model': model_id,
+            'name': AI_MODELS[model_id]['name'],
+            'message': f'Switched to {AI_MODELS[model_id]["name"]}'
+        })
+
+    return jsonify({'error': 'Failed to switch model'}), 500
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """Handle chat messages"""
@@ -646,12 +968,15 @@ def chat():
         return jsonify({'error': 'No message provided'}), 400
 
     ai_response, user_idx, ai_idx, searched = chat_with_ai(user_message, force_search)
+    current_model = get_current_model()
 
     return jsonify({
         'response': ai_response,
         'user_index': user_idx,
         'ai_index': ai_idx,
         'searched': searched,
+        'model': current_model,
+        'model_name': AI_MODELS[current_model]['name'],
         'timestamp': datetime.now().isoformat()
     })
 
@@ -718,6 +1043,13 @@ def edit_chat():
 @app.route('/api/chat/reset', methods=['POST'])
 def reset_chat():
     """Reset conversation"""
+    session_id = get_session_id()
+
+    # Clear from MongoDB
+    if USE_MONGODB and db.is_connected():
+        db.clear_chat_history(session_id)
+
+    # Clear from session
     session.pop('conversation', None)
     return jsonify({'status': 'success', 'message': 'Conversation reset'})
 
@@ -801,22 +1133,43 @@ def text_to_speech():
 def notes():
     """Manage notes"""
     if request.method == 'GET':
+        # Get from MongoDB
+        if USE_MONGODB and db.is_connected():
+            notes_list = db.get_all_notes()
+            return jsonify(notes_list)
         return jsonify(user_data['notes'])
-    
+
     elif request.method == 'POST':
         data = request.json
+        title = data.get('title', 'Untitled')
+        content = data.get('content', '')
+
+        # Save to MongoDB
+        if USE_MONGODB and db.is_connected():
+            note = db.create_note(title=title, content=content)
+            if note:
+                return jsonify(note), 201
+
+        # Fallback to in-memory
         note = {
             'id': str(uuid.uuid4()),
-            'title': data.get('title', 'Untitled'),
-            'content': data.get('content', ''),
+            'title': title,
+            'content': content,
             'created': datetime.now().isoformat(),
             'updated': datetime.now().isoformat()
         }
         user_data['notes'].append(note)
         return jsonify(note), 201
-    
+
     elif request.method == 'DELETE':
         note_id = request.json.get('id')
+
+        # Delete from MongoDB
+        if USE_MONGODB and db.is_connected():
+            db.delete_note(note_id)
+            return jsonify({'status': 'success'})
+
+        # Fallback to in-memory
         user_data['notes'] = [n for n in user_data['notes'] if n['id'] != note_id]
         return jsonify({'status': 'success'})
 
@@ -824,22 +1177,53 @@ def notes():
 def tasks():
     """Manage tasks"""
     if request.method == 'GET':
+        # Get from MongoDB
+        if USE_MONGODB and db.is_connected():
+            tasks_list = db.get_all_tasks()
+            return jsonify(tasks_list)
         return jsonify(user_data['tasks'])
-    
+
     elif request.method == 'POST':
         data = request.json
+        title = data.get('title', '')
+        priority = data.get('priority', 'medium')
+
+        # Save to MongoDB
+        if USE_MONGODB and db.is_connected():
+            task = db.create_task(title=title, priority=priority)
+            if task:
+                return jsonify(task), 201
+
+        # Fallback to in-memory
         task = {
             'id': str(uuid.uuid4()),
-            'title': data.get('title', ''),
+            'title': title,
             'completed': False,
-            'priority': data.get('priority', 'medium'),
+            'priority': priority,
             'created': datetime.now().isoformat()
         }
         user_data['tasks'].append(task)
         return jsonify(task), 201
-    
+
     elif request.method == 'PUT':
         task_id = request.json.get('id')
+
+        # Update in MongoDB
+        if USE_MONGODB and db.is_connected():
+            updates = {}
+            if 'completed' in request.json:
+                updates['completed'] = request.json['completed']
+            if 'title' in request.json:
+                updates['title'] = request.json['title']
+            if 'priority' in request.json:
+                updates['priority'] = request.json['priority']
+
+            task = db.update_task(task_id, updates)
+            if task:
+                return jsonify(task)
+            return jsonify({'error': 'Task not found'}), 404
+
+        # Fallback to in-memory
         for task in user_data['tasks']:
             if task['id'] == task_id:
                 task['completed'] = request.json.get('completed', task['completed'])
@@ -847,9 +1231,16 @@ def tasks():
                 task['priority'] = request.json.get('priority', task['priority'])
                 return jsonify(task)
         return jsonify({'error': 'Task not found'}), 404
-    
+
     elif request.method == 'DELETE':
         task_id = request.json.get('id')
+
+        # Delete from MongoDB
+        if USE_MONGODB and db.is_connected():
+            db.delete_task(task_id)
+            return jsonify({'status': 'success'})
+
+        # Fallback to in-memory
         user_data['tasks'] = [t for t in user_data['tasks'] if t['id'] != task_id]
         return jsonify({'status': 'success'})
 
@@ -857,27 +1248,55 @@ def tasks():
 def reminders():
     """Manage reminders"""
     if request.method == 'GET':
+        # Get from MongoDB
+        if USE_MONGODB and db.is_connected():
+            reminders_list = db.get_all_reminders()
+            return jsonify(reminders_list)
         return jsonify(user_data['reminders'])
-    
+
     elif request.method == 'POST':
         data = request.json
+        title = data.get('title', '')
+        reminder_datetime = data.get('datetime', '')
+
+        # Save to MongoDB
+        if USE_MONGODB and db.is_connected():
+            reminder = db.create_reminder(title=title, reminder_datetime=reminder_datetime)
+            if reminder:
+                return jsonify(reminder), 201
+
+        # Fallback to in-memory
         reminder = {
             'id': str(uuid.uuid4()),
-            'title': data.get('title', ''),
-            'datetime': data.get('datetime', ''),
+            'title': title,
+            'datetime': reminder_datetime,
             'created': datetime.now().isoformat()
         }
         user_data['reminders'].append(reminder)
         return jsonify(reminder), 201
-    
+
     elif request.method == 'DELETE':
         reminder_id = request.json.get('id')
+
+        # Delete from MongoDB
+        if USE_MONGODB and db.is_connected():
+            db.delete_reminder(reminder_id)
+            return jsonify({'status': 'success'})
+
+        # Fallback to in-memory
         user_data['reminders'] = [r for r in user_data['reminders'] if r['id'] != reminder_id]
         return jsonify({'status': 'success'})
 
 @app.route('/api/stats', methods=['GET'])
 def stats():
     """Get user statistics"""
+    # Get from MongoDB
+    if USE_MONGODB and db.is_connected():
+        db_stats = db.get_stats()
+        db_stats['current_time'] = datetime.now().isoformat()
+        return jsonify(db_stats)
+
+    # Fallback to in-memory
     total_tasks = len(user_data['tasks'])
     completed_tasks = len([t for t in user_data['tasks'] if t['completed']])
 
@@ -931,7 +1350,7 @@ def dociq_upload():
         chunks = chunk_text(text)
 
         # Store document info
-        session_data = get_dociq_documents()
+        session_id = get_dociq_session_id()
         doc_id = str(uuid.uuid4())
 
         doc_info = {
@@ -948,12 +1367,18 @@ def dociq_upload():
             'status': 'ready'
         }
 
-        session_data['documents'].append(doc_info)
+        # Save to MongoDB if connected
+        if USE_MONGODB and db.is_connected():
+            db.save_dociq_document(session_id, doc_info)
+            print(f"[DocIQ Upload] Document saved to MongoDB: {filename}")
+        else:
+            # Fallback to in-memory
+            session_data = get_dociq_documents()
+            session_data['documents'].append(doc_info)
 
         # Debug logging
         print(f"[DocIQ Upload] Successfully added document: {filename}")
-        print(f"[DocIQ Upload] Session now has {len(session_data['documents'])} documents")
-        print(f"[DocIQ Upload] Session ID: {get_dociq_session_id()}")
+        print(f"[DocIQ Upload] Session ID: {session_id}")
 
         return jsonify({
             'success': True,
@@ -998,16 +1423,22 @@ def dociq_delete_document(doc_id):
     session_data = get_dociq_documents()
 
     for i, doc in enumerate(session_data['documents']):
-        if doc['id'] == doc_id:
+        doc_doc_id = doc.get('doc_id') or doc.get('id')
+        if doc_doc_id == doc_id:
             # Delete file from disk
             try:
-                if os.path.exists(doc['path']):
-                    os.remove(doc['path'])
+                file_path = doc.get('path')
+                if file_path and os.path.exists(file_path):
+                    os.remove(file_path)
             except Exception as e:
                 print(f"Error deleting file: {e}")
 
-            # Remove from list
-            session_data['documents'].pop(i)
+            # Delete from MongoDB
+            if USE_MONGODB and db.is_connected():
+                db.delete_dociq_document(doc_id)
+            else:
+                # Remove from in-memory list
+                session_data['documents'].pop(i)
 
             return jsonify({'success': True, 'message': 'Document deleted'})
 
@@ -1016,19 +1447,26 @@ def dociq_delete_document(doc_id):
 @app.route('/api/dociq/clear', methods=['POST'])
 def dociq_clear():
     """Clear all documents and conversation"""
+    session_id = get_dociq_session_id()
     session_data = get_dociq_documents()
 
-    # Delete all files
+    # Delete all files from disk
     for doc in session_data['documents']:
         try:
-            if os.path.exists(doc['path']):
-                os.remove(doc['path'])
+            file_path = doc.get('path')
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
         except Exception as e:
             print(f"Error deleting file: {e}")
 
-    # Clear data
-    session_data['documents'] = []
-    session_data['conversation'] = []
+    # Clear from MongoDB
+    if USE_MONGODB and db.is_connected():
+        db.clear_dociq_documents(session_id)
+        db.clear_dociq_conversation(session_id)
+    else:
+        # Clear in-memory data
+        session_data['documents'] = []
+        session_data['conversation'] = []
 
     return jsonify({'success': True, 'message': 'All documents cleared'})
 
@@ -1037,6 +1475,7 @@ def dociq_chat():
     """Chat with documents using RAG"""
     data = request.json
     user_message = data.get('message', '')
+    session_id = get_dociq_session_id()
 
     print(f"[DocIQ Chat] Received message: {user_message[:50]}...")
 
@@ -1047,7 +1486,9 @@ def dociq_chat():
 
     print(f"[DocIQ Chat] Documents found: {len(session_data['documents'])}")
     for doc in session_data['documents']:
-        print(f"[DocIQ Chat] - {doc['name']}: {doc.get('chunk_count', 0)} chunks")
+        doc_name = doc.get('name', 'Unknown')
+        chunk_count = doc.get('chunk_count', 0)
+        print(f"[DocIQ Chat] - {doc_name}: {chunk_count} chunks")
 
     if not session_data['documents']:
         print("[DocIQ Chat] No documents found - returning error")
@@ -1062,6 +1503,10 @@ def dociq_chat():
         'content': user_message
     })
 
+    # Save user message to MongoDB
+    if USE_MONGODB and db.is_connected():
+        db.save_dociq_conversation(session_id, 'user', user_message)
+
     # Generate response using RAG
     ai_response = generate_dociq_response(user_message, session_data)
 
@@ -1070,6 +1515,10 @@ def dociq_chat():
         'role': 'assistant',
         'content': ai_response
     })
+
+    # Save AI response to MongoDB
+    if USE_MONGODB and db.is_connected():
+        db.save_dociq_conversation(session_id, 'assistant', ai_response)
 
     return jsonify({
         'response': ai_response,
@@ -1624,7 +2073,7 @@ def viziq_upload():
         # Generate insights
         insights = generate_insights(data, columns, dtypes, stats, filename)
 
-        # Store data
+        # Store data in memory for immediate use
         viziq_storage = {
             'data': data,
             'columns': columns,
@@ -1635,6 +2084,24 @@ def viziq_upload():
 
         # Prepare preview data (first 100 rows)
         preview_data = data[:100]
+
+        # Save to MongoDB for persistence
+        if USE_MONGODB and db.is_connected():
+            session_id = get_session_id()
+            viziq_data_info = {
+                'filename': filename,
+                'columns': columns,
+                'dtypes': dtypes,
+                'stats': stats,
+                'row_count': len(data),
+                'kpis': kpis,
+                'charts': charts,
+                'insights': insights,
+                'preview_data': preview_data,
+                'dashboard_name': dashboard_name
+            }
+            db.save_viziq_data(session_id, viziq_data_info)
+            print(f"[VizIQ] Data saved to MongoDB: {filename}")
 
         return jsonify({
             'success': True,
@@ -1660,6 +2127,13 @@ def viziq_upload():
 def viziq_clear():
     """Clear VizIQ data"""
     global viziq_storage
+
+    # Clear from MongoDB
+    if USE_MONGODB and db.is_connected():
+        session_id = get_session_id()
+        db.clear_viziq_data(session_id)
+
+    # Clear in-memory storage
     viziq_storage = {
         'data': None,
         'columns': [],
@@ -1672,26 +2146,51 @@ def viziq_clear():
 @app.route('/api/viziq/data', methods=['GET'])
 def viziq_get_data():
     """Get current VizIQ data"""
-    if viziq_storage['data'] is None:
-        return jsonify({'error': 'No data loaded'}), 404
+    # Try to get from in-memory first
+    if viziq_storage['data'] is not None:
+        return jsonify({
+            'filename': viziq_storage['filename'],
+            'columns': viziq_storage['columns'],
+            'dtypes': viziq_storage['dtypes'],
+            'rows': len(viziq_storage['data']),
+            'preview': viziq_storage['data'][:50]
+        })
 
-    return jsonify({
-        'filename': viziq_storage['filename'],
-        'columns': viziq_storage['columns'],
-        'dtypes': viziq_storage['dtypes'],
-        'rows': len(viziq_storage['data']),
-        'preview': viziq_storage['data'][:50]
-    })
+    # Try to get from MongoDB
+    if USE_MONGODB and db.is_connected():
+        session_id = get_session_id()
+        viziq_data = db.get_viziq_data(session_id)
+        if viziq_data:
+            return jsonify({
+                'filename': viziq_data.get('filename'),
+                'columns': viziq_data.get('columns', []),
+                'dtypes': viziq_data.get('dtypes', {}),
+                'rows': viziq_data.get('row_count', 0),
+                'preview': viziq_data.get('preview_data', [])[:50],
+                'kpis': viziq_data.get('kpis', []),
+                'charts': viziq_data.get('charts', []),
+                'insights': viziq_data.get('insights', []),
+                'dashboard_name': viziq_data.get('dashboard_name')
+            })
+
+    return jsonify({'error': 'No data loaded'}), 404
 
 # -------------------------------
 # Main
 # -------------------------------
 
 if __name__ == '__main__':
-    print("🚀 Axio AI Code Assistant by Perfionix AI - Starting...")
-    print(f"📡 GPT Server: {GPT_SERVER_URL}")
-    print(f"🤖 Model: {GPT_MODEL}")
-    print(f"🎤 Voice: {'Enabled' if ELEVENLABS_API_KEY else 'Disabled (no API key)'}")
-    print("\n✨ Open http://localhost:5000 in your browser\n")
-    
+    print("=" * 50)
+    print("Axio AI Code Assistant by Perfionix AI - Starting...")
+    print("=" * 50)
+    print(f"GPT Server: {GPT_SERVER_URL}")
+    print(f"GPT Model: {GPT_MODEL}")
+    print(f"Gemini Model: {GEMINI_MODEL}")
+    print(f"Gemini Client: {'Initialized' if gemini_client else 'Not initialized'}")
+    print(f"Voice: {'Enabled' if ELEVENLABS_API_KEY else 'Disabled (no API key)'}")
+    print(f"MongoDB: {'Connected' if USE_MONGODB and db.is_connected() else 'Not connected (using in-memory storage)'}")
+    print("=" * 50)
+    print("Open http://localhost:5000 in your browser")
+    print("=" * 50)
+
     app.run(debug=os.getenv('FLASK_DEBUG', 'True') == 'True', host='0.0.0.0', port=5000)
