@@ -13,12 +13,15 @@ class AxioAssistant {
         this.dociqDocuments = [];
         this.viziqCharts = [];
         this.viziqData = null;
+        this.currentModel = 'gpt';
         this.init();
     }
 
     init() {
         this.setupNavigation();
+        this.setupMobileMenu();
         this.setupChat();
+        this.setupModelSelector();
         this.setupTasks();
         this.setupNotes();
         this.setupReminders();
@@ -26,6 +29,7 @@ class AxioAssistant {
         this.setupVizIQ();
         this.setupClock();
         this.loadData();
+        this.loadModels();
     }
 
     // ================================
@@ -38,6 +42,8 @@ class AxioAssistant {
             item.addEventListener('click', () => {
                 const view = item.dataset.view;
                 this.switchView(view);
+                // Close mobile menu when navigating
+                this.closeMobileMenu();
             });
         });
     }
@@ -54,6 +60,93 @@ class AxioAssistant {
         });
 
         this.currentView = viewName;
+
+        // Update mobile view indicator
+        this.updateMobileViewIndicator(viewName);
+    }
+
+    // ================================
+    // MOBILE MENU
+    // ================================
+
+    setupMobileMenu() {
+        const menuBtn = document.getElementById('hamburger-menu');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        if (menuBtn) {
+            menuBtn.addEventListener('click', () => {
+                this.toggleMobileMenu();
+            });
+        }
+
+        if (overlay) {
+            overlay.addEventListener('click', () => {
+                this.closeMobileMenu();
+            });
+        }
+
+        // Close menu on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeMobileMenu();
+            }
+        });
+
+        // Handle resize - close menu when switching to desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                this.closeMobileMenu();
+            }
+        });
+
+        // Update initial view indicator
+        this.updateMobileViewIndicator(this.currentView);
+    }
+
+    toggleMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const menuBtn = document.getElementById('hamburger-menu');
+
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            if (menuBtn) {
+                menuBtn.classList.toggle('active');
+            }
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+        }
+    }
+
+    closeMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const menuBtn = document.getElementById('hamburger-menu');
+
+        if (sidebar && overlay) {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            if (menuBtn) {
+                menuBtn.classList.remove('active');
+            }
+            document.body.style.overflow = '';
+        }
+    }
+
+    updateMobileViewIndicator(viewName) {
+        const indicator = document.getElementById('mobile-view-indicator');
+        if (indicator) {
+            const viewLabels = {
+                'chat': 'Chat',
+                'tasks': 'Tasks',
+                'notes': 'Notes',
+                'reminders': 'Reminders',
+                'dociq': 'DocIQ',
+                'viziq': 'VizIQ'
+            };
+            indicator.textContent = viewLabels[viewName] || viewName;
+        }
     }
 
     // ================================
@@ -65,9 +158,15 @@ class AxioAssistant {
         const sendBtn = document.getElementById('send-message');
         const resetBtn = document.getElementById('reset-chat');
         const searchBtn = document.getElementById('web-search');
+        const voiceBtn = document.getElementById('voice-toggle');
 
         sendBtn.addEventListener('click', () => this.sendMessage());
         searchBtn.addEventListener('click', () => this.webSearch());
+
+        // Voice/Mic button - Coming Soon popup
+        if (voiceBtn) {
+            voiceBtn.addEventListener('click', () => this.showComingSoonPopup('Voice Input'));
+        }
 
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -88,6 +187,193 @@ class AxioAssistant {
         });
 
         resetBtn.addEventListener('click', () => this.resetChat());
+    }
+
+    // Show Coming Soon Popup
+    showComingSoonPopup(featureName) {
+        // Remove existing popup if any
+        const existingPopup = document.querySelector('.coming-soon-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        // Create popup
+        const popup = document.createElement('div');
+        popup.className = 'coming-soon-popup';
+        popup.innerHTML = `
+            <div class="coming-soon-content">
+                <div class="coming-soon-icon">🚀</div>
+                <h3>Coming Soon!</h3>
+                <p><strong>${featureName}</strong> feature is under development.</p>
+                <p class="coming-soon-sub">Stay tuned for updates!</p>
+                <button class="coming-soon-close">OK</button>
+            </div>
+        `;
+
+        document.body.appendChild(popup);
+
+        // Close button handler
+        popup.querySelector('.coming-soon-close').addEventListener('click', () => {
+            popup.classList.add('fade-out');
+            setTimeout(() => popup.remove(), 300);
+        });
+
+        // Close on backdrop click
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                popup.classList.add('fade-out');
+                setTimeout(() => popup.remove(), 300);
+            }
+        });
+
+        // Auto close after 3 seconds
+        setTimeout(() => {
+            if (popup.parentNode) {
+                popup.classList.add('fade-out');
+                setTimeout(() => popup.remove(), 300);
+            }
+        }, 3000);
+    }
+
+    // ================================
+    // MODEL SELECTOR
+    // ================================
+
+    setupModelSelector() {
+        const selectorBtn = document.getElementById('model-selector-btn');
+        const selector = document.getElementById('model-selector');
+        const dropdown = document.getElementById('model-dropdown');
+        const modelOptions = document.querySelectorAll('.model-option');
+
+        // Toggle dropdown
+        selectorBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selector.classList.toggle('active');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!selector.contains(e.target)) {
+                selector.classList.remove('active');
+            }
+        });
+
+        // Handle model selection
+        modelOptions.forEach(option => {
+            option.addEventListener('click', async () => {
+                const modelId = option.dataset.model;
+                if (option.classList.contains('unavailable')) {
+                    return;
+                }
+                await this.selectModel(modelId);
+                selector.classList.remove('active');
+            });
+        });
+    }
+
+    async loadModels() {
+        try {
+            const response = await fetch('/api/models');
+            const data = await response.json();
+
+            if (data.models) {
+                this.updateModelUI(data.models, data.current);
+            }
+        } catch (error) {
+            console.error('Failed to load models:', error);
+        }
+    }
+
+    async selectModel(modelId) {
+        try {
+            const response = await fetch('/api/models/select', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ model: modelId })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.currentModel = modelId;
+                this.updateModelUI(null, modelId);
+                this.showModelSwitchNotification(data.name);
+            } else {
+                alert(data.error || 'Failed to switch model');
+            }
+        } catch (error) {
+            console.error('Failed to select model:', error);
+            alert('Failed to switch model. Please try again.');
+        }
+    }
+
+    updateModelUI(models, currentModel) {
+        // Update button text
+        const modelNameSpan = document.getElementById('current-model-name');
+        const modelOptions = document.querySelectorAll('.model-option');
+
+        // Determine display name based on model ID
+        let displayName = currentModel === 'gemini' ? 'AXIO Lite' : 'AXIO Core';
+
+        if (models) {
+            const activeModel = models.find(m => m.id === currentModel);
+            if (activeModel) {
+                displayName = activeModel.name;
+            }
+
+            // Update availability and names from server
+            models.forEach(model => {
+                const option = document.querySelector(`.model-option[data-model="${model.id}"]`);
+                if (option) {
+                    // Update availability
+                    if (!model.available) {
+                        option.classList.add('unavailable');
+                        // Add unavailable text
+                        const descSpan = option.querySelector('.model-option-desc');
+                        if (descSpan && !descSpan.textContent.includes('Unavailable')) {
+                            descSpan.textContent = '(Unavailable)';
+                        }
+                    } else {
+                        option.classList.remove('unavailable');
+                    }
+                }
+            });
+        }
+
+        modelNameSpan.textContent = displayName;
+        this.currentModel = currentModel;
+
+        // Update active state
+        modelOptions.forEach(option => {
+            const isActive = option.dataset.model === currentModel;
+            option.classList.toggle('active', isActive);
+        });
+    }
+
+    showModelSwitchNotification(modelName) {
+        // Add a system message to chat indicating model switch
+        const messagesContainer = document.getElementById('chat-messages');
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = 'model-switch-notification';
+        notificationDiv.innerHTML = `
+            <span class="notification-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                    <path d="M12 16v-4M12 8h.01"></path>
+                </svg>
+            </span>
+            <span>Switched to <strong>${modelName}</strong></span>
+        `;
+        messagesContainer.appendChild(notificationDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+            notificationDiv.classList.add('fade-out');
+            setTimeout(() => notificationDiv.remove(), 300);
+        }, 3000);
     }
 
     async sendMessage(forceSearch = false) {
@@ -1598,6 +1884,15 @@ class AxioAssistant {
                     this.viziqCharts.push(chart);
                 }
             }, 100);
+        });
+
+        // Resize charts on window resize for mobile responsiveness
+        window.addEventListener('resize', () => {
+            this.viziqCharts.forEach(chart => {
+                if (chart && chart.resize) {
+                    chart.resize();
+                }
+            });
         });
     }
 

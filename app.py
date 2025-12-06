@@ -35,10 +35,47 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Configuration
 # -------------------------------
 
+# GPT/Ollama Configuration
 GPT_SERVER_URL = os.getenv('GPT_SERVER_URL', 'http://localhost:11434/api/chat')
 GPT_MODEL = os.getenv('GPT_MODEL', 'gpt-oss:120b-cloud')
+
+# Gemini Configuration
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+
+# Initialize Gemini client
+gemini_client = None
+GEMINI_AVAILABLE = False
+if GEMINI_API_KEY:
+    try:
+        from google import genai
+        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+        GEMINI_AVAILABLE = True
+        print("[OK] Gemini client initialized")
+    except Exception as e:
+        print(f"[WARNING] Failed to initialize Gemini client: {e}")
+        GEMINI_AVAILABLE = False
+
+# Other APIs
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 VOICE_ID = os.getenv('VOICE_ID', '21m00Tcm4TlvDq8ikWAM')
+
+# Default AI Model
+DEFAULT_AI_MODEL = os.getenv('DEFAULT_AI_MODEL', 'gemini' if GEMINI_AVAILABLE else 'gpt')
+
+# Available AI Models
+AI_MODELS = {
+    'gpt': {
+        'name': 'AXIO Core',
+        'description': 'Local GPT model via Ollama',
+        'available': True
+    },
+    'gemini': {
+        'name': 'AXIO Lite',
+        'description': 'Perfionix AI',
+        'available': GEMINI_AVAILABLE
+    }
+}
 
 # Initialize MongoDB connection
 USE_MONGODB = init_database()
@@ -161,8 +198,23 @@ def save_conversation(conversation):
     session['conversation'] = conversation
     session.modified = True
 
-def generate_ai_response(conversation):
-    """Generate AI response from conversation history"""
+def get_current_model():
+    """Get the current AI model from session"""
+    if 'ai_model' not in session:
+        session['ai_model'] = DEFAULT_AI_MODEL
+        session.modified = True
+    return session['ai_model']
+
+def set_current_model(model):
+    """Set the current AI model in session"""
+    if model in AI_MODELS and AI_MODELS[model]['available']:
+        session['ai_model'] = model
+        session.modified = True
+        return True
+    return False
+
+def generate_gpt_response(conversation):
+    """Generate AI response using GPT/Ollama"""
     headers = {"Content-Type": "application/json"}
     payload = {
         "model": GPT_MODEL,
@@ -175,20 +227,87 @@ def generate_ai_response(conversation):
             "repeat_penalty": 1.1
         }
     }
-    
+
     try:
         response = requests.post(GPT_SERVER_URL, headers=headers, json=payload, timeout=300)
         response.raise_for_status()
         data = response.json()
-        
+
         if "message" in data and "content" in data["message"]:
             return data["message"]["content"]
         return "Sorry, I couldn't process that request."
-            
+
     except requests.exceptions.RequestException as e:
         return f"Connection error: Unable to reach AI server. Please ensure the GPT server is running."
     except Exception as e:
         return f"An error occurred: {str(e)}"
+
+def generate_gemini_response(conversation):
+    """Generate AI response using Google Gemini SDK"""
+    if not gemini_client:
+        return "Gemini client not initialized. Please check your GEMINI_API_KEY in .env file."
+
+    try:
+        # Log which model is being used
+        print(f"[Gemini] Using model: {GEMINI_MODEL}")
+
+        # Extract system prompt
+        system_prompt = next((msg['content'] for msg in conversation if msg.get('role') == 'system'), None)
+
+        # Build the conversation content for Gemini
+        # Combine all messages into a single prompt with context
+        prompt_parts = []
+
+        if system_prompt:
+            prompt_parts.append(f"[System Instructions]\n{system_prompt}\n\n[Conversation]")
+
+        for msg in conversation:
+            role = msg.get('role', '')
+            content = msg.get('content', '')
+
+            if role == 'system':
+                continue
+            elif role == 'user':
+                prompt_parts.append(f"User: {content}")
+            elif role == 'assistant':
+                prompt_parts.append(f"Assistant: {content}")
+
+        # Add instruction to continue as assistant
+        prompt_parts.append("Assistant:")
+
+        full_prompt = "\n\n".join(prompt_parts)
+
+        # Generate response using the SDK
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=full_prompt
+        )
+
+        if response and response.text:
+            return response.text
+        else:
+            return "Sorry, I couldn't generate a response with Gemini."
+
+    except Exception as e:
+        error_msg = str(e)
+        print(f"[ERROR] Gemini API error: {error_msg}")
+
+        if "blocked" in error_msg.lower():
+            return "The response was blocked by Gemini's safety filters. Please try rephrasing your question."
+        elif "quota" in error_msg.lower():
+            return "Gemini API quota exceeded. Please try again later."
+        else:
+            return f"An error occurred with Gemini: {error_msg}"
+
+def generate_ai_response(conversation, model=None):
+    """Generate AI response from conversation history using selected model"""
+    # Use specified model or get current model from session
+    current_model = model or get_current_model()
+
+    if current_model == 'gemini':
+        return generate_gemini_response(conversation)
+    else:
+        return generate_gpt_response(conversation)
 
 def should_search_web(message: str) -> bool:
     """Determine if the message requires a web search"""
@@ -293,54 +412,76 @@ def generate_speech(text):
 # Web Search Function
 # -------------------------------
 
+# Google Custom Search API configuration (optional - for better reliability)
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', '')
+GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID', '')
+
 def web_search(query):
     """Perform web search - tries multiple methods"""
-    print(f"🔍 Starting web search for: {query}")
+    print(f"[SEARCH] Starting web search for: {query}")
 
-    # Method 1: Try googlesearch-python library
-    results = web_search_googlesearch(query)
-    if results:
-        print(f"✅ googlesearch-python returned {len(results)} results")
-        return results
+    # Method 1: Try Google Custom Search API (most reliable if configured)
+    if GOOGLE_API_KEY and GOOGLE_CSE_ID:
+        results = web_search_google_api(query)
+        if results:
+            print(f"[OK] Google Custom Search API returned {len(results)} results")
+            return results
 
-    # Method 2: Try DuckDuckGo
+    # Method 2: Try DuckDuckGo (most reliable free option)
     results = web_search_duckduckgo(query)
     if results:
-        print(f"✅ DuckDuckGo returned {len(results)} results")
+        print(f"[OK] DuckDuckGo returned {len(results)} results")
         return results
 
-    # Method 3: Fallback to direct Google scraping
+    # Method 3: Try googlesearch-python library
+    results = web_search_googlesearch(query)
+    if results:
+        print(f"[OK] googlesearch-python returned {len(results)} results")
+        return results
+
+    # Method 4: Fallback to direct Google scraping
     results = web_search_google_scrape(query)
     if results:
-        print(f"✅ Google scrape returned {len(results)} results")
+        print(f"[OK] Google scrape returned {len(results)} results")
         return results
 
-    print("❌ All search methods failed")
+    print("[ERROR] All search methods failed")
     return []
 
 
-def web_search_googlesearch(query):
-    """Search using googlesearch-python library"""
+def web_search_google_api(query):
+    """Search using Google Custom Search JSON API"""
     try:
-        from googlesearch import search
-        results = []
-        search_results = list(search(query, num_results=5, advanced=True))
+        url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            'key': GOOGLE_API_KEY,
+            'cx': GOOGLE_CSE_ID,
+            'q': query,
+            'num': 5
+        }
 
-        for result in search_results:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        results = []
+        for item in data.get('items', []):
             results.append({
-                'title': result.title if hasattr(result, 'title') else '',
-                'snippet': result.description if hasattr(result, 'description') else '',
-                'link': result.url if hasattr(result, 'url') else ''
+                'title': item.get('title', ''),
+                'snippet': item.get('snippet', ''),
+                'link': item.get('link', '')
             })
+
         return results if results else None
     except Exception as e:
-        print(f"googlesearch error: {e}")
+        print(f"Google API error: {e}")
         return None
 
 
 def web_search_duckduckgo(query):
     """Search using DuckDuckGo HTML"""
     import urllib.parse
+    from bs4 import BeautifulSoup
 
     try:
         search_url = "https://html.duckduckgo.com/html/"
@@ -348,12 +489,16 @@ def web_search_duckduckgo(query):
 
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Origin': 'https://html.duckduckgo.com',
+            'Referer': 'https://html.duckduckgo.com/'
         }
 
         response = requests.post(search_url, data=data, headers=headers, timeout=10)
         response.raise_for_status()
 
-        from bs4 import BeautifulSoup
         soup = BeautifulSoup(response.text, 'html.parser')
         results = []
 
@@ -372,7 +517,7 @@ def web_search_duckduckgo(query):
 
                 snippet = snippet_elem.get_text(strip=True) if snippet_elem else ''
 
-                if title and link:
+                if title and link and link.startswith('http'):
                     results.append({
                         'title': title,
                         'snippet': snippet,
@@ -385,56 +530,124 @@ def web_search_duckduckgo(query):
         return None
 
 
+def web_search_googlesearch(query):
+    """Search using googlesearch-python library"""
+    try:
+        from googlesearch import search
+        import time
+
+        results = []
+        # Add delay to avoid rate limiting
+        time.sleep(1)
+
+        try:
+            search_results = list(search(query, num_results=5, advanced=True, sleep_interval=2))
+        except TypeError:
+            # Fallback for older version without sleep_interval
+            search_results = list(search(query, num_results=5, advanced=True))
+
+        for result in search_results:
+            results.append({
+                'title': result.title if hasattr(result, 'title') else '',
+                'snippet': result.description if hasattr(result, 'description') else '',
+                'link': result.url if hasattr(result, 'url') else ''
+            })
+        return results if results else None
+    except Exception as e:
+        print(f"googlesearch error: {e}")
+        return None
+
+
 def web_search_google_scrape(query):
     """Fallback web search using direct Google scraping"""
     import urllib.parse
     from bs4 import BeautifulSoup
+    import random
+    import time
+
+    # Random delay to avoid detection
+    time.sleep(random.uniform(1, 3))
 
     search_url = "https://www.google.com/search"
     params = {
         'q': query,
         'num': 10,
-        'hl': 'en'
+        'hl': 'en',
+        'safe': 'off'
     }
 
+    # Rotate user agents
+    user_agents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15'
+    ]
+
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
+        'User-Agent': random.choice(user_agents),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
         'DNT': '1',
         'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0'
     }
 
     try:
-        response = requests.get(search_url, params=params, headers=headers, timeout=15)
+        session = requests.Session()
+        response = session.get(search_url, params=params, headers=headers, timeout=15)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
         results = []
 
-        # Find all search result divs
+        # Try multiple selectors for search results
         search_divs = soup.find_all('div', class_='g')
+
+        # Alternative selector if 'g' class doesn't work
+        if not search_divs:
+            search_divs = soup.select('div[data-hveid]')
+
+        # Another fallback
+        if not search_divs:
+            search_divs = soup.find_all('div', {'class': lambda x: x and 'g' in x.split()})
 
         for div in search_divs[:5]:
             try:
-                # Get title
-                title_elem = div.find('h3')
-                title = title_elem.get_text() if title_elem else ''
+                # Get title - try multiple selectors
+                title_elem = div.find('h3') or div.find('h2') or div.select_one('[role="heading"]')
+                title = title_elem.get_text(strip=True) if title_elem else ''
 
                 # Get link
-                link_elem = div.find('a')
+                link_elem = div.find('a', href=True)
                 link = link_elem.get('href', '') if link_elem else ''
 
                 # Clean the link
                 if link.startswith('/url?q='):
                     link = link.split('/url?q=')[1].split('&')[0]
                     link = urllib.parse.unquote(link)
+                elif link.startswith('/search'):
+                    continue  # Skip internal Google links
 
-                # Get snippet
-                snippet_elem = div.find('div', class_='VwiC3b') or div.find('span', class_='aCOpRe')
-                snippet = snippet_elem.get_text() if snippet_elem else ''
+                # Skip if not a valid URL
+                if not link.startswith('http'):
+                    continue
+
+                # Get snippet - try multiple selectors
+                snippet_elem = (
+                    div.find('div', class_='VwiC3b') or
+                    div.find('span', class_='aCOpRe') or
+                    div.select_one('[data-sncf]') or
+                    div.find('div', {'style': lambda x: x and 'line-clamp' in str(x)})
+                )
+                snippet = snippet_elem.get_text(strip=True) if snippet_elem else ''
 
                 if title and link:
                     results.append({
@@ -695,6 +908,55 @@ def index():
     """Main page"""
     return render_template('index.html')
 
+# -------------------------------
+# Model Selection Routes
+# -------------------------------
+
+@app.route('/api/models', methods=['GET'])
+def get_models():
+    """Get available AI models"""
+    current_model = get_current_model()
+    models_info = []
+
+    for model_id, model_data in AI_MODELS.items():
+        models_info.append({
+            'id': model_id,
+            'name': model_data['name'],
+            'description': model_data['description'],
+            'available': model_data['available'],
+            'active': model_id == current_model
+        })
+
+    return jsonify({
+        'models': models_info,
+        'current': current_model
+    })
+
+@app.route('/api/models/select', methods=['POST'])
+def select_model():
+    """Select an AI model"""
+    data = request.json
+    model_id = data.get('model', '')
+
+    if not model_id:
+        return jsonify({'error': 'No model specified'}), 400
+
+    if model_id not in AI_MODELS:
+        return jsonify({'error': 'Invalid model'}), 400
+
+    if not AI_MODELS[model_id]['available']:
+        return jsonify({'error': f'{AI_MODELS[model_id]["name"]} is not available. Check API configuration.'}), 400
+
+    if set_current_model(model_id):
+        return jsonify({
+            'success': True,
+            'model': model_id,
+            'name': AI_MODELS[model_id]['name'],
+            'message': f'Switched to {AI_MODELS[model_id]["name"]}'
+        })
+
+    return jsonify({'error': 'Failed to switch model'}), 500
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """Handle chat messages"""
@@ -706,12 +968,15 @@ def chat():
         return jsonify({'error': 'No message provided'}), 400
 
     ai_response, user_idx, ai_idx, searched = chat_with_ai(user_message, force_search)
+    current_model = get_current_model()
 
     return jsonify({
         'response': ai_response,
         'user_index': user_idx,
         'ai_index': ai_idx,
         'searched': searched,
+        'model': current_model,
+        'model_name': AI_MODELS[current_model]['name'],
         'timestamp': datetime.now().isoformat()
     })
 
@@ -1915,11 +2180,17 @@ def viziq_get_data():
 # -------------------------------
 
 if __name__ == '__main__':
-    print("🚀 Axio AI Code Assistant by Perfionix AI - Starting...")
-    print(f"📡 GPT Server: {GPT_SERVER_URL}")
-    print(f"🤖 Model: {GPT_MODEL}")
-    print(f"🎤 Voice: {'Enabled' if ELEVENLABS_API_KEY else 'Disabled (no API key)'}")
-    print(f"🗄️  MongoDB: {'Connected ✅' if USE_MONGODB and db.is_connected() else 'Not connected (using in-memory storage)'}")
-    print("\n✨ Open http://localhost:5000 in your browser\n")
+    print("=" * 50)
+    print("Axio AI Code Assistant by Perfionix AI - Starting...")
+    print("=" * 50)
+    print(f"GPT Server: {GPT_SERVER_URL}")
+    print(f"GPT Model: {GPT_MODEL}")
+    print(f"Gemini Model: {GEMINI_MODEL}")
+    print(f"Gemini Client: {'Initialized' if gemini_client else 'Not initialized'}")
+    print(f"Voice: {'Enabled' if ELEVENLABS_API_KEY else 'Disabled (no API key)'}")
+    print(f"MongoDB: {'Connected' if USE_MONGODB and db.is_connected() else 'Not connected (using in-memory storage)'}")
+    print("=" * 50)
+    print("Open http://localhost:5000 in your browser")
+    print("=" * 50)
 
     app.run(debug=os.getenv('FLASK_DEBUG', 'True') == 'True', host='0.0.0.0', port=5000)
