@@ -13,6 +13,9 @@ import re
 # Load environment variables
 load_dotenv()
 
+# Import database module
+from database import init_database, get_database
+
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default-secret-key-change-in-production')
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -37,15 +40,18 @@ GPT_MODEL = os.getenv('GPT_MODEL', 'gpt-oss:120b-cloud')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 VOICE_ID = os.getenv('VOICE_ID', '21m00Tcm4TlvDq8ikWAM')
 
-# In-memory storage (replace with database in production)
+# Initialize MongoDB connection
+USE_MONGODB = init_database()
+db = get_database()
+
+# Fallback in-memory storage (used when MongoDB is not available)
 user_data = {
     'notes': [],
     'reminders': [],
     'tasks': []
 }
 
-# DocIQ document storage (global, keyed by session ID)
-# Note: In production, use Redis or database for persistence
+# DocIQ document storage (fallback)
 dociq_storage = {}
 
 # Simple fallback: single-user mode storage (for development/testing)
@@ -54,7 +60,7 @@ dociq_single_user_storage = {
     'conversation': []
 }
 
-# VizIQ storage
+# VizIQ storage (fallback)
 viziq_storage = {
     'data': None,
     'columns': [],
@@ -96,8 +102,32 @@ IMPORTANT FORMATTING RULES:
 Current date and time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"""
 
 
+def get_session_id():
+    """Get or create session ID"""
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid4())
+        session.modified = True
+    return session['session_id']
+
 def get_conversation():
     """Get or initialize conversation for current session"""
+    session_id = get_session_id()
+
+    # Try to get from MongoDB first
+    if USE_MONGODB and db.is_connected():
+        messages = db.get_chat_history(session_id, limit=50)
+        if messages:
+            # Convert to conversation format
+            conversation = [{"role": "system", "content": get_system_prompt()}]
+            for msg in messages:
+                conversation.append({
+                    "role": msg.get("role"),
+                    "content": msg.get("content"),
+                    "_id": msg.get("id")  # Store MongoDB ID for editing
+                })
+            return conversation
+
+    # Fallback to session storage
     if 'conversation' not in session:
         session['conversation'] = [
             {
@@ -109,7 +139,25 @@ def get_conversation():
     return session['conversation']
 
 def save_conversation(conversation):
-    """Save conversation to session and mark as modified"""
+    """Save conversation to session and MongoDB"""
+    session_id = get_session_id()
+
+    # Save to MongoDB if connected
+    if USE_MONGODB and db.is_connected():
+        # Get the last two messages (user + assistant) to save
+        if len(conversation) >= 2:
+            # Check if these are new messages (don't have _id)
+            for msg in conversation[-2:]:
+                if msg.get("role") in ["user", "assistant"] and "_id" not in msg:
+                    msg_id = db.save_chat_message(
+                        session_id=session_id,
+                        role=msg["role"],
+                        content=msg["content"],
+                        metadata={"searched": msg.get("searched", False)}
+                    )
+                    msg["_id"] = msg_id
+
+    # Also save to session as backup
     session['conversation'] = conversation
     session.modified = True
 
@@ -528,9 +576,21 @@ def get_dociq_session_id():
     return session['dociq_session_id']
 
 def get_dociq_documents():
-    """Get documents for current session - uses single-user mode for reliability"""
-    # Use single-user storage for development (avoids session issues)
-    # This is simpler and more reliable for local development
+    """Get documents for current session - uses MongoDB or fallback storage"""
+    session_id = get_dociq_session_id()
+
+    # Try MongoDB first
+    if USE_MONGODB and db.is_connected():
+        documents = db.get_dociq_documents(session_id)
+        conversation = db.get_dociq_conversation(session_id)
+        doc_count = len(documents)
+        print(f"[DocIQ] Using MongoDB storage with {doc_count} documents")
+        return {
+            'documents': documents,
+            'conversation': [{'role': msg['role'], 'content': msg['content']} for msg in conversation]
+        }
+
+    # Fallback to in-memory storage
     doc_count = len(dociq_single_user_storage['documents'])
     print(f"[DocIQ] Using single-user mode storage with {doc_count} documents")
     return dociq_single_user_storage
@@ -718,6 +778,13 @@ def edit_chat():
 @app.route('/api/chat/reset', methods=['POST'])
 def reset_chat():
     """Reset conversation"""
+    session_id = get_session_id()
+
+    # Clear from MongoDB
+    if USE_MONGODB and db.is_connected():
+        db.clear_chat_history(session_id)
+
+    # Clear from session
     session.pop('conversation', None)
     return jsonify({'status': 'success', 'message': 'Conversation reset'})
 
@@ -801,22 +868,43 @@ def text_to_speech():
 def notes():
     """Manage notes"""
     if request.method == 'GET':
+        # Get from MongoDB
+        if USE_MONGODB and db.is_connected():
+            notes_list = db.get_all_notes()
+            return jsonify(notes_list)
         return jsonify(user_data['notes'])
-    
+
     elif request.method == 'POST':
         data = request.json
+        title = data.get('title', 'Untitled')
+        content = data.get('content', '')
+
+        # Save to MongoDB
+        if USE_MONGODB and db.is_connected():
+            note = db.create_note(title=title, content=content)
+            if note:
+                return jsonify(note), 201
+
+        # Fallback to in-memory
         note = {
             'id': str(uuid.uuid4()),
-            'title': data.get('title', 'Untitled'),
-            'content': data.get('content', ''),
+            'title': title,
+            'content': content,
             'created': datetime.now().isoformat(),
             'updated': datetime.now().isoformat()
         }
         user_data['notes'].append(note)
         return jsonify(note), 201
-    
+
     elif request.method == 'DELETE':
         note_id = request.json.get('id')
+
+        # Delete from MongoDB
+        if USE_MONGODB and db.is_connected():
+            db.delete_note(note_id)
+            return jsonify({'status': 'success'})
+
+        # Fallback to in-memory
         user_data['notes'] = [n for n in user_data['notes'] if n['id'] != note_id]
         return jsonify({'status': 'success'})
 
@@ -824,22 +912,53 @@ def notes():
 def tasks():
     """Manage tasks"""
     if request.method == 'GET':
+        # Get from MongoDB
+        if USE_MONGODB and db.is_connected():
+            tasks_list = db.get_all_tasks()
+            return jsonify(tasks_list)
         return jsonify(user_data['tasks'])
-    
+
     elif request.method == 'POST':
         data = request.json
+        title = data.get('title', '')
+        priority = data.get('priority', 'medium')
+
+        # Save to MongoDB
+        if USE_MONGODB and db.is_connected():
+            task = db.create_task(title=title, priority=priority)
+            if task:
+                return jsonify(task), 201
+
+        # Fallback to in-memory
         task = {
             'id': str(uuid.uuid4()),
-            'title': data.get('title', ''),
+            'title': title,
             'completed': False,
-            'priority': data.get('priority', 'medium'),
+            'priority': priority,
             'created': datetime.now().isoformat()
         }
         user_data['tasks'].append(task)
         return jsonify(task), 201
-    
+
     elif request.method == 'PUT':
         task_id = request.json.get('id')
+
+        # Update in MongoDB
+        if USE_MONGODB and db.is_connected():
+            updates = {}
+            if 'completed' in request.json:
+                updates['completed'] = request.json['completed']
+            if 'title' in request.json:
+                updates['title'] = request.json['title']
+            if 'priority' in request.json:
+                updates['priority'] = request.json['priority']
+
+            task = db.update_task(task_id, updates)
+            if task:
+                return jsonify(task)
+            return jsonify({'error': 'Task not found'}), 404
+
+        # Fallback to in-memory
         for task in user_data['tasks']:
             if task['id'] == task_id:
                 task['completed'] = request.json.get('completed', task['completed'])
@@ -847,9 +966,16 @@ def tasks():
                 task['priority'] = request.json.get('priority', task['priority'])
                 return jsonify(task)
         return jsonify({'error': 'Task not found'}), 404
-    
+
     elif request.method == 'DELETE':
         task_id = request.json.get('id')
+
+        # Delete from MongoDB
+        if USE_MONGODB and db.is_connected():
+            db.delete_task(task_id)
+            return jsonify({'status': 'success'})
+
+        # Fallback to in-memory
         user_data['tasks'] = [t for t in user_data['tasks'] if t['id'] != task_id]
         return jsonify({'status': 'success'})
 
@@ -857,27 +983,55 @@ def tasks():
 def reminders():
     """Manage reminders"""
     if request.method == 'GET':
+        # Get from MongoDB
+        if USE_MONGODB and db.is_connected():
+            reminders_list = db.get_all_reminders()
+            return jsonify(reminders_list)
         return jsonify(user_data['reminders'])
-    
+
     elif request.method == 'POST':
         data = request.json
+        title = data.get('title', '')
+        reminder_datetime = data.get('datetime', '')
+
+        # Save to MongoDB
+        if USE_MONGODB and db.is_connected():
+            reminder = db.create_reminder(title=title, reminder_datetime=reminder_datetime)
+            if reminder:
+                return jsonify(reminder), 201
+
+        # Fallback to in-memory
         reminder = {
             'id': str(uuid.uuid4()),
-            'title': data.get('title', ''),
-            'datetime': data.get('datetime', ''),
+            'title': title,
+            'datetime': reminder_datetime,
             'created': datetime.now().isoformat()
         }
         user_data['reminders'].append(reminder)
         return jsonify(reminder), 201
-    
+
     elif request.method == 'DELETE':
         reminder_id = request.json.get('id')
+
+        # Delete from MongoDB
+        if USE_MONGODB and db.is_connected():
+            db.delete_reminder(reminder_id)
+            return jsonify({'status': 'success'})
+
+        # Fallback to in-memory
         user_data['reminders'] = [r for r in user_data['reminders'] if r['id'] != reminder_id]
         return jsonify({'status': 'success'})
 
 @app.route('/api/stats', methods=['GET'])
 def stats():
     """Get user statistics"""
+    # Get from MongoDB
+    if USE_MONGODB and db.is_connected():
+        db_stats = db.get_stats()
+        db_stats['current_time'] = datetime.now().isoformat()
+        return jsonify(db_stats)
+
+    # Fallback to in-memory
     total_tasks = len(user_data['tasks'])
     completed_tasks = len([t for t in user_data['tasks'] if t['completed']])
 
@@ -931,7 +1085,7 @@ def dociq_upload():
         chunks = chunk_text(text)
 
         # Store document info
-        session_data = get_dociq_documents()
+        session_id = get_dociq_session_id()
         doc_id = str(uuid.uuid4())
 
         doc_info = {
@@ -948,12 +1102,18 @@ def dociq_upload():
             'status': 'ready'
         }
 
-        session_data['documents'].append(doc_info)
+        # Save to MongoDB if connected
+        if USE_MONGODB and db.is_connected():
+            db.save_dociq_document(session_id, doc_info)
+            print(f"[DocIQ Upload] Document saved to MongoDB: {filename}")
+        else:
+            # Fallback to in-memory
+            session_data = get_dociq_documents()
+            session_data['documents'].append(doc_info)
 
         # Debug logging
         print(f"[DocIQ Upload] Successfully added document: {filename}")
-        print(f"[DocIQ Upload] Session now has {len(session_data['documents'])} documents")
-        print(f"[DocIQ Upload] Session ID: {get_dociq_session_id()}")
+        print(f"[DocIQ Upload] Session ID: {session_id}")
 
         return jsonify({
             'success': True,
@@ -998,16 +1158,22 @@ def dociq_delete_document(doc_id):
     session_data = get_dociq_documents()
 
     for i, doc in enumerate(session_data['documents']):
-        if doc['id'] == doc_id:
+        doc_doc_id = doc.get('doc_id') or doc.get('id')
+        if doc_doc_id == doc_id:
             # Delete file from disk
             try:
-                if os.path.exists(doc['path']):
-                    os.remove(doc['path'])
+                file_path = doc.get('path')
+                if file_path and os.path.exists(file_path):
+                    os.remove(file_path)
             except Exception as e:
                 print(f"Error deleting file: {e}")
 
-            # Remove from list
-            session_data['documents'].pop(i)
+            # Delete from MongoDB
+            if USE_MONGODB and db.is_connected():
+                db.delete_dociq_document(doc_id)
+            else:
+                # Remove from in-memory list
+                session_data['documents'].pop(i)
 
             return jsonify({'success': True, 'message': 'Document deleted'})
 
@@ -1016,19 +1182,26 @@ def dociq_delete_document(doc_id):
 @app.route('/api/dociq/clear', methods=['POST'])
 def dociq_clear():
     """Clear all documents and conversation"""
+    session_id = get_dociq_session_id()
     session_data = get_dociq_documents()
 
-    # Delete all files
+    # Delete all files from disk
     for doc in session_data['documents']:
         try:
-            if os.path.exists(doc['path']):
-                os.remove(doc['path'])
+            file_path = doc.get('path')
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
         except Exception as e:
             print(f"Error deleting file: {e}")
 
-    # Clear data
-    session_data['documents'] = []
-    session_data['conversation'] = []
+    # Clear from MongoDB
+    if USE_MONGODB and db.is_connected():
+        db.clear_dociq_documents(session_id)
+        db.clear_dociq_conversation(session_id)
+    else:
+        # Clear in-memory data
+        session_data['documents'] = []
+        session_data['conversation'] = []
 
     return jsonify({'success': True, 'message': 'All documents cleared'})
 
@@ -1037,6 +1210,7 @@ def dociq_chat():
     """Chat with documents using RAG"""
     data = request.json
     user_message = data.get('message', '')
+    session_id = get_dociq_session_id()
 
     print(f"[DocIQ Chat] Received message: {user_message[:50]}...")
 
@@ -1047,7 +1221,9 @@ def dociq_chat():
 
     print(f"[DocIQ Chat] Documents found: {len(session_data['documents'])}")
     for doc in session_data['documents']:
-        print(f"[DocIQ Chat] - {doc['name']}: {doc.get('chunk_count', 0)} chunks")
+        doc_name = doc.get('name', 'Unknown')
+        chunk_count = doc.get('chunk_count', 0)
+        print(f"[DocIQ Chat] - {doc_name}: {chunk_count} chunks")
 
     if not session_data['documents']:
         print("[DocIQ Chat] No documents found - returning error")
@@ -1062,6 +1238,10 @@ def dociq_chat():
         'content': user_message
     })
 
+    # Save user message to MongoDB
+    if USE_MONGODB and db.is_connected():
+        db.save_dociq_conversation(session_id, 'user', user_message)
+
     # Generate response using RAG
     ai_response = generate_dociq_response(user_message, session_data)
 
@@ -1070,6 +1250,10 @@ def dociq_chat():
         'role': 'assistant',
         'content': ai_response
     })
+
+    # Save AI response to MongoDB
+    if USE_MONGODB and db.is_connected():
+        db.save_dociq_conversation(session_id, 'assistant', ai_response)
 
     return jsonify({
         'response': ai_response,
@@ -1624,7 +1808,7 @@ def viziq_upload():
         # Generate insights
         insights = generate_insights(data, columns, dtypes, stats, filename)
 
-        # Store data
+        # Store data in memory for immediate use
         viziq_storage = {
             'data': data,
             'columns': columns,
@@ -1635,6 +1819,24 @@ def viziq_upload():
 
         # Prepare preview data (first 100 rows)
         preview_data = data[:100]
+
+        # Save to MongoDB for persistence
+        if USE_MONGODB and db.is_connected():
+            session_id = get_session_id()
+            viziq_data_info = {
+                'filename': filename,
+                'columns': columns,
+                'dtypes': dtypes,
+                'stats': stats,
+                'row_count': len(data),
+                'kpis': kpis,
+                'charts': charts,
+                'insights': insights,
+                'preview_data': preview_data,
+                'dashboard_name': dashboard_name
+            }
+            db.save_viziq_data(session_id, viziq_data_info)
+            print(f"[VizIQ] Data saved to MongoDB: {filename}")
 
         return jsonify({
             'success': True,
@@ -1660,6 +1862,13 @@ def viziq_upload():
 def viziq_clear():
     """Clear VizIQ data"""
     global viziq_storage
+
+    # Clear from MongoDB
+    if USE_MONGODB and db.is_connected():
+        session_id = get_session_id()
+        db.clear_viziq_data(session_id)
+
+    # Clear in-memory storage
     viziq_storage = {
         'data': None,
         'columns': [],
@@ -1672,16 +1881,34 @@ def viziq_clear():
 @app.route('/api/viziq/data', methods=['GET'])
 def viziq_get_data():
     """Get current VizIQ data"""
-    if viziq_storage['data'] is None:
-        return jsonify({'error': 'No data loaded'}), 404
+    # Try to get from in-memory first
+    if viziq_storage['data'] is not None:
+        return jsonify({
+            'filename': viziq_storage['filename'],
+            'columns': viziq_storage['columns'],
+            'dtypes': viziq_storage['dtypes'],
+            'rows': len(viziq_storage['data']),
+            'preview': viziq_storage['data'][:50]
+        })
 
-    return jsonify({
-        'filename': viziq_storage['filename'],
-        'columns': viziq_storage['columns'],
-        'dtypes': viziq_storage['dtypes'],
-        'rows': len(viziq_storage['data']),
-        'preview': viziq_storage['data'][:50]
-    })
+    # Try to get from MongoDB
+    if USE_MONGODB and db.is_connected():
+        session_id = get_session_id()
+        viziq_data = db.get_viziq_data(session_id)
+        if viziq_data:
+            return jsonify({
+                'filename': viziq_data.get('filename'),
+                'columns': viziq_data.get('columns', []),
+                'dtypes': viziq_data.get('dtypes', {}),
+                'rows': viziq_data.get('row_count', 0),
+                'preview': viziq_data.get('preview_data', [])[:50],
+                'kpis': viziq_data.get('kpis', []),
+                'charts': viziq_data.get('charts', []),
+                'insights': viziq_data.get('insights', []),
+                'dashboard_name': viziq_data.get('dashboard_name')
+            })
+
+    return jsonify({'error': 'No data loaded'}), 404
 
 # -------------------------------
 # Main
@@ -1692,6 +1919,7 @@ if __name__ == '__main__':
     print(f"📡 GPT Server: {GPT_SERVER_URL}")
     print(f"🤖 Model: {GPT_MODEL}")
     print(f"🎤 Voice: {'Enabled' if ELEVENLABS_API_KEY else 'Disabled (no API key)'}")
+    print(f"🗄️  MongoDB: {'Connected ✅' if USE_MONGODB and db.is_connected() else 'Not connected (using in-memory storage)'}")
     print("\n✨ Open http://localhost:5000 in your browser\n")
-    
+
     app.run(debug=os.getenv('FLASK_DEBUG', 'True') == 'True', host='0.0.0.0', port=5000)
