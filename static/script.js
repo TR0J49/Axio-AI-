@@ -20,12 +20,14 @@ class AxioAssistant {
     init() {
         this.setupNavigation();
         this.setupMobileMenu();
+        this.setupSidebarToggle();
         this.setupChat();
         this.setupModelSelector();
         this.setupTasks();
         this.setupNotes();
         this.setupReminders();
         this.setupDocIQ();
+        this.setupUploadSectionToggle();
         this.setupVizIQ();
         this.setupClock();
         this.loadData();
@@ -146,6 +148,87 @@ class AxioAssistant {
                 'viziq': 'VizIQ'
             };
             indicator.textContent = viewLabels[viewName] || viewName;
+        }
+    }
+
+    // ================================
+    // SIDEBAR TOGGLE
+    // ================================
+
+    setupSidebarToggle() {
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const showBtn = document.getElementById('sidebar-show-btn');
+        const sidebar = document.getElementById('sidebar');
+
+        // Load saved state from localStorage
+        const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (isSidebarCollapsed) {
+            sidebar.classList.add('collapsed');
+            showBtn.classList.add('visible');
+        }
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                this.toggleSidebar();
+            });
+        }
+
+        if (showBtn) {
+            showBtn.addEventListener('click', () => {
+                this.showSidebar();
+            });
+        }
+    }
+
+    toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const showBtn = document.getElementById('sidebar-show-btn');
+
+        if (sidebar) {
+            sidebar.classList.add('collapsed');
+            if (showBtn) {
+                setTimeout(() => {
+                    showBtn.classList.add('visible');
+                }, 150);
+            }
+            localStorage.setItem('sidebarCollapsed', 'true');
+        }
+    }
+
+    showSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const showBtn = document.getElementById('sidebar-show-btn');
+
+        if (showBtn) {
+            showBtn.classList.remove('visible');
+        }
+        if (sidebar) {
+            setTimeout(() => {
+                sidebar.classList.remove('collapsed');
+            }, 50);
+            localStorage.setItem('sidebarCollapsed', 'false');
+        }
+    }
+
+    // ================================
+    // UPLOAD SECTION TOGGLE
+    // ================================
+
+    setupUploadSectionToggle() {
+        const closeBtn = document.getElementById('dociq-close-btn');
+        const showBtn = document.getElementById('dociq-show-btn');
+        const section = document.getElementById('dociq-upload-section');
+
+        if (closeBtn && section) {
+            closeBtn.addEventListener('click', () => {
+                section.classList.add('collapsed');
+            });
+        }
+
+        if (showBtn && section) {
+            showBtn.addEventListener('click', () => {
+                section.classList.remove('collapsed');
+            });
         }
     }
 
@@ -1108,6 +1191,189 @@ class AxioAssistant {
     setupReminders() {
         const addBtn = document.getElementById('add-reminder');
         addBtn.addEventListener('click', () => this.showReminderModal());
+
+        // Initialize reminder alarm system
+        this.triggeredReminders = new Set();
+        this.initReminderAlarm();
+
+        // Start checking reminders every 10 seconds
+        this.startReminderChecker();
+    }
+
+    initReminderAlarm() {
+        // Create audio context for alarm sound
+        this.audioContext = null;
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }
+
+    startReminderChecker() {
+        // Check reminders every 10 seconds
+        this.reminderInterval = setInterval(() => {
+            this.checkReminders();
+        }, 10000);
+
+        // Also check immediately
+        setTimeout(() => this.checkReminders(), 2000);
+    }
+
+    checkReminders() {
+        const now = new Date();
+
+        this.reminders.forEach(reminder => {
+            const reminderTime = new Date(reminder.datetime);
+            const timeDiff = reminderTime - now;
+
+            // Check if reminder is due (within 30 seconds window) and not already triggered
+            if (timeDiff <= 30000 && timeDiff > -60000 && !this.triggeredReminders.has(reminder.id)) {
+                this.triggerReminder(reminder);
+                this.triggeredReminders.add(reminder.id);
+            }
+        });
+    }
+
+    triggerReminder(reminder) {
+        // Play alarm sound
+        this.playAlarmSound();
+
+        // Show notification popup
+        this.showReminderNotification(reminder);
+
+        // Show browser notification if permitted
+        this.showBrowserNotification(reminder);
+    }
+
+    playAlarmSound() {
+        try {
+            // Create audio context if not exists
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            const ctx = this.audioContext;
+            const duration = 0.15;
+            const frequency = 800;
+
+            // Play a pleasant notification sound (3 beeps)
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const oscillator = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+
+                    oscillator.frequency.value = frequency + (i * 100);
+                    oscillator.type = 'sine';
+
+                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + duration);
+                }, i * 200);
+            }
+        } catch (error) {
+            console.log('Audio not supported:', error);
+        }
+    }
+
+    showReminderNotification(reminder) {
+        // Create notification popup
+        const notification = document.createElement('div');
+        notification.className = 'reminder-notification';
+        notification.innerHTML = `
+            <div class="reminder-notification-content">
+                <div class="reminder-notification-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                </div>
+                <div class="reminder-notification-text">
+                    <div class="reminder-notification-title">Reminder!</div>
+                    <div class="reminder-notification-message">${this.escapeHtml(reminder.title)}</div>
+                    <div class="reminder-notification-time">${this.formatDateTime(new Date(reminder.datetime))}</div>
+                </div>
+                <button class="reminder-notification-close" onclick="this.parentElement.parentElement.remove()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="reminder-notification-actions">
+                <button class="btn-dismiss" onclick="axio.dismissReminderNotification(this, '${reminder.id}')">Dismiss</button>
+                <button class="btn-snooze" onclick="axio.snoozeReminder('${reminder.id}', 5)">Snooze 5 min</button>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => notification.classList.add('active'), 10);
+
+        // Auto remove after 30 seconds if not dismissed
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.classList.remove('active');
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 30000);
+    }
+
+    showBrowserNotification(reminder) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            const notification = new Notification('Axio Reminder', {
+                body: reminder.title,
+                icon: '/static/logo gen .png',
+                tag: reminder.id,
+                requireInteraction: true
+            });
+
+            notification.onclick = () => {
+                window.focus();
+                this.switchView('reminders');
+                notification.close();
+            };
+        }
+    }
+
+    dismissReminderNotification(button, reminderId) {
+        const notification = button.closest('.reminder-notification');
+        notification.classList.remove('active');
+        setTimeout(() => notification.remove(), 300);
+    }
+
+    async snoozeReminder(reminderId, minutes) {
+        // Find the reminder
+        const reminder = this.reminders.find(r => r.id === reminderId);
+        if (!reminder) return;
+
+        // Calculate new time
+        const newTime = new Date(Date.now() + minutes * 60 * 1000);
+
+        // Remove from triggered set so it can trigger again
+        this.triggeredReminders.delete(reminderId);
+
+        // Update reminder time
+        reminder.datetime = newTime.toISOString();
+
+        // Close notification
+        const notification = document.querySelector('.reminder-notification');
+        if (notification) {
+            notification.classList.remove('active');
+            setTimeout(() => notification.remove(), 300);
+        }
+
+        // Show toast
+        this.showToast(`Reminder snoozed for ${minutes} minutes`, 'success');
+
+        // Re-render reminders
+        this.renderReminders();
     }
 
     showReminderModal() {
@@ -1939,7 +2205,7 @@ class AxioAssistant {
                     padding: 12,
                     displayColors: true,
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             let label = context.dataset.label || context.label || '';
                             let value = context.parsed.y !== undefined ? context.parsed.y : context.parsed;
                             if (typeof value === 'number') {

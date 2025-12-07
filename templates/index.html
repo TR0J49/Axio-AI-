@@ -38,6 +38,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhancements.css') }}">
 </head>
 
 <body>
@@ -61,6 +62,13 @@
     <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" id="sidebar-toggle" title="Hide Sidebar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="11 17 6 12 11 7"></polyline>
+                    <polyline points="18 17 13 12 18 7"></polyline>
+                </svg>
+            </button>
             <div class="sidebar-header">
                 <div class="logo">
                     <img src="{{ url_for('static', filename='logo gen .png') }}" alt="Axio Logo" class="logo-icon">
@@ -72,56 +80,23 @@
             </div>
 
             <nav class="nav-menu">
+                <!-- AI Features -->
                 <button class="nav-item active" data-view="chat">
                     <span class="nav-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             <path d="M8 10h.01M12 10h.01M16 10h.01"></path>
                         </svg>
                     </span>
                     <span class="nav-label">Chat</span>
-                    <span class="nav-indicator"></span>
-                </button>
-                <button class="nav-item" data-view="tasks">
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 11l3 3L22 4"></path>
-                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                        </svg>
-                    </span>
-                    <span class="nav-label">Tasks</span>
-                    <span class="nav-badge" id="tasks-badge">0</span>
-                    <span class="nav-indicator"></span>
-                </button>
-                <button class="nav-item" data-view="notes">
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <line x1="10" y1="9" x2="8" y2="9"></line>
-                        </svg>
-                    </span>
-                    <span class="nav-label">Notes</span>
-                    <span class="nav-badge" id="notes-badge">0</span>
-                    <span class="nav-indicator"></span>
-                </button>
-                <button class="nav-item" data-view="reminders">
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                            <path d="M12 2v2"></path>
-                        </svg>
-                    </span>
-                    <span class="nav-label">Reminders</span>
-                    <span class="nav-badge" id="reminders-badge">0</span>
+                    <span class="nav-badge dociq-badge">AI</span>
                     <span class="nav-indicator"></span>
                 </button>
                 <button class="nav-item dociq-nav" data-view="dociq">
                     <span class="nav-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                             <circle cx="12" cy="15" r="3"></circle>
@@ -137,7 +112,8 @@
                 </button>
                 <button class="nav-item viziq-nav" data-view="viziq">
                     <span class="nav-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
                             <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
                         </svg>
@@ -146,12 +122,55 @@
                     <span class="nav-badge viziq-badge" id="viziq-badge">AI</span>
                     <span class="nav-indicator"></span>
                 </button>
+
+                <!-- Productivity Features -->
+                <button class="nav-item" data-view="tasks">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 11l3 3L22 4"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Tasks</span>
+                    <span class="nav-badge" id="tasks-badge">0</span>
+                    <span class="nav-indicator"></span>
+                </button>
+                <button class="nav-item" data-view="notes">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Notes</span>
+                    <span class="nav-badge" id="notes-badge">0</span>
+                    <span class="nav-indicator"></span>
+                </button>
+                <button class="nav-item" data-view="reminders">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            <path d="M12 2v2"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Reminders</span>
+                    <span class="nav-badge" id="reminders-badge">0</span>
+                    <span class="nav-indicator"></span>
+                </button>
             </nav>
 
             <div class="sidebar-footer">
                 <div class="stats-card">
                     <div class="stats-header">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 20V10"></path>
                             <path d="M18 20V4"></path>
                             <path d="M6 20v-4"></path>
@@ -180,7 +199,8 @@
                     </div>
                 </div>
                 <div class="current-time" id="current-time">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
@@ -189,13 +209,23 @@
             </div>
         </aside>
 
+        <!-- Sidebar Show Button (visible when sidebar is hidden) -->
+        <button class="sidebar-show-btn" id="sidebar-show-btn" title="Show Sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="13 17 18 12 13 7"></polyline>
+                <polyline points="6 17 11 12 6 7"></polyline>
+            </svg>
+        </button>
+
         <!-- Main Content -->
         <main class="main-content">
             <!-- Chat View -->
             <div class="view active" id="chat-view">
                 <div class="view-header">
                     <div class="view-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                         </svg>
                         <h2>Chat with Axio</h2>
@@ -204,12 +234,16 @@
                         <!-- Model Selector -->
                         <div class="model-selector" id="model-selector">
                             <button class="model-selector-btn" id="model-selector-btn" title="Select AI Model">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="3"></circle>
-                                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                                    <path
+                                        d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42">
+                                    </path>
                                 </svg>
                                 <span class="model-name" id="current-model-name">GPT</span>
-                                <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
                             </button>
@@ -231,7 +265,9 @@
                                 <div class="model-option" data-model="gemini">
                                     <div class="model-option-icon gemini-icon">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                            <polygon
+                                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                            </polygon>
                                         </svg>
                                     </div>
                                     <div class="model-option-info">
@@ -243,7 +279,8 @@
                             </div>
                         </div>
                         <button class="btn-icon" id="voice-toggle" title="Voice Mode">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                                 <line x1="12" y1="19" x2="12" y2="23"></line>
@@ -251,7 +288,8 @@
                             </svg>
                         </button>
                         <button class="btn-icon" id="reset-chat" title="Reset Conversation">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
                                 <path d="M21 3v5h-5"></path>
                                 <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
@@ -300,10 +338,19 @@
             <!-- Tasks View -->
             <div class="view" id="tasks-view">
                 <div class="view-header">
-                    <h2>My Tasks</h2>
-                    <button class="btn-primary" id="add-task">
-                        <span>+</span> Add Task
-                    </button>
+                    <div class="view-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 11l3 3L22 4"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        <h2>My Tasks</h2>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-primary" id="add-task">
+                            <span>+</span> Add Task
+                        </button>
+                    </div>
                 </div>
 
                 <div class="tasks-container">
@@ -325,10 +372,22 @@
             <!-- Notes View -->
             <div class="view" id="notes-view">
                 <div class="view-header">
-                    <h2>My Notes</h2>
-                    <button class="btn-primary" id="add-note">
-                        <span>+</span> New Note
-                    </button>
+                    <div class="view-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <h2>My Notes</h2>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-primary" id="add-note">
+                            <span>+</span> New Note
+                        </button>
+                    </div>
                 </div>
 
                 <div class="notes-grid" id="notes-grid">
@@ -342,10 +401,21 @@
             <!-- Reminders View -->
             <div class="view" id="reminders-view">
                 <div class="view-header">
-                    <h2>Reminders</h2>
-                    <button class="btn-primary" id="add-reminder">
-                        <span>+</span> Add Reminder
-                    </button>
+                    <div class="view-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="13" r="8"></circle>
+                            <path d="M12 9v4l2 2"></path>
+                            <path d="M5 3L2 6"></path>
+                            <path d="M22 6L19 3"></path>
+                        </svg>
+                        <h2>Reminders</h2>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-primary" id="add-reminder">
+                            <span>+</span> Add Reminder
+                        </button>
+                    </div>
                 </div>
 
                 <div class="reminders-list" id="reminders-list">
@@ -360,7 +430,8 @@
             <div class="view" id="dociq-view">
                 <div class="view-header">
                     <div class="view-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                             <circle cx="12" cy="15" r="3"></circle>
@@ -369,20 +440,39 @@
                     </div>
                     <div class="header-actions">
                         <button class="btn-icon" id="clear-docs" title="Clear Documents">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                </path>
                             </svg>
                         </button>
                     </div>
                 </div>
 
                 <div class="dociq-container">
+                    <!-- DocIQ Sidebar Show Button -->
+                    <button class="dociq-show-btn" id="dociq-show-btn" title="Show Upload Section">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+
                     <!-- Upload Section -->
                     <div class="dociq-upload-section" id="dociq-upload-section">
+                        <button class="dociq-close-btn" id="dociq-close-btn" title="Hide Upload Section">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
                         <div class="upload-area" id="upload-area">
                             <div class="upload-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="17 8 12 3 7 8"></polyline>
                                     <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -392,7 +482,8 @@
                             <p>Drag & drop PDF or Word files here, or click to browse</p>
                             <input type="file" id="doc-file-input" accept=".pdf,.doc,.docx,.txt" multiple hidden>
                             <button class="btn-primary upload-btn" id="browse-files">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
                                     <line x1="12" y1="18" x2="12" y2="12"></line>
@@ -436,7 +527,8 @@
                                 <div class="message-content">
                                     <div class="message-text">
                                         <strong>Welcome to DocIQ!</strong><br><br>
-                                        I'm your intelligent document assistant. Upload PDF, Word, or text files and ask me anything about their content.<br><br>
+                                        I'm your intelligent document assistant. Upload PDF, Word, or text files and ask
+                                        me anything about their content.<br><br>
                                         <em>Features:</em>
                                         <ul>
                                             <li>Extract key information</li>
@@ -452,9 +544,11 @@
 
                         <div class="dociq-input-container">
                             <div class="dociq-input-wrapper">
-                                <textarea id="dociq-input" placeholder="Ask a question about your documents..." rows="1" disabled></textarea>
+                                <textarea id="dociq-input" placeholder="Ask a question about your documents..." rows="1"
+                                    disabled></textarea>
                                 <button class="btn-send" id="dociq-send" disabled>
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="22" y1="2" x2="11" y2="13"></line>
                                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                                     </svg>
@@ -470,7 +564,8 @@
             <div class="view" id="viziq-view">
                 <div class="view-header">
                     <div class="view-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
                             <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
                         </svg>
@@ -478,7 +573,8 @@
                     </div>
                     <div class="header-actions">
                         <button class="btn-icon" id="refresh-viziq" title="Refresh Dashboard">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
                                 <path d="M21 3v5h-5"></path>
                                 <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
@@ -486,9 +582,12 @@
                             </svg>
                         </button>
                         <button class="btn-icon" id="clear-viziq" title="Clear Data">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                </path>
                             </svg>
                         </button>
                     </div>
@@ -499,7 +598,8 @@
                     <div class="viziq-upload-section" id="viziq-upload-section">
                         <div class="viziq-upload-area" id="viziq-upload-area">
                             <div class="upload-icon viziq-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="17 8 12 3 7 8"></polyline>
                                     <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -533,7 +633,8 @@
                             </div>
                             <div class="processing-steps">
                                 <div class="step" id="step-upload"><span class="step-icon">📤</span> Uploading</div>
-                                <div class="step" id="step-preprocess"><span class="step-icon">⚙️</span> Preprocessing</div>
+                                <div class="step" id="step-preprocess"><span class="step-icon">⚙️</span> Preprocessing
+                                </div>
                                 <div class="step" id="step-analyze"><span class="step-icon">🔍</span> Analyzing</div>
                                 <div class="step" id="step-visualize"><span class="step-icon">📊</span> Generating</div>
                             </div>
@@ -579,7 +680,9 @@
                         <div class="insights-section">
                             <h4 class="section-title">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    <path
+                                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
+                                    </path>
                                 </svg>
                                 AI Insights
                             </h4>
@@ -625,7 +728,11 @@
         </div>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='ui-enhancements.js') }}"></script>
 </body>
 
 </html>
