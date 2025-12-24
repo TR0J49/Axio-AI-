@@ -37,31 +37,51 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # GPT/Ollama Configuration
 GPT_SERVER_URL = os.getenv('GPT_SERVER_URL', 'http://localhost:11434/api/chat')
-GPT_MODEL = os.getenv('GPT_MODEL', 'gpt-oss:120b-cloud')
+GPT_MODEL = os.getenv('GPT_MODEL', 'gpt-oss:20b-cloud')
 
-# Gemini Configuration
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+# Axio Lite Configuration (Ollama with phi3:mini)
+LITE_MODEL = os.getenv('LITE_MODEL', 'phi3:mini')
+LITE_SERVER_URL = os.getenv('GPT_SERVER_URL', 'http://localhost:11434/api/chat')
 
-# Initialize Gemini client
-gemini_client = None
-GEMINI_AVAILABLE = False
-if GEMINI_API_KEY:
-    try:
-        from google import genai
-        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
-        GEMINI_AVAILABLE = True
-        print("[OK] Gemini client initialized")
-    except Exception as e:
-        print(f"[WARNING] Failed to initialize Gemini client: {e}")
-        GEMINI_AVAILABLE = False
+# Axio Coder Configuration (Ollama with qwen3-coder)
+CODER_MODEL = os.getenv('CODER_MODEL', 'qwen3-coder:480b-cloud')
+
+# Check if Lite model is available
+LITE_AVAILABLE = False
+try:
+    test_response = requests.post(
+        LITE_SERVER_URL,
+        json={"model": LITE_MODEL, "messages": [{"role": "user", "content": "Hi"}], "stream": False},
+        timeout=10
+    )
+    if test_response.status_code == 200:
+        LITE_AVAILABLE = True
+        print(f"[OK] Axio Lite model ({LITE_MODEL}) initialized and verified")
+except Exception as e:
+    print(f"[WARNING] Axio Lite model ({LITE_MODEL}) not available: {str(e)}")
+    LITE_AVAILABLE = False
+
+# Check if Coder model is available
+CODER_AVAILABLE = False
+try:
+    test_response = requests.post(
+        LITE_SERVER_URL,
+        json={"model": CODER_MODEL, "messages": [{"role": "user", "content": "Hi"}], "stream": False},
+        timeout=10
+    )
+    if test_response.status_code == 200:
+        CODER_AVAILABLE = True
+        print(f"[OK] Axio Coder model ({CODER_MODEL}) initialized and verified")
+except Exception as e:
+    print(f"[WARNING] Axio Coder model ({CODER_MODEL}) not available: {str(e)}")
+    CODER_AVAILABLE = False
 
 # Other APIs
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 VOICE_ID = os.getenv('VOICE_ID', '21m00Tcm4TlvDq8ikWAM')
 
 # Default AI Model
-DEFAULT_AI_MODEL = os.getenv('DEFAULT_AI_MODEL', 'gemini' if GEMINI_AVAILABLE else 'gpt')
+DEFAULT_AI_MODEL = os.getenv('DEFAULT_AI_MODEL', 'gemini' if LITE_AVAILABLE else 'gpt')
 
 # Available AI Models
 AI_MODELS = {
@@ -72,8 +92,13 @@ AI_MODELS = {
     },
     'gemini': {
         'name': 'AXIO Lite',
-        'description': 'Perfionix AI',
-        'available': GEMINI_AVAILABLE
+        'description': f'Perfionix AI ({LITE_MODEL})',
+        'available': LITE_AVAILABLE
+    },
+    'coder': {
+        'name': 'AXIO Coder',
+        'description': f'Code Expert ({CODER_MODEL})',
+        'available': CODER_AVAILABLE
     }
 }
 
@@ -229,75 +254,145 @@ def generate_gpt_response(conversation):
     }
 
     try:
+        print(f"[Axio Core] Using model: {GPT_MODEL}")
+        print(f"[Axio Core] Sending request to: {GPT_SERVER_URL}")
+
         response = requests.post(GPT_SERVER_URL, headers=headers, json=payload, timeout=300)
         response.raise_for_status()
         data = response.json()
 
         if "message" in data and "content" in data["message"]:
-            return data["message"]["content"]
+            content = data["message"]["content"]
+            print(f"[Axio Core] Response received: {len(content)} characters")
+            return content
+
+        print(f"[Axio Core] Unexpected response format: {data}")
         return "Sorry, I couldn't process that request."
 
+    except requests.exceptions.Timeout:
+        print(f"[Axio Core] Request timed out")
+        return "Request timed out. The model is taking too long to respond. Please try again."
+    except requests.exceptions.ConnectionError as e:
+        print(f"[Axio Core] Connection error: {str(e)}")
+        return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {GPT_MODEL} model pulled."
+    except requests.exceptions.HTTPError as e:
+        print(f"[Axio Core] HTTP error: {str(e)}")
+        if "404" in str(e):
+            return f"Model '{GPT_MODEL}' not found. Please run: ollama pull {GPT_MODEL}"
+        return f"HTTP error occurred: {str(e)}"
     except requests.exceptions.RequestException as e:
-        return f"Connection error: Unable to reach AI server. Please ensure the GPT server is running."
+        print(f"[Axio Core] Request error: {str(e)}")
+        return f"Connection error: Unable to reach AI server. Please ensure Ollama is running."
+    except json.JSONDecodeError as e:
+        print(f"[Axio Core] JSON decode error: {str(e)}")
+        return "Error parsing response from the model. Please try again."
     except Exception as e:
-        return f"An error occurred: {str(e)}"
+        print(f"[Axio Core] Unexpected error: {str(e)}")
+        return f"An unexpected error occurred: {str(e)}"
 
-def generate_gemini_response(conversation):
-    """Generate AI response using Google Gemini SDK"""
-    if not gemini_client:
-        return "Gemini client not initialized. Please check your GEMINI_API_KEY in .env file."
+def generate_lite_response(conversation):
+    """Generate AI response using Ollama with Lite model (phi3:mini)"""
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "model": LITE_MODEL,
+        "messages": conversation,
+        "stream": False,
+        "options": {
+            "num_predict": 4096,
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "repeat_penalty": 1.1
+        }
+    }
 
     try:
-        # Log which model is being used
-        print(f"[Gemini] Using model: {GEMINI_MODEL}")
+        print(f"[Axio Lite] Using model: {LITE_MODEL}")
+        print(f"[Axio Lite] Sending request to: {LITE_SERVER_URL}")
 
-        # Extract system prompt
-        system_prompt = next((msg['content'] for msg in conversation if msg.get('role') == 'system'), None)
+        response = requests.post(LITE_SERVER_URL, headers=headers, json=payload, timeout=300)
+        response.raise_for_status()
+        data = response.json()
 
-        # Build the conversation content for Gemini
-        # Combine all messages into a single prompt with context
-        prompt_parts = []
+        if "message" in data and "content" in data["message"]:
+            content = data["message"]["content"]
+            print(f"[Axio Lite] Response received: {len(content)} characters")
+            return content
 
-        if system_prompt:
-            prompt_parts.append(f"[System Instructions]\n{system_prompt}\n\n[Conversation]")
+        print(f"[Axio Lite] Unexpected response format: {data}")
+        return "Sorry, I couldn't process that request with Axio Lite."
 
-        for msg in conversation:
-            role = msg.get('role', '')
-            content = msg.get('content', '')
-
-            if role == 'system':
-                continue
-            elif role == 'user':
-                prompt_parts.append(f"User: {content}")
-            elif role == 'assistant':
-                prompt_parts.append(f"Assistant: {content}")
-
-        # Add instruction to continue as assistant
-        prompt_parts.append("Assistant:")
-
-        full_prompt = "\n\n".join(prompt_parts)
-
-        # Generate response using the SDK
-        response = gemini_client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=full_prompt
-        )
-
-        if response and response.text:
-            return response.text
-        else:
-            return "Sorry, I couldn't generate a response with Gemini."
-
+    except requests.exceptions.Timeout:
+        print(f"[Axio Lite] Request timed out")
+        return "Request timed out. The model is taking too long to respond. Please try again."
+    except requests.exceptions.ConnectionError as e:
+        print(f"[Axio Lite] Connection error: {str(e)}")
+        return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {LITE_MODEL} model pulled."
+    except requests.exceptions.HTTPError as e:
+        print(f"[Axio Lite] HTTP error: {str(e)}")
+        if "404" in str(e):
+            return f"Model '{LITE_MODEL}' not found. Please run: ollama pull {LITE_MODEL}"
+        return f"HTTP error occurred: {str(e)}"
+    except requests.exceptions.RequestException as e:
+        print(f"[Axio Lite] Request error: {str(e)}")
+        return f"Connection error: Unable to reach Ollama server for Axio Lite. Please ensure Ollama is running."
+    except json.JSONDecodeError as e:
+        print(f"[Axio Lite] JSON decode error: {str(e)}")
+        return "Error parsing response from the model. Please try again."
     except Exception as e:
-        error_msg = str(e)
-        print(f"[ERROR] Gemini API error: {error_msg}")
+        print(f"[Axio Lite] Unexpected error: {str(e)}")
+        return f"An unexpected error occurred with Axio Lite: {str(e)}"
 
-        if "blocked" in error_msg.lower():
-            return "The response was blocked by Gemini's safety filters. Please try rephrasing your question."
-        elif "quota" in error_msg.lower():
-            return "Gemini API quota exceeded. Please try again later."
-        else:
-            return f"An error occurred with Gemini: {error_msg}"
+def generate_coder_response(conversation):
+    """Generate AI response using Ollama with Qwen3 Coder model for coding tasks"""
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "model": CODER_MODEL,
+        "messages": conversation,
+        "stream": False,
+        "options": {
+            "num_predict": 8192,
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "repeat_penalty": 1.1
+        }
+    }
+
+    try:
+        print(f"[Axio Coder] Using model: {CODER_MODEL}")
+        print(f"[Axio Coder] Sending request to: {LITE_SERVER_URL}")
+
+        response = requests.post(LITE_SERVER_URL, headers=headers, json=payload, timeout=300)
+        response.raise_for_status()
+        data = response.json()
+
+        if "message" in data and "content" in data["message"]:
+            content = data["message"]["content"]
+            print(f"[Axio Coder] Response received: {len(content)} characters")
+            return content
+
+        print(f"[Axio Coder] Unexpected response format: {data}")
+        return "Sorry, I couldn't process that request with Axio Coder."
+
+    except requests.exceptions.Timeout:
+        print(f"[Axio Coder] Request timed out")
+        return "Request timed out. The model is taking too long to respond. Please try again."
+    except requests.exceptions.ConnectionError as e:
+        print(f"[Axio Coder] Connection error: {str(e)}")
+        return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {CODER_MODEL} model pulled."
+    except requests.exceptions.HTTPError as e:
+        print(f"[Axio Coder] HTTP error: {str(e)}")
+        if "404" in str(e):
+            return f"Model '{CODER_MODEL}' not found. Please run: ollama pull {CODER_MODEL}"
+        return f"HTTP error occurred: {str(e)}"
+    except requests.exceptions.RequestException as e:
+        print(f"[Axio Coder] Request error: {str(e)}")
+        return f"Connection error: Unable to reach Ollama server for Axio Coder. Please ensure Ollama is running."
+    except json.JSONDecodeError as e:
+        print(f"[Axio Coder] JSON decode error: {str(e)}")
+        return "Error parsing response from the model. Please try again."
+    except Exception as e:
+        print(f"[Axio Coder] Unexpected error: {str(e)}")
+        return f"An unexpected error occurred with Axio Coder: {str(e)}"
 
 def generate_ai_response(conversation, model=None):
     """Generate AI response from conversation history using selected model"""
@@ -305,7 +400,9 @@ def generate_ai_response(conversation, model=None):
     current_model = model or get_current_model()
 
     if current_model == 'gemini':
-        return generate_gemini_response(conversation)
+        return generate_lite_response(conversation)
+    elif current_model == 'coder':
+        return generate_coder_response(conversation)
     else:
         return generate_gpt_response(conversation)
 
@@ -2183,10 +2280,10 @@ if __name__ == '__main__':
     print("=" * 50)
     print("Axio AI Code Assistant by Perfionix AI - Starting...")
     print("=" * 50)
-    print(f"GPT Server: {GPT_SERVER_URL}")
-    print(f"GPT Model: {GPT_MODEL}")
-    print(f"Gemini Model: {GEMINI_MODEL}")
-    print(f"Gemini Client: {'Initialized' if gemini_client else 'Not initialized'}")
+    print(f"Ollama Server: {GPT_SERVER_URL}")
+    print(f"AXIO Core Model: {GPT_MODEL}")
+    print(f"AXIO Lite Model: {LITE_MODEL} - {'Available' if LITE_AVAILABLE else 'Not available'}")
+    print(f"AXIO Coder Model: {CODER_MODEL} - {'Available' if CODER_AVAILABLE else 'Not available'}")
     print(f"Voice: {'Enabled' if ELEVENLABS_API_KEY else 'Disabled (no API key)'}")
     print(f"MongoDB: {'Connected' if USE_MONGODB and db.is_connected() else 'Not connected (using in-memory storage)'}")
     print("=" * 50)

@@ -37,6 +37,73 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
+    <!-- Mermaid.js for Architecture & Design Diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        // Initialize mermaid when ready
+        function initMermaid() {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: 'dark',
+                    securityLevel: 'loose',
+                    themeVariables: {
+                        primaryColor: '#667eea',
+                        primaryTextColor: '#fff',
+                        primaryBorderColor: '#764ba2',
+                        lineColor: '#00f2fe',
+                        secondaryColor: '#1a1b2e',
+                        tertiaryColor: '#0d0e1a',
+                        background: '#0d0e1a',
+                        mainBkg: '#1a1b2e',
+                        secondBkg: '#252642',
+                        border1: '#667eea',
+                        border2: '#764ba2',
+                        arrowheadColor: '#00f2fe',
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: '14px',
+                        textColor: '#e0e0e0',
+                        nodeTextColor: '#ffffff'
+                    },
+                    flowchart: {
+                        htmlLabels: true,
+                        curve: 'basis',
+                        padding: 15,
+                        useMaxWidth: true
+                    },
+                    sequence: {
+                        diagramMarginX: 50,
+                        diagramMarginY: 10,
+                        actorMargin: 50,
+                        width: 150,
+                        height: 65,
+                        boxMargin: 10,
+                        boxTextMargin: 5,
+                        noteMargin: 10,
+                        messageMargin: 35,
+                        useMaxWidth: true
+                    },
+                    er: {
+                        useMaxWidth: true
+                    },
+                    gantt: {
+                        useMaxWidth: true
+                    }
+                });
+                console.log('Mermaid initialized successfully');
+            } else {
+                setTimeout(initMermaid, 100);
+            }
+        }
+
+        // Try to initialize immediately, or wait for DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMermaid);
+        } else {
+            initMermaid();
+        }
+    </script>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='enhancements.css') }}">
 </head>
@@ -272,7 +339,20 @@
                                     </div>
                                     <div class="model-option-info">
                                         <span class="model-option-name">AXIO Lite</span>
-                                        <span class="model-option-desc">✨ Perfionix AI</span>
+                                        <span class="model-option-desc">✨ Reasoning </span>
+                                    </div>
+                                    <span class="model-active-indicator"></span>
+                                </div>
+                                <div class="model-option" data-model="coder">
+                                    <div class="model-option-icon coder-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="16 18 22 12 16 6"></polyline>
+                                            <polyline points="8 6 2 12 8 18"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="model-option-info">
+                                        <span class="model-option-name">AXIO Coder</span>
+                                        <span class="model-option-desc">💻 Code Expert</span>
                                     </div>
                                     <span class="model-active-indicator"></span>
                                 </div>
@@ -326,6 +406,27 @@
                             <button class="btn-icon btn-search" id="web-search" title="Web Search">
                                 <span>🔍</span>
                             </button>
+
+                            <!-- Generation Control Buttons (visible during generation) -->
+                            <div class="generation-controls" id="generation-controls">
+                                <button class="gen-control-btn pause-btn" id="pause-generation" title="Pause Generation">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                        <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+                                        <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+                                    </svg>
+                                </button>
+                                <button class="gen-control-btn continue-btn" id="continue-generation" title="Continue Generation" style="display: none;">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                </button>
+                                <button class="gen-control-btn stop-btn" id="stop-generation" title="Stop Generation">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                        <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                                    </svg>
+                                </button>
+                            </div>
+
                             <button class="btn-send" id="send-message">
                                 <span>➤</span>
                             </button>

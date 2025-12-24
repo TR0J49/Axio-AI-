@@ -832,6 +832,15 @@ body::before {
     fill: white;
 }
 
+.model-option-icon.coder-icon {
+    background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+}
+
+.model-option-icon.coder-icon svg {
+    stroke: white;
+    fill: none;
+}
+
 .model-option-info {
     flex: 1;
     display: flex;
