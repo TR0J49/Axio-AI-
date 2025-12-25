@@ -1,5 +1,5 @@
 """
-MongoDB Database Module for Axio AI
+MongoDB Database Module for Laplacian AI
 Handles all database operations for chat, tasks, notes, reminders, DocIQ, and VizIQ
 """
 
@@ -10,7 +10,7 @@ from bson import ObjectId
 import os
 
 class Database:
-    """MongoDB Database Handler for Axio AI"""
+    """MongoDB Database Handler for Laplacian AI"""
 
     def __init__(self):
         self.client = None
@@ -21,7 +21,7 @@ class Database:
         """Connect to MongoDB"""
         try:
             uri = uri or os.getenv('MONGODB_URI')
-            database_name = database_name or os.getenv('MONGODB_DATABASE', 'axio_ai')
+            database_name = database_name or os.getenv('MONGODB_DATABASE', 'laplacian_ai')
 
             if not uri:
                 print("[WARNING] MongoDB URI not found. Using in-memory storage.")

@@ -1,809 +1,828 @@
 <p align="center">
-  <img src="static/logo gen .png" alt="Axio Logo" width="150" height="150">
+  <img src="static/logo.png" alt="Laplacian Logo" width="150" height="150">
 </p>
 
-<h1 align="center">AXIO - AI Personal Assistant</h1>
+<h1 align="center">LAPLACIAN</h1>
+<h3 align="center">AI Code Assistant & Productivity Platform</h3>
 
 <p align="center">
-  <strong>by Perfionix AI</strong>
+  <strong>by Perfionix AI Technology Pvt Ltd</strong>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/Version-2.0-667eea?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Flask-3.0.0-000000?style=for-the-badge&logo=flask" alt="Flask">
+  <img src="https://img.shields.io/badge/MongoDB-Supported-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB">
 </p>
 
 <p align="center">
-  An intelligent, feature-rich AI-powered personal assistant with advanced chat capabilities, document analysis, data visualization, task management, and productivity tools.
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Version-2.0-blue?style=for-the-badge" alt="Version">
-  <img src="https://img.shields.io/badge/Python-3.8+-green?style=for-the-badge&logo=python" alt="Python">
-  <img src="https://img.shields.io/badge/Flask-3.0.0-red?style=for-the-badge&logo=flask" alt="Flask">
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/badge/Perfionix-AI-purple?style=for-the-badge" alt="Perfionix AI">
+  <img src="https://img.shields.io/badge/Ollama-LLM_Engine-FF6F00?style=for-the-badge" alt="Ollama">
+  <img src="https://img.shields.io/badge/Mermaid-Diagrams-FF3670?style=for-the-badge" alt="Mermaid">
+  <img src="https://img.shields.io/badge/Chart.js-Visualizations-FF6384?style=for-the-badge&logo=chartdotjs" alt="Chart.js">
 </p>
 
 ---
 
-## Table of Contents
+## Company Information
 
-- [Overview](#overview)
-- [Problem Statement](#problem-statement)
-- [Solution](#solution)
-- [Key Features](#key-features)
-- [System Architecture](#system-architecture)
-- [Workflow Diagram](#workflow-diagram)
-- [Tech Stack](#tech-stack)
-- [Installation](#installation)
-- [Project Structure](#project-structure)
-- [Module Details](#module-details)
-- [API Endpoints](#api-endpoints)
-- [Screenshots](#screenshots)
-- [Future Roadmap](#future-roadmap)
-- [Contributing](#contributing)
-- [License](#license)
+| Field | Details |
+|-------|---------|
+| **Company** | Perfionix AI Technology Pvt Ltd |
+| **Product** | LAPLACIAN v2.0 |
+| **Founder** | Shubham Rahangdale |
+| **Email** | connect@perfionixai.com |
+| **Status** | Production Ready |
 
 ---
 
-## Overview
+## Executive Summary
 
-**Axio** is a comprehensive AI-powered personal assistant developed by **Perfionix AI**. It combines the power of Large Language Models (LLMs) with modern web technologies to provide users with an intelligent, intuitive, and feature-rich productivity platform.
+**LAPLACIAN** is an enterprise-grade AI-powered code assistant and productivity platform developed by **Perfionix AI Technology Pvt Ltd**. It combines cutting-edge Large Language Models with modern web technologies to deliver an intelligent, privacy-focused solution for developers, analysts, and professionals.
 
-Axio goes beyond simple chatbots by offering specialized modules for document analysis (DocIQ), data visualization (VizIQ), task management, note-taking, and reminders - all wrapped in a beautiful, responsive dark-themed interface.
+### Platform Highlights
+
+| Metric | Value |
+|--------|-------|
+| **Total Modules** | 6 Integrated Modules |
+| **AI Models** | 2 (Core, Coder) |
+| **Document Formats** | PDF, DOCX, TXT |
+| **Data Formats** | CSV, XLSX, JSON |
+| **Chart Types** | 4 Auto-Generated |
+| **Code Languages** | 10+ Syntax Highlighted |
+| **Diagram Types** | 15+ Mermaid Diagrams |
 
 ---
 
-## Problem Statement
+## Key Features Overview
 
-In today's digital world, professionals and individuals face several challenges:
+### Feature Matrix
 
-| Problem | Impact |
+| Module | Feature | Description |
+|--------|---------|-------------|
+| **Chat** | Multi-Model AI | Switch between Core, Lite, and Coder models |
+| **Chat** | Web Search | Real-time web search with AI summarization |
+| **Chat** | Code Execution | Run HTML/CSS/JS in live preview |
+| **Chat** | Mermaid Diagrams | Auto-render flowcharts, sequences, etc. |
+| **Chat** | Message Editing | Edit past messages and regenerate |
+| **Chat** | Generation Controls | Pause, Continue, Stop AI responses |
+| **DocIQ** | RAG Q&A | Chat with uploaded documents |
+| **VizIQ** | Auto Dashboards | Instant KPIs and charts from data |
+| **Tasks** | Task Management | Priority-based task tracking |
+| **Notes** | Note Taking | Card-based notes with timestamps |
+| **Reminders** | Scheduling | Date/time reminder alerts |
+
+---
+
+## Chat System - Complete Features
+
+### 1. Multi-Model AI Selection
+
+| Model | ID | Description | Use Case |
+|-------|-----|-------------|----------|
+| **LAPLACIAN Core** | `gpt` | `gpt-oss:20b-cloud` | General thinking, complex reasoning |
+| **LAPLACIAN Coder** | `coder` | `qwen3-coder:480b-cloud` | Code generation, debugging |
+
+**Features:**
+- Dropdown selector in header
+- Real-time model switching
+- Availability checking on startup
+- Notification on model change
+
+---
+
+### 2. Web Search Integration
+```mermaid
+flowchart TD
+    A[USER QUERY] --> B[Keyword Detection]
+    B --> C{Search Type}
+    C -->|Auto| D[Auto Search]
+    C -->|Manual| E["Manual 🔍"]
+    D --> F[Search Providers]
+    E --> F
+    F --> G[1. Google API]
+    F --> H[2. DuckDuckGo]
+    F --> I[3. Direct Scrape]
+    G --> J[AI Summarization + Citations]
+    H --> J
+    I --> J
+```
+#### Trigger Keywords
+| Category | Keywords |
+|----------|----------|
+| **Search** | `search`, `google`, `find`, `look up` |
+| **Questions** | `what is`, `who is`, `when did` |
+| **Time** | `latest`, `recent`, `news`, `current`, `today` |
+| **Year** | `2024`, `2025` |
+| **Info** | `price`, `weather`, `definition`, `meaning` |
+
+#### Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl + Enter` | Force web search |
+| 🔍 Button | Manual search trigger |
+
+---
+
+### 3. Message Editing & Regeneration
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant M as Message
+    participant AI as AI Assistant
+    U->>M: Hover over message
+    Note right of M: ✏️ Edit button appears
+    U->>M: Click Edit
+    Note right of M: Textarea opens
+    U->>M: Modify message
+    U->>M: Save & Submit
+    M->>M: Truncate history after edit
+    M->>AI: Send updated message
+    AI->>M: Generate new response
+    Note right of M: New AI Response displayed
+```
+| Step | Action | Description |
+|------|--------|-------------|
+| 1 | **Hover** | Edit button (✏️) appears on user message |
+| 2 | **Click Edit** | Textarea opens for editing |
+| 3 | **Submit** | History truncated, AI regenerates response |
+
+| Feature | Description |
+|---------|-------------|
+| **Edit Button** | Appears on hover over user messages |
+| **Inline Editing** | Textarea replaces message text |
+| **History Truncation** | Removes all messages after edited one |
+| **Auto-Regenerate** | AI generates fresh response |
+| **Keyboard Support** | `Enter` = save, `Escape` = cancel |
+
+---
+
+### 4. Generation Controls
+```mermaid
+stateDiagram-v2
+    [*] --> Generating: User sends message
+    Generating --> Paused: Click Pause ⏸
+    Generating --> Stopped: Click Stop ⏹
+    Paused --> Generating: Click Continue ▶
+    Paused --> Stopped: Click Stop ⏹
+    Generating --> Complete: Response finished
+    Stopped --> [*]: Partial text shown
+    Complete --> [*]: Full response displayed
+```
+| State | Controls Available | Cursor |
+|-------|-------------------|--------|
+| **During Generation** | `[⏸ Pause]` `[⏹ Stop]` | `▌` (animated) |
+| **When Paused** | `[▶ Continue]` `[⏹ Stop]` | `⏸` (paused) |
+| **When Stopped** | Generation stopped message | None |
+
+#### State Variables
+| Variable | Type | Description |
+|----------|------|-------------|
+| `isGenerating` | `boolean` | Currently generating response |
+| `isPaused` | `boolean` | Generation is paused |
+| `isStopped` | `boolean` | Generation was stopped |
+
+---
+
+### 5. Typewriter Effect
+```mermaid
+sequenceDiagram
+    participant AI as AI Response
+    participant TE as Typewriter Engine
+    participant UI as Display
+    AI->>TE: Full response text
+    loop Every 5ms
+        TE->>TE: Get next 3 characters
+        TE->>UI: Append chunk + cursor ▌
+        UI->>UI: Render update
+    end
+    TE->>UI: Remove cursor
+    Note over UI: Complete message displayed
+```
+| Parameter | Value |
+|-----------|-------|
+| **Speed** | 5ms per character |
+| **Chunk Size** | 3 characters per update |
+| **Cursor** | `▌` (animated) |
+| **Pause Cursor** | `⏸` |
+
+---
+
+### 6. Markdown Rendering
+```mermaid
+flowchart TD
+    A[Markdown Text] --> B[marked.js Parser]
+    B --> C[HTML DOM]
+    C --> D[Highlight.js]
+    D --> E[Rendered Output]
+    subgraph Processing
+        B
+        C
+        D
+    end
+```
+#### Supported Elements
+| Element | Syntax |
 |---------|--------|
-| **Information Overload** | Difficulty in extracting insights from large documents and datasets |
-| **Fragmented Tools** | Using multiple apps for chat, tasks, notes, and data analysis |
-| **Complex Data Analysis** | Non-technical users struggle to visualize and understand data |
-| **Document Comprehension** | Time-consuming process to read and analyze lengthy documents |
-| **Productivity Gaps** | Lack of unified platform for personal productivity management |
-| **Accessibility** | Enterprise AI solutions are expensive and complex to deploy |
+| Headers | `# H1` to `###### H6` |
+| Bold | `**bold**` |
+| Italic | `*italic*` |
+| Strikethrough | `~~strike~~` |
+| Lists | `-` or `1.` |
+| Code | `` `inline` `` or ` ``` block ``` ` |
+| Links | `[text](url)` |
+| Images | `![alt](url)` |
+| Tables | `| col1 | col2 |` |
+| Blockquotes | `> quote` |
 
 ---
 
-## Solution
-
-**Axio** provides a comprehensive solution to modern productivity challenges:
-
-### 🎯 Core Solutions
-
-| # | Solution | Description | Benefit |
-|---|----------|-------------|---------|
-| 1 | **Unified AI Platform** | Single application combining chat, documents, data, and tasks | Eliminates need for multiple tools |
-| 2 | **Intelligent Chat Assistant** | LLM-powered conversational AI with web search | Instant answers and code help |
-| 3 | **Document Intelligence (DocIQ)** | RAG-based document Q&A system | Extract insights from any document |
-| 4 | **Auto Data Visualization (VizIQ)** | Upload data, get instant dashboards | No coding required for analytics |
-| 5 | **Smart Task Management** | Priority-based task tracking | Stay organized and productive |
-| 6 | **Local & Private Processing** | All data processed on your machine | Complete data privacy |
-
-### 💡 How Axio Solves Each Problem
-
-<table>
-<tr>
-<td width="50%">
-
-**❌ Problem: Information Overload**
-- Too many documents to read
-- Complex data to analyze
-- Time-consuming research
-
-</td>
-<td width="50%">
-
-**✅ Axio Solution:**
-- **DocIQ** extracts key information instantly
-- **VizIQ** auto-generates visual insights
-- **AI Chat** summarizes and explains
-
-</td>
-</tr>
-<tr>
-<td>
-
-**❌ Problem: Fragmented Tools**
-- Multiple apps for different tasks
-- Context switching overhead
-- Data scattered everywhere
-
-</td>
-<td>
-
-**✅ Axio Solution:**
-- **All-in-one platform** with 6 integrated modules
-- **Seamless navigation** between features
-- **Centralized workspace** for everything
-
-</td>
-</tr>
-<tr>
-<td>
-
-**❌ Problem: Complex Data Analysis**
-- Need technical skills for visualization
-- Manual chart creation is tedious
-- Hard to identify patterns
-
-</td>
-<td>
-
-**✅ Axio Solution:**
-- **Auto-generated KPIs** from your data
-- **Smart chart selection** (Column, Pie, Line, etc.)
-- **AI-powered insights** highlight key findings
-
-</td>
-</tr>
-<tr>
-<td>
-
-**❌ Problem: Document Comprehension**
-- Long documents take hours to read
-- Finding specific information is hard
-- No easy way to query documents
-
-</td>
-<td>
-
-**✅ Axio Solution:**
-- **Natural language Q&A** with documents
-- **RAG technology** finds relevant sections
-- **Instant answers** from uploaded files
-
-</td>
-</tr>
-</table>
-
-
-
-### ⭐ Key Value Propositions
-
-| Value | Description |
-|-------|-------------|
-| 🔗 **Unified Platform** | All productivity tools in one place - no more app switching |
-| 🤖 **AI-Powered Intelligence** | Leveraging Large Language Models for smart, contextual responses |
-| 📊 **No-Code Data Analysis** | Upload CSV/Excel, get instant KPIs, charts, and insights |
-| 📄 **Document Q&A** | Chat with your documents using RAG (Retrieval Augmented Generation) |
-| 🎨 **Beautiful UX** | Modern, responsive, dark-themed interface with smooth animations |
-| 🔒 **Local & Private** | All data stays on your machine - complete privacy control |
-| ⚡ **Real-time Processing** | Instant responses with streaming AI and live updates |
-| 🌐 **Web Search Integration** | Get up-to-date information from the internet |
+### 7. Syntax Highlighting
+#### Supported Languages
+| Category | Languages |
+|----------|-----------|
+| **Web** | HTML, CSS, JavaScript, TypeScript |
+| **Backend** | Python, Java, PHP, Ruby |
+| **Systems** | C++, Go, Rust |
+| **Data** | SQL, JSON, YAML |
+| **Shell** | Bash, Markdown |
 
 ---
 
-## Key Features
+## Frontend Code Execution
+### Live Preview Feature
+LAPLACIAN can execute HTML, CSS, and JavaScript code directly in a sandboxed iframe preview.
 
-### 1. AI Chat Assistant
-- Real-time conversational AI powered by LLM
-- Syntax highlighting for 10+ programming languages
-- Markdown rendering with code blocks
-- Web search integration for real-time information
-- Message editing and regeneration
-- Typing indicators and streaming responses
+### Supported Languages
+| Language | Execution Type | Description |
+|----------|---------------|-------------|
+| `html` | Full document | Complete HTML documents or fragments |
+| `css` | Demo wrapped | Styles applied to demo elements |
+| `javascript` / `js` | Console capture | Output captured and displayed |
+| `jsx` / `tsx` | Detected | React/TypeScript components |
+| `vue` / `svelte` | Basic | Basic framework rendering |
 
-### 2. DocIQ - Document Intelligence
-- Upload and analyze PDF, DOCX, TXT, and MD files
-- RAG (Retrieval Augmented Generation) for accurate answers
-- Chat with your documents naturally
-- Multi-document support
-- Context-aware responses
+### Code Block with Run Button
+```mermaid
+flowchart LR
+    subgraph CodeBlock["Code Block UI"]
+        A["Language Label"] --> B["📋 Copy Button"]
+        B --> C["▶ Run Button"]
+    end
+    C --> D{Executable?}
+    D -->|Yes| E[Open Preview Modal]
+    D -->|No| F[Run disabled]
+    B --> G[Copy to Clipboard]
+```
+| Button | Action |
+|--------|--------|
+| **📋 Copy** | Copy code to clipboard |
+| **▶ Run** | Execute in preview modal |
 
-### 3. VizIQ - Data Visualization
-- Upload CSV, Excel, JSON data files
-- Automatic data preprocessing and cleaning
-- AI-generated dashboard names and descriptions
-- Auto-generated KPIs (Key Performance Indicators)
-- Multiple chart types:
-  - Column Charts
-  - Distribution Charts (Doughnut)
-  - Comparison Charts
-  - Trend Analysis (Line Charts)
-- AI-powered insights generation
-- Interactive data preview table
+#### Detection
+```javascript
+isExecutableCode(lang, content) {
+  const executable = [
+    'html', 'css',
+    'javascript', 'js',
+    'jsx', 'tsx',
+    'vue', 'svelte'
+  ];
+  return executable.includes(lang);
+}
+```
 
-### 4. Task Management
-- Create, edit, delete tasks
-- Priority levels (High, Medium, Low)
-- Status tracking (Pending, Completed)
-- Filter and sort capabilities
-- Visual progress indicators
+### Preview Modal Features
+```mermaid
+flowchart TB
+    subgraph Modal["▶ Live Preview Modal"]
+        direction TB
+        subgraph Header["Header Controls"]
+            R["🔄 Refresh"] --- N["↗️ New Tab"] --- F["⛶ Fullscreen"] --- X["✕ Close"]
+        end
+        subgraph Content["Sandboxed iframe"]
+            O[RENDERED OUTPUT]
+        end
+        subgraph Footer["Device Simulation"]
+            D["💻 Desktop 100%"] --- T["📱 Tablet 768px"] --- M["📱 Mobile 375px"]
+        end
+    end
+```
+| Button | Function |
+|--------|----------|
+| 🔄 | Refresh/Reload iframe |
+| ↗️ | Open in new tab |
+| ⛶ | Toggle fullscreen |
+| ✕ | Close modal |
 
-### 5. Notes System
-- Rich text note creation
-- Card-based layout
-- Quick access and search
-- Timestamp tracking
+| Mode | Width | Icon |
+|------|-------|------|
+| Desktop | 100% | 💻 |
+| Tablet | 768px | 📱 |
+| Mobile | 375px | 📱 |
 
-### 6. Reminders
-- Time-based reminder alerts
-- Date and time picker
-- Reminder management interface
+---
+
+### JavaScript Console Capture
+| Method | Color | Example |
+|--------|-------|---------|
+| `console.log()` | Blue | `console.log("Hello");` |
+| `console.error()` | Red | `console.error("Error!");` |
+| `console.warn()` | Yellow | `console.warn("Warning");` |
+| `console.info()` | Blue | `console.info("Info");` |
+
+---
+
+## Mermaid Diagram Rendering
+### Auto-Detection
+LAPLACIAN automatically detects and renders Mermaid diagrams in code blocks.
+
+### Supported Diagram Types
+| Category | Types | Example Syntax |
+|----------|-------|----------------|
+| **Flow** | `flowchart`, `graph` | `graph LR A --> B --> C` |
+| **Sequence** | `sequenceDiagram` | `A ->> B: Message` |
+| **Class** | `classDiagram` | `class Animal { +name }` |
+| **State** | `stateDiagram-v2` | `[*] --> Active` |
+| **Entity** | `erDiagram` | `USER \|\|--o{ ORDER` |
+| **Gantt** | `gantt` | `Task 1: a1, 2024-01-01, 7d` |
+| **Pie** | `pie` | `"A": 30, "B": 70` |
+| **Other** | `gitGraph`, `journey`, `mindmap`, `timeline`, `C4` | Various syntaxes |
+
+---
+
+### Diagram Block UI
+```mermaid
+flowchart TB
+    subgraph DiagramUI["Mermaid Diagram Block"]
+        direction TB
+        subgraph Tabs["View Tabs"]
+            C["Code"] --- V["Visual"]
+        end
+        subgraph Controls["📐 Architecture"]
+            CP["📋 Copy"] --- EX["⬇ Export SVG"]
+        end
+        subgraph Preview["Interactive Preview"]
+            DG["Rendered Diagram"]
+            Z["Zoom: 0.5x - 3x"]
+            P["Pan: Click & Drag"]
+        end
+    end
+```
+| Feature | Description |
+|---------|-------------|
+| **Tab: Code** | View source code |
+| **Tab: Visual** | View rendered diagram |
+| **📋 Copy** | Copy source code |
+| **⬇ Export** | Download as SVG |
+| **Zoom** | Mouse wheel (0.5x - 3x) |
+| **Pan** | Click and drag |
+| **Fullscreen** | Expand view |
+
+---
+
+## DocIQ - Document Intelligence
+### RAG (Retrieval Augmented Generation)
+```mermaid
+flowchart LR
+    subgraph Upload["1. UPLOAD"]
+        A[PDF] --> D[Document Processor]
+        B[DOCX] --> D
+        C[TXT] --> D
+    end
+    subgraph Process["2. PROCESS"]
+        D --> E[Extract Text]
+        E --> F["Chunk (1000 chars)"]
+        F --> G[Store in DB]
+    end
+    subgraph Query["3. QUERY"]
+        H[User Question] --> I[Search Chunks]
+        I --> J[Retrieve Top 5]
+        J --> K[LLM + Context]
+        K --> L[Answer]
+    end
+    G --> I
+```
+### Configuration
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| **Max File Size** | 16 MB | Maximum upload size |
+| **Chunk Size** | 1000 chars | Text split size |
+| **Chunk Overlap** | 200 chars | Overlap between chunks |
+| **Top K Results** | 5 chunks | Retrieved for context |
+
+### Supported Formats
+| Format | Library | Features |
+|--------|---------|----------|
+| **PDF** | PyPDF2 | Text extraction from pages |
+| **DOCX** | python-docx | Paragraph extraction |
+| **TXT** | Built-in | UTF-8/Latin-1 encoding |
+
+---
+
+## VizIQ - Data Visualization
+### Auto-Dashboard Generation
+```mermaid
+flowchart TD
+    subgraph Input["📁 UPLOAD"]
+        A[CSV]
+        B[XLSX]
+        C[JSON]
+    end
+    subgraph Processing["🔍 PARSE & ANALYZE"]
+        D[Detect Column Types]
+        E[Calculate Statistics]
+        F[Generate KPIs]
+    end
+    subgraph Dashboard["📊 GENERATED DASHBOARD"]
+        subgraph KPIs["KPI Cards"]
+            K1["📊 $1.2M"]
+            K2["📊 156"]
+            K3["📊 7,689"]
+            K4["📊 +12.5%"]
+        end
+        subgraph Charts["Visualizations"]
+            CH1["📊 Column Chart"]
+            CH2["🍩 Doughnut Chart"]
+            CH3["📈 Line Chart"]
+        end
+        subgraph Insights["💡 AI Insights"]
+            I1["Insight 1"]
+            I2["Insight 2"]
+            I3["Insight 3"]
+        end
+    end
+    A --> D
+    B --> D
+    C --> D
+    D --> E --> F --> Dashboard
+```
+### Generated Components
+| Component | Icon | Description |
+|-----------|------|-------------|
+| **KPI Cards** | 📊 | Auto-calculated key metrics |
+| **Column Chart** | 📊 | Categorical vs numeric data |
+| **Doughnut Chart** | 🍩 | Distribution breakdown |
+| **Line Chart** | 📈 | Trend analysis over time |
+| **Comparison Chart** | 📉 | Multi-metric comparison |
+| **AI Insights** | 💡 | Pattern detection alerts |
+| **Data Table** | 📋 | First 100 rows preview |
+
+### Column Type Detection
+| Type | Detection Rule | Example |
+|------|---------------|---------|
+| `numeric` | 70%+ values are numbers | `123`, `45.67` |
+| `date` | Contains date separators | `2024-01-15`, `01/15/24` |
+| `categorical` | Everything else | `Red`, `Blue`, `Active` |
+
+---
+
+## Productivity Suite
+```mermaid
+flowchart LR
+    subgraph Tasks["📋 Tasks Module"]
+        T1["☐ Task 1 [!]"]
+        T2["☑ Task 2 [!!]"]
+        T3["☐ Task 3 [!!!]"]
+    end
+    subgraph Notes["📝 Notes Module"]
+        N1["Note Title"]
+        N2["Content..."]
+        N3["12:30 PM"]
+    end
+    subgraph Reminders["⏰ Reminders Module"]
+        R1["Meeting"]
+        R2["Dec 25, 10:00 AM"]
+    end
+```
+| Module | Features |
+|--------|----------|
+| **Tasks** | Create, Priority (High/Medium/Low), Status (Pending/Done), Filter, Delete |
+| **Notes** | Create (Title + Content), Card Display, Auto-Timestamp, Delete |
+| **Reminders** | Create (Date/Time), Alert Notifications, Delete |
 
 ---
 
 ## System Architecture
-
+### LAPLACIAN Architecture *by Perfionix AI*
 ```mermaid
-graph TB
-    subgraph CLIENT["🖥️ CLIENT LAYER"]
-        subgraph Browser["Web Browser"]
-            HTML["📄 HTML<br/>Templates"]
-            CSS["🎨 CSS<br/>Styles"]
-            JS["⚡ JavaScript<br/>Logic"]
-            Charts["📊 Chart.js<br/>Graphs"]
+flowchart TB
+    subgraph Client["🖥️ CLIENT LAYER - Web Browser"]
+        direction LR
+        subgraph Core["Core Technologies"]
+            H[HTML5 Templates]
+            C[CSS3 Styles]
+            J[ES6+ JS Logic]
+            A[Assets/Fonts]
+        end
+        subgraph Libraries["Frontend Libraries"]
+            CH[Chart.js]
+            ME[Mermaid.js]
+            HL[Highlight.js]
         end
     end
-
-    subgraph APP["⚙️ APPLICATION LAYER"]
-        subgraph Flask["Flask Backend"]
-            ChatRoute["💬 Chat<br/>Routes"]
-            DocRoute["📑 DocIQ<br/>Routes"]
-            VizRoute["📈 VizIQ<br/>Routes"]
-            TaskRoute["✅ Tasks<br/>Notes"]
+    subgraph Application["⚙️ APPLICATION LAYER - Flask 3.0.0"]
+        direction LR
+        subgraph APIs["API Endpoints"]
+            CA["/api/chat"]
+            DA["/api/dociq"]
+            VA["/api/viziq"]
+            TA["/api/tasks"]
+            NA["/api/notes"]
+            MA["/api/models"]
         end
     end
-
-    subgraph SERVICE["🔧 SERVICE LAYER"]
-        LLM["🤖 LLM API<br/>Ollama"]
-        DocProc["📄 Document<br/>Processor"]
-        DataProc["📊 Data<br/>Processor"]
-        WebSearch["🔍 Web<br/>Search"]
-        RAG["🧠 RAG<br/>Engine"]
-        ChartGen["📉 Chart<br/>Generator"]
+    subgraph Service["🔧 SERVICE LAYER"]
+        direction LR
+        subgraph AI["AI Services"]
+            OL["Ollama LLM (3 Models)"]
+            WS["Web Search (Google/DDG)"]
+            RAG["RAG Engine"]
+        end
+        subgraph Processing["Data Processing"]
+            DP["Doc Processor (PDF/DOCX/TXT)"]
+            DAN["Data Analyzer (CSV/XLSX/JSON)"]
+            CG["Chart Generator"]
+        end
     end
-
-    subgraph DATA["💾 DATA LAYER"]
-        Memory["🗃️ In-Memory<br/>Storage"]
-        Session["🔐 Session<br/>Storage"]
-        Files["📁 File<br/>Storage"]
+    subgraph Data["💾 DATA LAYER"]
+        direction LR
+        MO[(MongoDB Primary)]
+        FS[(Flask Session Backup)]
+        UP[(File Storage uploads/)]
     end
-
-    CLIENT -->|"HTTP/REST API"| APP
-    APP --> SERVICE
-    SERVICE --> DATA
-
-    style CLIENT fill:#1a1b2e,stroke:#667eea,stroke-width:2px,color:#fff
-    style APP fill:#1a1b2e,stroke:#764ba2,stroke-width:2px,color:#fff
-    style SERVICE fill:#1a1b2e,stroke:#f5576c,stroke-width:2px,color:#fff
-    style DATA fill:#1a1b2e,stroke:#00f2fe,stroke-width:2px,color:#fff
+    Client -->|REST API JSON| Application
+    Application --> Service
+    Service --> Data
 ```
 
 ---
 
-## Workflow Diagrams
-
-### Main Application Flow
-
+## Chat System Flow Diagram
+### Complete Chat Pipeline - LAPLACIAN CHAT SYSTEM *by Perfionix AI*
 ```mermaid
 flowchart TD
-    A[("👤 User<br/>Request")] --> B["🌐 Web Browser<br/>Client"]
-    B --> C["🖥️ Flask Server"]
-
-    C --> D{"🔀 Route<br/>Handler"}
-
-    D -->|Chat| E["💬 AI Chat<br/>Module"]
-    D -->|Documents| F["📑 DocIQ<br/>Module"]
-    D -->|Data| G["📊 VizIQ<br/>Module"]
-    D -->|Tasks| H["✅ Tasks/Notes<br/>Module"]
-
-    E --> I["🤖 LLM API<br/>Processing"]
-    F --> J["📄 Document<br/>Processing"]
-    G --> K["📈 Data<br/>Processing"]
-    H --> L["💾 Storage<br/>Operations"]
-
-    I --> M["📤 Response"]
-    J --> M
-    K --> M
-    L --> M
-
-    M --> N[("👤 User<br/>Response")]
-
-    style A fill:#667eea,stroke:#fff,stroke-width:2px,color:#fff
-    style N fill:#667eea,stroke:#fff,stroke-width:2px,color:#fff
-    style D fill:#764ba2,stroke:#fff,stroke-width:2px,color:#fff
-    style M fill:#00f2fe,stroke:#fff,stroke-width:2px,color:#000
-```
-
-### VizIQ Data Flow
-
-```mermaid
-flowchart LR
-    subgraph INPUT["📥 INPUT"]
-        A["📁 Upload File<br/>CSV / Excel / JSON"]
-    end
-
-    subgraph PROCESSING["⚙️ PROCESSING"]
-        B["🔍 Parse<br/>Data"]
-        C["📊 Analyze<br/>& Statistics"]
-        D["🎯 Detect<br/>Column Types"]
-    end
-
-    subgraph GENERATION["🎨 GENERATION"]
-        E["📈 Generate<br/>KPIs"]
-        F["📊 Generate<br/>Charts"]
-        G["💡 Generate<br/>Insights"]
-    end
-
-    A --> B --> C --> D
-    D --> E & F & G
-
-    subgraph DASHBOARD["📋 GENERATED DASHBOARD"]
-        direction TB
-        H["🎯 KPI Cards<br/>Key Metrics"]
-        I["📊 Visualizations<br/>Column • Distribution • Comparison"]
-        J["📈 Trend Analysis<br/>Line Chart"]
-        K["💡 AI Insights<br/>Smart Observations"]
-        L["📋 Data Preview<br/>Interactive Table"]
-    end
-
-    E --> H
-    F --> I
-    F --> J
-    G --> K
-    C --> L
-
-    style INPUT fill:#667eea,stroke:#fff,stroke-width:2px,color:#fff
-    style PROCESSING fill:#764ba2,stroke:#fff,stroke-width:2px,color:#fff
-    style GENERATION fill:#f5576c,stroke:#fff,stroke-width:2px,color:#fff
-    style DASHBOARD fill:#1a1b2e,stroke:#00f2fe,stroke-width:2px,color:#fff
-```
-
-### DocIQ RAG Flow
-
-```mermaid
-flowchart TB
-    subgraph UPLOAD["📤 DOCUMENT UPLOAD"]
-        A["📄 Upload Document<br/>PDF • DOCX • TXT • MD"]
-    end
-
-    subgraph PROCESS["⚙️ DOCUMENT PROCESSING"]
-        B["📖 Extract Text<br/>Content Extraction"]
-        C["✂️ Chunk Text<br/>Split into Segments"]
-        D["💾 Store Chunks<br/>In Memory"]
-    end
-
-    subgraph QUERY["❓ USER QUERY"]
-        E["💬 User Question<br/>Natural Language"]
-    end
-
-    subgraph RAG["🧠 RAG ENGINE"]
-        F["🔍 Find Relevant<br/>Chunks"]
-        G["📝 Build Context<br/>Combine Information"]
-        H["🤖 LLM Processing<br/>Generate Answer"]
-    end
-
-    subgraph OUTPUT["📤 OUTPUT"]
-        I["💡 AI Response<br/>Contextual Answer"]
-    end
-
-    A --> B --> C --> D
+    A[USER INPUT] --> B{Input Type}
+    B -->|Enter| C[Send Message]
+    B -->|Ctrl+Enter| D[Force Search]
+    B -->|Edit Button| E[Edit Message]
+    C --> F["Show Typing ● ● ●"]
+    D --> F
     E --> F
-    D -.->|"Search"| F
-    F --> G --> H --> I
-
-    style UPLOAD fill:#667eea,stroke:#fff,stroke-width:2px,color:#fff
-    style PROCESS fill:#764ba2,stroke:#fff,stroke-width:2px,color:#fff
-    style QUERY fill:#f5576c,stroke:#fff,stroke-width:2px,color:#fff
-    style RAG fill:#00f2fe,stroke:#fff,stroke-width:2px,color:#000
-    style OUTPUT fill:#667eea,stroke:#fff,stroke-width:2px,color:#fff
+    F --> G{should_search_web?}
+    G -->|Yes| H[Web Search]
+    G -->|No| I[Direct Query]
+    subgraph Search["Search Providers"]
+        H --> H1[1. Google API]
+        H --> H2[2. DuckDuckGo]
+        H --> H3[3. Direct Scrape]
+    end
+    H1 --> J
+    H2 --> J
+    H3 --> J
+    I --> J
+    J[Model Selection] --> K{Selected Model}
+    K -->|Core| L["gpt-oss:20b-cloud"]
+    K -->|Lite| M["-"]
+    K -->|Coder| N["qwen3-coder:480b-cloud"]
+    L --> O["OLLAMA API :11434"]
+    M --> O
+    N --> O
+    O --> P[AI RESPONSE]
+    P --> Q["Generation Controls<br/>⏸ Pause | ▶ Continue | ⏹ Stop"]
+    Q --> R["Typewriter Effect<br/>5ms | 3 chars | ▌"]
+    R --> S["Markdown Rendering<br/>marked.js → HTML"]
+    S --> T{Content Type}
+    T -->|Code| U["CODE BLOCK<br/>[Copy] [Run]"]
+    T -->|Mermaid| V["MERMAID DIAGRAM<br/>[Export]"]
+    T -->|Text| W[PLAIN TEXT]
+    U --> X["Save to Storage<br/>MongoDB + Session"]
+    V --> X
+    W --> X
+    X --> Y["Display Message<br/>+ Edit Button + Timestamp"]
 ```
 
-### Complete System Interaction
-
+### State Machine
 ```mermaid
-sequenceDiagram
-    participant U as 👤 User
-    participant B as 🌐 Browser
-    participant F as 🖥️ Flask
-    participant L as 🤖 LLM
-    participant D as 💾 Data
-
-    rect rgb(102, 126, 234)
-        Note over U,D: Chat Flow
-        U->>B: Send Message
-        B->>F: POST /api/chat
-        F->>L: Process with LLM
-        L-->>F: AI Response
-        F-->>B: JSON Response
-        B-->>U: Display Message
-    end
-
-    rect rgb(118, 75, 162)
-        Note over U,D: DocIQ Flow
-        U->>B: Upload Document
-        B->>F: POST /api/dociq/upload
-        F->>D: Store & Process
-        D-->>F: Chunks Ready
-        U->>B: Ask Question
-        B->>F: POST /api/dociq/chat
-        F->>L: RAG + LLM
-        L-->>F: Contextual Answer
-        F-->>B: Response
-        B-->>U: Display Answer
-    end
-
-    rect rgb(245, 87, 108)
-        Note over U,D: VizIQ Flow
-        U->>B: Upload Data File
-        B->>F: POST /api/viziq/upload
-        F->>F: Parse & Analyze
-        F->>F: Generate Dashboard
-        F-->>B: KPIs + Charts + Insights
-        B-->>U: Render Dashboard
-    end
+stateDiagram-v2
+    [*] --> IDLE
+    IDLE --> SENDING: User sends message
+    SENDING --> SEARCHING: Search keywords found
+    SENDING --> PROCESSING: Direct query
+    SEARCHING --> PROCESSING: Search complete
+    PROCESSING --> GENERATING: LLM responds
+    GENERATING --> PAUSED: Click Pause
+    GENERATING --> STOPPED: Click Stop
+    GENERATING --> RENDERING: Complete
+    PAUSED --> GENERATING: Click Continue
+    PAUSED --> STOPPED: Click Stop
+    STOPPED --> RENDERING: Partial content
+    RENDERING --> SAVING: Markdown done
+    SAVING --> IDLE: Message displayed
 ```
+#### State Transitions
+| From | To | Trigger |
+|------|----|---------|
+| IDLE | SENDING | User sends message |
+| SENDING | SEARCHING | Search keywords found |
+| SENDING | PROCESSING | Direct query |
+| SEARCHING | PROCESSING | Search complete |
+| PROCESSING | GENERATING | LLM responds |
+| GENERATING | PAUSED | User clicks Pause |
+| GENERATING | STOPPED | User clicks Stop |
+| PAUSED | GENERATING | User clicks Continue |
+| PAUSED | STOPPED | User clicks Stop |
+| GENERATING | RENDERING | Complete |
+| STOPPED | RENDERING | Partial content |
+| RENDERING | SAVING | Markdown done |
+| SAVING | IDLE | Message displayed |
 
 ---
 
 ## Tech Stack
-
 ### Backend
-
-| Technology | Purpose | Version |
+| Technology | Version | Purpose |
 |------------|---------|---------|
-| **Python** | Core programming language | 3.8+ |
-| **Flask** | Web framework | 3.0.0 |
-| **Werkzeug** | WSGI utilities | 3.0.1 |
-| **Requests** | HTTP client | 2.31.0 |
-| **python-dotenv** | Environment management | 1.0.0 |
-
-### Document Processing
-
-| Technology | Purpose | Version |
-|------------|---------|---------|
-| **PyPDF2** | PDF parsing | 3.0.1 |
-| **python-docx** | DOCX parsing | 1.1.0 |
-| **BeautifulSoup4** | HTML/XML parsing | 4.12.2 |
-
-### Data Processing
-
-| Technology | Purpose | Version |
-|------------|---------|---------|
-| **openpyxl** | Excel file processing | 3.1.2 |
-| **CSV (stdlib)** | CSV file processing | Built-in |
-| **JSON (stdlib)** | JSON processing | Built-in |
-
-### Audio Processing
-
-| Technology | Purpose | Version |
-|------------|---------|---------|
-| **SpeechRecognition** | Voice input | 3.10.0 |
-| **PyAudio** | Audio I/O | 0.2.14 |
-| **pydub** | Audio manipulation | 0.25.1 |
+| **Python** | 3.8+ | Core Language |
+| **Flask** | 3.0.0 | Web Framework |
+| **pymongo** | 4.6.1 | MongoDB Driver |
+| **PyPDF2** | 3.0.1 | PDF Processing |
+| **python-docx** | 1.1.0 | Word Documents |
+| **openpyxl** | 3.1.2 | Excel Files |
+| **BeautifulSoup4** | 4.12.2 | Web Scraping |
+| **requests** | 2.31.0 | HTTP Client |
 
 ### Frontend
-
-| Technology | Purpose |
-|------------|---------|
-| **HTML5** | Structure |
-| **CSS3** | Styling (Custom dark theme) |
-| **JavaScript (ES6+)** | Interactivity |
-| **Chart.js** | Data visualization |
-| **Highlight.js** | Code syntax highlighting |
-| **Marked.js** | Markdown parsing |
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **HTML5** | - | Structure |
+| **CSS3** | - | Glassmorphism Dark Theme |
+| **JavaScript** | ES6+ | Interactivity |
+| **Chart.js** | Latest | Data Visualization |
+| **Mermaid.js** | 10.6.1 | Diagram Rendering |
+| **Highlight.js** | 11.9.0 | Syntax Highlighting |
+| **Marked.js** | Latest | Markdown Parsing |
 
 ### External Services
-
 | Service | Purpose |
 |---------|---------|
-| **Ollama** | Local LLM inference |
-| **Google Search** | Web search integration |
-| **ElevenLabs** | Text-to-speech (optional) |
+| **Ollama** | Local LLM Inference |
+| **MongoDB** | Persistent Storage |
+| **Google/DuckDuckGo** | Web Search |
+| **ElevenLabs** | Text-to-Speech (Optional) |
 
 ---
 
-## Installation
-
-### Prerequisites
-
-- Python 3.8 or higher
-- pip (Python package manager)
-- Ollama (for local LLM) or compatible LLM API
-- Modern web browser
-
-### Step-by-Step Installation
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/perfionix-ai/axio.git
-   cd axio
-   ```
-
-2. **Create Virtual Environment (Recommended)**
-   ```bash
-   python -m venv venv
-
-   # Windows
-   venv\Scripts\activate
-
-   # Linux/Mac
-   source venv/bin/activate
-   ```
-
-3. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Configure Environment**
-   ```bash
-   # Create .env file
-   cp .env.example .env
-
-   # Edit .env with your settings
-   GPT_SERVER_URL=http://localhost:11434/api/chat
-   GPT_MODEL=llama3.2
-   ELEVENLABS_API_KEY=your_key_here  # Optional
-   ```
-
-5. **Start Ollama (if using local LLM)**
-   ```bash
-   ollama serve
-   ollama pull llama3.2
-   ```
-
-6. **Run the Application**
-   ```bash
-   python app.py
-   ```
-
-7. **Access Axio**
-   ```
-   Open browser: http://localhost:5000
-   ```
-
----
-
-## Project Structure
-
-```
-axio/
-├── app.py                      # Main Flask application
-├── requirements.txt            # Python dependencies
-├── .env                        # Environment configuration
-├── README.md                   # Documentation
-│
-├── templates/
-│   └── index.html              # Main HTML template
-│
-├── static/
-│   ├── style.css               # Custom CSS styles
-│   ├── script.js               # JavaScript logic
-│   └── logo gen .png           # Application logo
-│
-└── uploads/                    # Temporary file uploads (auto-created)
-```
-
----
-
-## Module Details
-
-### AI Chat Module
-
-```python
-# Key Functions
-- chat(): Handle chat messages
-- format_response(): Format AI responses with markdown
-- Web search integration with fallback
-- Streaming response support
-```
-
-**Features:**
-- Multi-turn conversations
-- Context management (15 messages)
-- Code syntax highlighting
-- Web search for real-time data
-- Message editing capability
-
-### DocIQ Module
-
-```python
-# Key Functions
-- dociq_upload(): Handle document uploads
-- dociq_chat(): Process document queries
-- extract_text_from_pdf(): PDF text extraction
-- extract_text_from_docx(): DOCX text extraction
-- chunk_text(): Split text for RAG
-- find_relevant_chunks(): Retrieve relevant context
-```
-
-**Supported Formats:**
-- PDF (.pdf)
-- Word Documents (.docx)
-- Text Files (.txt)
-- Markdown Files (.md)
-
-### VizIQ Module
-
-```python
-# Key Functions
-- viziq_upload(): Handle data file uploads
-- parse_csv_data(): CSV parsing
-- parse_excel_data(): Excel parsing
-- detect_column_types(): Auto-detect data types
-- calculate_statistics(): Compute statistics
-- generate_kpis(): Generate KPI cards
-- generate_chart_configs(): Create chart configurations
-- generate_insights(): AI-powered insights
-```
-
-**Chart Types Generated:**
-1. Column Chart - Categorical data visualization
-2. Distribution Chart - Data distribution (Doughnut)
-3. Comparison Chart - Metric comparisons
-4. Trend Chart - Time series analysis
-
----
-
-## API Endpoints
-
-### Chat API
-
+## API Reference
+### Chat Endpoints
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/chat` | POST | Send chat message |
-| `/api/chat/clear` | POST | Clear chat history |
+| `/api/chat` | POST | Send message to AI |
+| `/api/chat/edit` | POST | Edit message and regenerate |
+| `/api/chat/reset` | POST | Clear conversation |
+| `/api/chat/debug` | GET | Debug conversation state |
+| `/api/models` | GET | List available AI models |
+| `/api/models/select` | POST | Switch AI model |
+| `/api/search` | POST | Web search with summary |
+| `/api/speech` | POST | Text-to-speech |
 
-### DocIQ API
-
+### DocIQ Endpoints
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/dociq/upload` | POST | Upload document |
+| `/api/dociq/documents` | GET | List uploaded documents |
+| `/api/dociq/documents/<id>` | DELETE | Delete document |
 | `/api/dociq/chat` | POST | Query documents |
-| `/api/dociq/clear` | POST | Clear documents |
+| `/api/dociq/summary` | GET | Get document summary |
+| `/api/dociq/clear` | POST | Clear all documents |
 
-### VizIQ API
-
+### VizIQ Endpoints
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/viziq/upload` | POST | Upload data file |
+| `/api/viziq/data` | GET | Get current data |
 | `/api/viziq/clear` | POST | Clear data |
 
-### Task Management API
-
+### Productivity Endpoints
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/tasks` | GET | Get all tasks |
-| `/api/tasks` | POST | Create task |
-| `/api/tasks/<id>` | PUT | Update task |
-| `/api/tasks/<id>` | DELETE | Delete task |
-
-### Notes API
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/notes` | GET | Get all notes |
-| `/api/notes` | POST | Create note |
+| `/api/tasks` | GET/POST | List/Create tasks |
+| `/api/tasks/<id>` | PUT/DELETE | Update/Delete task |
+| `/api/notes` | GET/POST | List/Create notes |
 | `/api/notes/<id>` | DELETE | Delete note |
-
-### Reminders API
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/reminders` | GET | Get all reminders |
-| `/api/reminders` | POST | Create reminder |
+| `/api/reminders` | GET/POST | List/Create reminders |
 | `/api/reminders/<id>` | DELETE | Delete reminder |
+| `/api/stats` | GET | Get user statistics |
 
 ---
 
-## Screenshots
+## Installation Guide
+### Prerequisites
+- Python 3.8+
+- MongoDB (optional, recommended)
+- Ollama with models installed
+- Modern web browser
 
-### Dashboard Layout
-```
-+------------------------------------------------------------------+
-|  [Logo]  AXIO                    [Chat] [Tasks] [Notes] [DocIQ]  |
-+------------------------------------------------------------------+
-|                                                                   |
-|  Welcome to Axio! How can I help you today?                      |
-|                                                                   |
-|  +------------------------------------------------------------+  |
-|  |  User: How do I create a REST API in Python?               |  |
-|  +------------------------------------------------------------+  |
-|  |  Axio: Here's how to create a REST API using Flask:        |  |
-|  |                                                             |  |
-|  |  ```python                                                  |  |
-|  |  from flask import Flask, jsonify                          |  |
-|  |  app = Flask(__name__)                                      |  |
-|  |                                                             |  |
-|  |  @app.route('/api/data')                                   |  |
-|  |  def get_data():                                           |  |
-|  |      return jsonify({"message": "Hello!"})                 |  |
-|  |  ```                                                        |  |
-|  +------------------------------------------------------------+  |
-|                                                                   |
-|  [____________________Type your message..._____________________]  |
-+------------------------------------------------------------------+
-```
+### Quick Start
 
-### VizIQ Dashboard
-```
-+------------------------------------------------------------------+
-|  Sales Analytics Dashboard                                        |
-|  AI-generated insights from sales_data.csv                       |
-|  [1,234 Rows] [8 Columns] [Updated: Now]                         |
-+------------------------------------------------------------------+
-|  [Total Revenue]  [Avg Order]  [Total Orders]  [Growth Rate]     |
-|  [$1.2M]          [$156]       [7,689]         [+12.5%]          |
-+------------------------------------------------------------------+
-|  [Column Chart]  [Distribution]  [Comparison]                     |
-|  Revenue by      Product Mix     Metrics                          |
-|  Category                        Comparison                       |
-+------------------------------------------------------------------+
-|  [              Trend Analysis: Revenue Over Time               ] |
-+------------------------------------------------------------------+
-|  [Insight 1]  [Insight 2]  [Insight 3]  [Insight 4]              |
-+------------------------------------------------------------------+
+```bash
+# 1. Clone repository
+git clone https://github.com/TR0J49/laplacian-ai.git
+cd laplacian
+
+# 2. Create virtual environment
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+# Linux/Mac
+source venv/bin/activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# 5. Start Ollama and pull models
+ollama serve
+ollama pull phi3:mini
+ollama pull qwen3-coder
+
+# 6. Run application
+python app.py
+
+# 7. Access Laplacian
+# Open http://localhost:5000
 ```
 
 ---
 
 ## Future Roadmap
+### Version 2.1 (Q1 2025)
+- [ ] Voice input with speech recognition
+- [ ] Multi-language interface support
+- [ ] Advanced RAG with embeddings
+- [ ] Export chat history as PDF
+- [ ] Code execution for Python (sandboxed)
 
-### Version 2.1
-- [ ] Database integration (SQLite/PostgreSQL)
+### Version 2.2 (Q2 2025)
 - [ ] User authentication system
-- [ ] Export dashboards as PDF/PNG
+- [ ] Team collaboration features
+- [ ] Custom model fine-tuning
+- [ ] API rate limiting
+- [ ] Webhook integrations
 
-### Version 2.2
-- [ ] Voice input (speech-to-text)
-- [ ] Multi-language support
-- [ ] Calendar integration
-
-### Version 3.0
+### Version 3.0 (Q3 2025)
 - [ ] Mobile responsive PWA
-- [ ] Real-time collaboration
 - [ ] Plugin architecture
-- [ ] Custom AI model fine-tuning
-
----
-
-## Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Code Style
-- Follow PEP 8 for Python code
-- Use meaningful variable names
-- Add comments for complex logic
-- Write unit tests for new features
-
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- [ ] Real-time collaboration
+- [ ] Enterprise SSO integration
+- [ ] Self-hosted deployment guide
 
 ---
 
 ## Contact & Support
+| | |
+|---|---|
+| **Company** | Perfionix AI Technology Pvt Ltd |
+| **Product** | LAPLACIAN v2.0 |
+| **Founder** | Shubham Rahangdale |
+| **Email** | connect@perfionixai.com |
 
-**Perfionix AI**
-
-- Website: [perfionix.ai](https://perfionix.ai)
-- Email: support@perfionix.ai
-- GitHub: [github.com/perfionix-ai](https://github.com/perfionix-ai)
+**Technical Support:** connect@perfionixai.com
+**Subject Format:** `[LAPLACIAN] <Issue Type> - <Brief Description>`
 
 ---
 
 <p align="center">
-  <strong>Built with by Perfionix AI</strong>
+  <img src="static/logo.png" alt="Perfionix AI" width="100">
 </p>
 
 <p align="center">
-  <em>Empowering productivity through intelligent automation</em>
+  <strong>LAPLACIAN v2.0</strong><br>
+  <em>AI Code Assistant & Productivity Platform</em>
+</p>
+
+<p align="center">
+  <strong>Perfionix AI Technology Pvt Ltd</strong><br>
+  
+</p>
+
+<p align="center">
+  <em>"Empowering developers with intelligent AI"</em>
 </p>
 
 ---
 
-**Version:** 2.0.0
-**Last Updated:** December 2024
-**Status:** Active Development
+<p align="center">
+  <sub>Copyright 2024 Perfionix AI Technology Pvt Ltd. All rights reserved.</sub>
+</p>
+
+---
+
+**Document Version:** 2.0.0
+**Last Updated:** December 2025
+**Status:** Production Ready
+**Classification:** Public Documentation

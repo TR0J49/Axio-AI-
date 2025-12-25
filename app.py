@@ -39,11 +39,11 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 GPT_SERVER_URL = os.getenv('GPT_SERVER_URL', 'http://localhost:11434/api/chat')
 GPT_MODEL = os.getenv('GPT_MODEL', 'gpt-oss:20b-cloud')
 
-# Axio Lite Configuration (Ollama with phi3:mini)
+# Laplacian Lite Configuration (Ollama with phi3:mini)
 LITE_MODEL = os.getenv('LITE_MODEL', 'phi3:mini')
 LITE_SERVER_URL = os.getenv('GPT_SERVER_URL', 'http://localhost:11434/api/chat')
 
-# Axio Coder Configuration (Ollama with qwen3-coder)
+# Laplacian Coder Configuration (Ollama with qwen3-coder)
 CODER_MODEL = os.getenv('CODER_MODEL', 'qwen3-coder:480b-cloud')
 
 # Check if Lite model is available
@@ -56,9 +56,9 @@ try:
     )
     if test_response.status_code == 200:
         LITE_AVAILABLE = True
-        print(f"[OK] Axio Lite model ({LITE_MODEL}) initialized and verified")
+        print(f"[OK] Laplacian Lite model ({LITE_MODEL}) initialized and verified")
 except Exception as e:
-    print(f"[WARNING] Axio Lite model ({LITE_MODEL}) not available: {str(e)}")
+    print(f"[WARNING] Laplacian Lite model ({LITE_MODEL}) not available: {str(e)}")
     LITE_AVAILABLE = False
 
 # Check if Coder model is available
@@ -71,9 +71,9 @@ try:
     )
     if test_response.status_code == 200:
         CODER_AVAILABLE = True
-        print(f"[OK] Axio Coder model ({CODER_MODEL}) initialized and verified")
+        print(f"[OK] Laplacian Coder model ({CODER_MODEL}) initialized and verified")
 except Exception as e:
-    print(f"[WARNING] Axio Coder model ({CODER_MODEL}) not available: {str(e)}")
+    print(f"[WARNING] Laplacian Coder model ({CODER_MODEL}) not available: {str(e)}")
     CODER_AVAILABLE = False
 
 # Other APIs
@@ -86,17 +86,17 @@ DEFAULT_AI_MODEL = os.getenv('DEFAULT_AI_MODEL', 'gemini' if LITE_AVAILABLE else
 # Available AI Models
 AI_MODELS = {
     'gpt': {
-        'name': 'AXIO Core',
+        'name': 'LAPLACIAN Core',
         'description': 'Local GPT model via Ollama',
         'available': True
     },
     'gemini': {
-        'name': 'AXIO Lite',
+        'name': 'LAPLACIAN Lite',
         'description': f'Perfionix AI ({LITE_MODEL})',
         'available': LITE_AVAILABLE
     },
     'coder': {
-        'name': 'AXIO Coder',
+        'name': 'LAPLACIAN Coder',
         'description': f'Code Expert ({CODER_MODEL})',
         'available': CODER_AVAILABLE
     }
@@ -137,7 +137,7 @@ viziq_storage = {
 
 def get_system_prompt():
     """Get the system prompt with current date/time"""
-    return f"""You are Axio by Perfionix AI – a professional coding assistant and programming expert with web search capabilities.
+    return f"""You are Laplacian by Perfionix AI – a professional coding assistant and programming expert with web search capabilities.
 
 You help developers with:
 - Writing, debugging, and optimizing code
@@ -254,8 +254,8 @@ def generate_gpt_response(conversation):
     }
 
     try:
-        print(f"[Axio Core] Using model: {GPT_MODEL}")
-        print(f"[Axio Core] Sending request to: {GPT_SERVER_URL}")
+        print(f"[Laplacian Core] Using model: {GPT_MODEL}")
+        print(f"[Laplacian Core] Sending request to: {GPT_SERVER_URL}")
 
         response = requests.post(GPT_SERVER_URL, headers=headers, json=payload, timeout=300)
         response.raise_for_status()
@@ -263,31 +263,31 @@ def generate_gpt_response(conversation):
 
         if "message" in data and "content" in data["message"]:
             content = data["message"]["content"]
-            print(f"[Axio Core] Response received: {len(content)} characters")
+            print(f"[Laplacian Core] Response received: {len(content)} characters")
             return content
 
-        print(f"[Axio Core] Unexpected response format: {data}")
+        print(f"[Laplacian Core] Unexpected response format: {data}")
         return "Sorry, I couldn't process that request."
 
     except requests.exceptions.Timeout:
-        print(f"[Axio Core] Request timed out")
+        print(f"[Laplacian Core] Request timed out")
         return "Request timed out. The model is taking too long to respond. Please try again."
     except requests.exceptions.ConnectionError as e:
-        print(f"[Axio Core] Connection error: {str(e)}")
+        print(f"[Laplacian Core] Connection error: {str(e)}")
         return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {GPT_MODEL} model pulled."
     except requests.exceptions.HTTPError as e:
-        print(f"[Axio Core] HTTP error: {str(e)}")
+        print(f"[Laplacian Core] HTTP error: {str(e)}")
         if "404" in str(e):
             return f"Model '{GPT_MODEL}' not found. Please run: ollama pull {GPT_MODEL}"
         return f"HTTP error occurred: {str(e)}"
     except requests.exceptions.RequestException as e:
-        print(f"[Axio Core] Request error: {str(e)}")
+        print(f"[Laplacian Core] Request error: {str(e)}")
         return f"Connection error: Unable to reach AI server. Please ensure Ollama is running."
     except json.JSONDecodeError as e:
-        print(f"[Axio Core] JSON decode error: {str(e)}")
+        print(f"[Laplacian Core] JSON decode error: {str(e)}")
         return "Error parsing response from the model. Please try again."
     except Exception as e:
-        print(f"[Axio Core] Unexpected error: {str(e)}")
+        print(f"[Laplacian Core] Unexpected error: {str(e)}")
         return f"An unexpected error occurred: {str(e)}"
 
 def generate_lite_response(conversation):
@@ -306,8 +306,8 @@ def generate_lite_response(conversation):
     }
 
     try:
-        print(f"[Axio Lite] Using model: {LITE_MODEL}")
-        print(f"[Axio Lite] Sending request to: {LITE_SERVER_URL}")
+        print(f"[Laplacian Lite] Using model: {LITE_MODEL}")
+        print(f"[Laplacian Lite] Sending request to: {LITE_SERVER_URL}")
 
         response = requests.post(LITE_SERVER_URL, headers=headers, json=payload, timeout=300)
         response.raise_for_status()
@@ -315,32 +315,32 @@ def generate_lite_response(conversation):
 
         if "message" in data and "content" in data["message"]:
             content = data["message"]["content"]
-            print(f"[Axio Lite] Response received: {len(content)} characters")
+            print(f"[Laplacian Lite] Response received: {len(content)} characters")
             return content
 
-        print(f"[Axio Lite] Unexpected response format: {data}")
-        return "Sorry, I couldn't process that request with Axio Lite."
+        print(f"[Laplacian Lite] Unexpected response format: {data}")
+        return "Sorry, I couldn't process that request with Laplacian Lite."
 
     except requests.exceptions.Timeout:
-        print(f"[Axio Lite] Request timed out")
+        print(f"[Laplacian Lite] Request timed out")
         return "Request timed out. The model is taking too long to respond. Please try again."
     except requests.exceptions.ConnectionError as e:
-        print(f"[Axio Lite] Connection error: {str(e)}")
+        print(f"[Laplacian Lite] Connection error: {str(e)}")
         return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {LITE_MODEL} model pulled."
     except requests.exceptions.HTTPError as e:
-        print(f"[Axio Lite] HTTP error: {str(e)}")
+        print(f"[Laplacian Lite] HTTP error: {str(e)}")
         if "404" in str(e):
             return f"Model '{LITE_MODEL}' not found. Please run: ollama pull {LITE_MODEL}"
         return f"HTTP error occurred: {str(e)}"
     except requests.exceptions.RequestException as e:
-        print(f"[Axio Lite] Request error: {str(e)}")
-        return f"Connection error: Unable to reach Ollama server for Axio Lite. Please ensure Ollama is running."
+        print(f"[Laplacian Lite] Request error: {str(e)}")
+        return f"Connection error: Unable to reach Ollama server for Laplacian Lite. Please ensure Ollama is running."
     except json.JSONDecodeError as e:
-        print(f"[Axio Lite] JSON decode error: {str(e)}")
+        print(f"[Laplacian Lite] JSON decode error: {str(e)}")
         return "Error parsing response from the model. Please try again."
     except Exception as e:
-        print(f"[Axio Lite] Unexpected error: {str(e)}")
-        return f"An unexpected error occurred with Axio Lite: {str(e)}"
+        print(f"[Laplacian Lite] Unexpected error: {str(e)}")
+        return f"An unexpected error occurred with Laplacian Lite: {str(e)}"
 
 def generate_coder_response(conversation):
     """Generate AI response using Ollama with Qwen3 Coder model for coding tasks"""
@@ -358,8 +358,8 @@ def generate_coder_response(conversation):
     }
 
     try:
-        print(f"[Axio Coder] Using model: {CODER_MODEL}")
-        print(f"[Axio Coder] Sending request to: {LITE_SERVER_URL}")
+        print(f"[Laplacian Coder] Using model: {CODER_MODEL}")
+        print(f"[Laplacian Coder] Sending request to: {LITE_SERVER_URL}")
 
         response = requests.post(LITE_SERVER_URL, headers=headers, json=payload, timeout=300)
         response.raise_for_status()
@@ -367,32 +367,32 @@ def generate_coder_response(conversation):
 
         if "message" in data and "content" in data["message"]:
             content = data["message"]["content"]
-            print(f"[Axio Coder] Response received: {len(content)} characters")
+            print(f"[Laplacian Coder] Response received: {len(content)} characters")
             return content
 
-        print(f"[Axio Coder] Unexpected response format: {data}")
-        return "Sorry, I couldn't process that request with Axio Coder."
+        print(f"[Laplacian Coder] Unexpected response format: {data}")
+        return "Sorry, I couldn't process that request with Laplacian Coder."
 
     except requests.exceptions.Timeout:
-        print(f"[Axio Coder] Request timed out")
+        print(f"[Laplacian Coder] Request timed out")
         return "Request timed out. The model is taking too long to respond. Please try again."
     except requests.exceptions.ConnectionError as e:
-        print(f"[Axio Coder] Connection error: {str(e)}")
+        print(f"[Laplacian Coder] Connection error: {str(e)}")
         return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {CODER_MODEL} model pulled."
     except requests.exceptions.HTTPError as e:
-        print(f"[Axio Coder] HTTP error: {str(e)}")
+        print(f"[Laplacian Coder] HTTP error: {str(e)}")
         if "404" in str(e):
             return f"Model '{CODER_MODEL}' not found. Please run: ollama pull {CODER_MODEL}"
         return f"HTTP error occurred: {str(e)}"
     except requests.exceptions.RequestException as e:
-        print(f"[Axio Coder] Request error: {str(e)}")
-        return f"Connection error: Unable to reach Ollama server for Axio Coder. Please ensure Ollama is running."
+        print(f"[Laplacian Coder] Request error: {str(e)}")
+        return f"Connection error: Unable to reach Ollama server for Laplacian Coder. Please ensure Ollama is running."
     except json.JSONDecodeError as e:
-        print(f"[Axio Coder] JSON decode error: {str(e)}")
+        print(f"[Laplacian Coder] JSON decode error: {str(e)}")
         return "Error parsing response from the model. Please try again."
     except Exception as e:
-        print(f"[Axio Coder] Unexpected error: {str(e)}")
-        return f"An unexpected error occurred with Axio Coder: {str(e)}"
+        print(f"[Laplacian Coder] Unexpected error: {str(e)}")
+        return f"An unexpected error occurred with Laplacian Coder: {str(e)}"
 
 def generate_ai_response(conversation, model=None):
     """Generate AI response from conversation history using selected model"""
@@ -2278,12 +2278,12 @@ def viziq_get_data():
 
 if __name__ == '__main__':
     print("=" * 50)
-    print("Axio AI Code Assistant by Perfionix AI - Starting...")
+    print("Laplacian AI Code Assistant by Perfionix AI - Starting...")
     print("=" * 50)
     print(f"Ollama Server: {GPT_SERVER_URL}")
-    print(f"AXIO Core Model: {GPT_MODEL}")
-    print(f"AXIO Lite Model: {LITE_MODEL} - {'Available' if LITE_AVAILABLE else 'Not available'}")
-    print(f"AXIO Coder Model: {CODER_MODEL} - {'Available' if CODER_AVAILABLE else 'Not available'}")
+    print(f"LAPLACIAN Core Model: {GPT_MODEL}")
+    print(f"LAPLACIAN Lite Model: {LITE_MODEL} - {'Available' if LITE_AVAILABLE else 'Not available'}")
+    print(f"LAPLACIAN Coder Model: {CODER_MODEL} - {'Available' if CODER_AVAILABLE else 'Not available'}")
     print(f"Voice: {'Enabled' if ELEVENLABS_API_KEY else 'Disabled (no API key)'}")
     print(f"MongoDB: {'Connected' if USE_MONGODB and db.is_connected() else 'Not connected (using in-memory storage)'}")
     print("=" * 50)

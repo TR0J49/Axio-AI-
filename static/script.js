@@ -1,10 +1,10 @@
 // ================================
-// AXIO - AI CODE ASSISTANT
+// LAPLACIAN - AI CODE ASSISTANT
 // by Perfionix AI
 // Interactive JavaScript
 // ================================
 
-class AxioAssistant {
+class LaplacianAssistant {
     constructor() {
         this.currentView = 'chat';
         this.notes = [];
@@ -515,9 +515,9 @@ class AxioAssistant {
         const modelOptions = document.querySelectorAll('.model-option');
 
         // Determine display name based on model ID
-        let displayName = 'AXIO Core';
-        if (currentModel === 'gemini') displayName = 'AXIO Lite';
-        else if (currentModel === 'coder') displayName = 'AXIO Coder';
+        let displayName = 'LAPLACIAN Core';
+        if (currentModel === 'gemini') displayName = 'LAPLACIAN Lite';
+        else if (currentModel === 'coder') displayName = 'LAPLACIAN Coder';
 
         if (models) {
             const activeModel = models.find(m => m.id === currentModel);
@@ -878,18 +878,68 @@ class AxioAssistant {
     }
 
     copyCode(button, code) {
-        navigator.clipboard.writeText(code).then(() => {
-            const originalText = button.innerHTML;
-            button.innerHTML = '✓ Copied!';
-            button.classList.add('copied');
+        const originalText = button.innerHTML;
 
-            setTimeout(() => {
-                button.innerHTML = originalText;
-                button.classList.remove('copied');
-            }, 2000);
-        }).catch(err => {
-            console.error('Failed to copy code:', err);
-        });
+        // Try modern clipboard API first
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(code).then(() => {
+                this.showCopySuccess(button, originalText);
+            }).catch(err => {
+                console.error('Clipboard API failed:', err);
+                this.fallbackCopy(button, code, originalText);
+            });
+        } else {
+            // Fallback for non-secure contexts or older browsers
+            this.fallbackCopy(button, code, originalText);
+        }
+    }
+
+    fallbackCopy(button, code, originalText) {
+        try {
+            // Create temporary textarea
+            const textArea = document.createElement('textarea');
+            textArea.value = code;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            textArea.style.top = '-9999px';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            // Execute copy command
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            if (successful) {
+                this.showCopySuccess(button, originalText);
+            } else {
+                this.showCopyError(button, originalText);
+            }
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            this.showCopyError(button, originalText);
+        }
+    }
+
+    showCopySuccess(button, originalText) {
+        button.innerHTML = '✓ Copied!';
+        button.classList.add('copied');
+
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+    }
+
+    showCopyError(button, originalText) {
+        button.innerHTML = '✗ Failed';
+        button.classList.add('copy-error');
+
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('copy-error');
+        }, 2000);
     }
 
     showTypingIndicator(customMessage = null) {
@@ -1506,8 +1556,8 @@ class AxioAssistant {
         try {
             await waitForMermaid();
 
-            // Clean the code
-            const cleanCode = code.trim();
+            // Sanitize mermaid code to fix common syntax issues
+            const cleanCode = this.sanitizeMermaidCode(code.trim());
 
             // Generate unique ID to avoid conflicts
             const uniqueId = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -1544,6 +1594,53 @@ class AxioAssistant {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    sanitizeMermaidCode(code) {
+        // Fix common Mermaid syntax issues
+        let sanitized = code;
+
+        // Replace problematic characters inside square brackets []
+        // Match node definitions like A[text with (parentheses) or special/chars]
+        sanitized = sanitized.replace(/\[([^\]]*)\]/g, (match, content) => {
+            // Replace parentheses with angle brackets or remove them
+            let fixed = content
+                .replace(/\(/g, '<')
+                .replace(/\)/g, '>')
+                .replace(/\//g, '-')
+                .replace(/\\/g, '-')
+                .replace(/"/g, "'")
+                .replace(/&/g, 'and');
+            return `["${fixed}"]`;
+        });
+
+        // Fix node definitions with parentheses () - stadium shape
+        sanitized = sanitized.replace(/\(([^\)]*)\)/g, (match, content, offset, str) => {
+            // Check if this is inside a node definition (preceded by letter/number and bracket)
+            const before = str.substring(Math.max(0, offset - 3), offset);
+            if (/\w\s*$/.test(before) || /\]\s*$/.test(before)) {
+                // This might be a stadium node, keep it but sanitize content
+                let fixed = content
+                    .replace(/\//g, '-')
+                    .replace(/\\/g, '-')
+                    .replace(/"/g, "'")
+                    .replace(/&/g, 'and');
+                return `("${fixed}")`;
+            }
+            return match;
+        });
+
+        // Fix double brackets/quotes that may have been introduced
+        sanitized = sanitized.replace(/\[\["/g, '["');
+        sanitized = sanitized.replace(/"\]\]/g, '"]');
+        sanitized = sanitized.replace(/\(\("/g, '("');
+        sanitized = sanitized.replace(/"\)\)/g, '")');
+
+        // Remove any empty quotes
+        sanitized = sanitized.replace(/\[""\]/g, '[ ]');
+        sanitized = sanitized.replace(/\(""\)/g, '( )');
+
+        return sanitized;
     }
 
     addDiagramInteractivity(container) {
@@ -1827,7 +1924,7 @@ class AxioAssistant {
                         </div>
                     </div>
                     <div class="message-content">
-                        <div class="message-text">Hello! I'm Axio, your AI coding assistant by Perfionix AI. I can help you with code, debugging, algorithms, and programming questions. What would you like to work on?</div>
+                        <div class="message-text">Hello! I'm Laplacian, your AI coding assistant by Perfionix AI. I can help you with code, debugging, algorithms, and programming questions. What would you like to work on?</div>
                         <span class="message-time">${this.formatTime(new Date())}</span>
                     </div>
                 </div>
@@ -1876,8 +1973,8 @@ class AxioAssistant {
                 </select>
             </div>
             <div class="form-actions">
-                <button class="btn-secondary" onclick="axio.closeModal()">Cancel</button>
-                <button class="btn-primary" onclick="axio.saveTask()">Add Task</button>
+                <button class="btn-secondary" onclick="laplacian.closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="laplacian.saveTask()">Add Task</button>
             </div>
         `;
 
@@ -1965,12 +2062,12 @@ class AxioAssistant {
 
         container.innerHTML = tasksToShow.map(task => `
             <div class="task-item ${task.completed ? 'completed' : ''}">
-                <div class="task-checkbox" onclick="axio.toggleTask('${task.id}')"></div>
+                <div class="task-checkbox" onclick="laplacian.toggleTask('${task.id}')"></div>
                 <div class="task-content">
                     <div class="task-title">${this.escapeHtml(task.title)}</div>
                 </div>
                 <span class="task-priority ${task.priority}">${task.priority}</span>
-                <button class="task-delete" onclick="axio.deleteTask('${task.id}')">×</button>
+                <button class="task-delete" onclick="laplacian.deleteTask('${task.id}')">×</button>
             </div>
         `).join('');
     }
@@ -2004,8 +2101,8 @@ class AxioAssistant {
                 <textarea class="form-textarea" id="note-content" placeholder="Write your note here...">${note ? this.escapeHtml(note.content) : ''}</textarea>
             </div>
             <div class="form-actions">
-                <button class="btn-secondary" onclick="axio.closeModal()">Cancel</button>
-                <button class="btn-primary" onclick="axio.saveNote()">Save Note</button>
+                <button class="btn-secondary" onclick="laplacian.closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="laplacian.saveNote()">Save Note</button>
             </div>
         `;
 
@@ -2068,7 +2165,7 @@ class AxioAssistant {
             <div class="note-card">
                 <div class="note-header">
                     <h3 class="note-title">${this.escapeHtml(note.title)}</h3>
-                    <button class="note-delete" onclick="axio.deleteNote('${note.id}')">×</button>
+                    <button class="note-delete" onclick="laplacian.deleteNote('${note.id}')">×</button>
                 </div>
                 <p class="note-content">${this.escapeHtml(note.content)}</p>
                 <div class="note-time">${this.formatTime(new Date(note.created))}</div>
@@ -2198,8 +2295,8 @@ class AxioAssistant {
                 </button>
             </div>
             <div class="reminder-notification-actions">
-                <button class="btn-dismiss" onclick="axio.dismissReminderNotification(this, '${reminder.id}')">Dismiss</button>
-                <button class="btn-snooze" onclick="axio.snoozeReminder('${reminder.id}', 5)">Snooze 5 min</button>
+                <button class="btn-dismiss" onclick="laplacian.dismissReminderNotification(this, '${reminder.id}')">Dismiss</button>
+                <button class="btn-snooze" onclick="laplacian.snoozeReminder('${reminder.id}', 5)">Snooze 5 min</button>
             </div>
         `;
 
@@ -2219,9 +2316,8 @@ class AxioAssistant {
 
     showBrowserNotification(reminder) {
         if ('Notification' in window && Notification.permission === 'granted') {
-            const notification = new Notification('Axio Reminder', {
+            const notification = new Notification('Laplacian Reminder', {
                 body: reminder.title,
-                icon: '/static/logo gen .png',
                 tag: reminder.id,
                 requireInteraction: true
             });
@@ -2287,8 +2383,8 @@ class AxioAssistant {
                 <input type="datetime-local" class="form-input" id="reminder-datetime" value="${dateStr}">
             </div>
             <div class="form-actions">
-                <button class="btn-secondary" onclick="axio.closeModal()">Cancel</button>
-                <button class="btn-primary" onclick="axio.saveReminder()">Add Reminder</button>
+                <button class="btn-secondary" onclick="laplacian.closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="laplacian.saveReminder()">Add Reminder</button>
             </div>
         `;
 
@@ -2354,7 +2450,7 @@ class AxioAssistant {
                     <div class="reminder-title">${this.escapeHtml(reminder.title)}</div>
                     <div class="reminder-datetime">${this.formatDateTime(new Date(reminder.datetime))}</div>
                 </div>
-                <button class="reminder-delete" onclick="axio.deleteReminder('${reminder.id}')">×</button>
+                <button class="reminder-delete" onclick="laplacian.deleteReminder('${reminder.id}')">×</button>
             </div>
         `).join('');
     }
@@ -2502,7 +2598,7 @@ class AxioAssistant {
                 <div class="doc-size">${this.formatFileSize(doc.size)}</div>
             </div>
             <span class="doc-status ${doc.status}">${doc.status === 'processing' ? '⏳ Processing' : '✓ Ready'}</span>
-            <button class="doc-remove" onclick="axio.removeDocIQDocument('${doc.id}')" title="Remove document">
+            <button class="doc-remove" onclick="laplacian.removeDocIQDocument('${doc.id}')" title="Remove document">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -3350,20 +3446,20 @@ class AxioAssistant {
 // INITIALIZE APP
 // ================================
 
-let axio;
+let laplacian;
 
 document.addEventListener('DOMContentLoaded', () => {
-    axio = new AxioAssistant();
+    laplacian = new LaplacianAssistant();
 
     // Setup modal close button
     document.getElementById('modal-close').addEventListener('click', () => {
-        axio.closeModal();
+        laplacian.closeModal();
     });
 
     // Close modal on background click
     document.getElementById('modal').addEventListener('click', (e) => {
         if (e.target.id === 'modal') {
-            axio.closeModal();
+            laplacian.closeModal();
         }
     });
 });
