@@ -655,6 +655,20 @@ class LaplacianAssistant {
         await this.sendMessage(true);
     }
 
+    // Handle suggestion chip clicks
+    useSuggestion(text) {
+        const input = document.getElementById('chat-input');
+        input.value = text;
+        input.focus();
+
+        // Auto-resize textarea
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+
+        // Place cursor at end of text so user can edit or add more context
+        input.setSelectionRange(input.value.length, input.value.length);
+    }
+
     addMessageToUI(text, role, index = null, searched = false, typeEffect = false) {
         const messagesContainer = document.getElementById('chat-messages');
         const messageDiv = document.createElement('div');
@@ -1094,11 +1108,12 @@ class LaplacianAssistant {
     }
 
     isExecutableCode(language, content) {
-        const executableLanguages = ['html', 'css', 'javascript', 'js', 'jsx', 'tsx', 'vue', 'svelte'];
+        const frontendLanguages = ['html', 'css', 'javascript', 'js', 'jsx', 'tsx', 'vue', 'svelte'];
+        const backendLanguages = ['python', 'py', 'java', 'cpp', 'c++', 'c', 'go', 'rust', 'ruby', 'php'];
         const langLower = language.toLowerCase();
 
-        // Check if language is executable
-        if (executableLanguages.includes(langLower)) {
+        // Check if language is executable (frontend or backend)
+        if (frontendLanguages.includes(langLower) || backendLanguages.includes(langLower)) {
             return true;
         }
 
@@ -1112,7 +1127,211 @@ class LaplacianAssistant {
         return false;
     }
 
+    isBackendCode(language) {
+        const backendLanguages = ['python', 'py', 'java', 'cpp', 'c++', 'c', 'go', 'rust', 'ruby', 'php'];
+        return backendLanguages.includes(language.toLowerCase());
+    }
+
+    async executeBackendCode(language, code) {
+        // Create or get the code runner modal
+        let runnerModal = document.getElementById('code-runner-modal');
+
+        if (!runnerModal) {
+            runnerModal = this.createCodeRunnerModal();
+            document.body.appendChild(runnerModal);
+        }
+
+        const outputArea = runnerModal.querySelector('#runner-output');
+        const inputArea = runnerModal.querySelector('#runner-input');
+        const languageLabel = runnerModal.querySelector('#runner-language');
+        const runBtn = runnerModal.querySelector('#runner-run-btn');
+        const codeDisplay = runnerModal.querySelector('#runner-code');
+
+        // Set language label
+        const langNames = {
+            'python': 'Python', 'py': 'Python',
+            'java': 'Java',
+            'cpp': 'C++', 'c++': 'C++',
+            'c': 'C',
+            'go': 'Go',
+            'rust': 'Rust',
+            'ruby': 'Ruby',
+            'php': 'PHP'
+        };
+        languageLabel.textContent = langNames[language.toLowerCase()] || language;
+
+        // Display code
+        codeDisplay.textContent = code;
+        if (typeof hljs !== 'undefined') {
+            hljs.highlightElement(codeDisplay);
+        }
+
+        // Clear previous output
+        outputArea.innerHTML = '<span class="output-placeholder">Click "Run Code" to execute...</span>';
+        inputArea.value = '';
+
+        // Show modal
+        runnerModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Store current code and language for run button
+        runnerModal.dataset.code = code;
+        runnerModal.dataset.language = language;
+
+        // Run button handler
+        runBtn.onclick = async () => {
+            const stdin = inputArea.value;
+            await this.runCodeOnServer(language, code, stdin, outputArea);
+        };
+    }
+
+    async runCodeOnServer(language, code, stdin, outputArea) {
+        outputArea.innerHTML = `
+            <div class="runner-loading">
+                <div class="runner-spinner"></div>
+                <span>Executing code...</span>
+            </div>
+        `;
+
+        try {
+            const response = await fetch('/api/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ language, code, stdin })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                let output = '';
+
+                if (data.output && data.output.trim()) {
+                    output += `<div class="output-section">
+                        <div class="output-label">📤 Output:</div>
+                        <pre class="output-content">${this.escapeHtml(data.output)}</pre>
+                    </div>`;
+                }
+
+                if (data.error && data.error.trim()) {
+                    output += `<div class="output-section error">
+                        <div class="output-label">⚠️ Errors:</div>
+                        <pre class="output-content error">${this.escapeHtml(data.error)}</pre>
+                    </div>`;
+                }
+
+                if (data.execution_time) {
+                    output += `<div class="output-meta">⏱️ Execution time: ${data.execution_time}ms</div>`;
+                }
+
+                if (!output) {
+                    output = '<span class="output-placeholder">Program executed with no output.</span>';
+                }
+
+                outputArea.innerHTML = output;
+            } else {
+                outputArea.innerHTML = `
+                    <div class="output-section error">
+                        <div class="output-label">❌ Error:</div>
+                        <pre class="output-content error">${this.escapeHtml(data.error || 'Execution failed')}</pre>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            outputArea.innerHTML = `
+                <div class="output-section error">
+                    <div class="output-label">❌ Connection Error:</div>
+                    <pre class="output-content error">${this.escapeHtml(error.message)}</pre>
+                </div>
+            `;
+        }
+    }
+
+    createCodeRunnerModal() {
+        const modal = document.createElement('div');
+        modal.id = 'code-runner-modal';
+        modal.className = 'code-runner-modal';
+
+        modal.innerHTML = `
+            <div class="runner-modal-container">
+                <div class="runner-modal-header">
+                    <div class="runner-header-left">
+                        <span class="runner-icon">⚡</span>
+                        <h3>Code Runner</h3>
+                        <span class="runner-language-badge" id="runner-language">Python</span>
+                    </div>
+                    <div class="runner-header-actions">
+                        <button class="runner-action-btn primary" id="runner-run-btn" title="Run Code">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            Run Code
+                        </button>
+                        <button class="runner-action-btn close" id="runner-close" title="Close">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="runner-modal-body">
+                    <div class="runner-section code-section">
+                        <div class="section-header">
+                            <span class="section-icon">📝</span>
+                            <span class="section-title">Code</span>
+                        </div>
+                        <pre class="runner-code-display"><code id="runner-code"></code></pre>
+                    </div>
+                    <div class="runner-section input-section">
+                        <div class="section-header">
+                            <span class="section-icon">📥</span>
+                            <span class="section-title">Input (stdin)</span>
+                            <span class="section-hint">Optional - for programs that need input</span>
+                        </div>
+                        <textarea id="runner-input" placeholder="Enter input here (one value per line)..."></textarea>
+                    </div>
+                    <div class="runner-section output-section">
+                        <div class="section-header">
+                            <span class="section-icon">📤</span>
+                            <span class="section-title">Output</span>
+                        </div>
+                        <div class="runner-output" id="runner-output">
+                            <span class="output-placeholder">Click "Run Code" to execute...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Close handlers
+        const closeBtn = modal.querySelector('#runner-close');
+        closeBtn.onclick = () => this.closeCodeRunnerModal(modal);
+
+        modal.onclick = (e) => {
+            if (e.target === modal) this.closeCodeRunnerModal(modal);
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                this.closeCodeRunnerModal(modal);
+            }
+        });
+
+        return modal;
+    }
+
+    closeCodeRunnerModal(modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
     executeCodeInCanvas(language, code) {
+        // Check if this is backend code
+        if (this.isBackendCode(language)) {
+            this.executeBackendCode(language, code);
+            return;
+        }
+
         // Create or get the preview modal
         let previewModal = document.getElementById('code-preview-modal');
 
@@ -1924,7 +2143,7 @@ class LaplacianAssistant {
                         </div>
                     </div>
                     <div class="message-content">
-                        <div class="message-text">Hello! I'm Laplacian, your AI coding assistant by Perfionix AI. I can help you with code, debugging, algorithms, and programming questions. What would you like to work on?</div>
+                        <div class="message-text"><strong>Welcome to Laplacian</strong> — your private AI workspace by Perfionix AI.<br><br>I'm here to help you:<br>• <strong>Code</strong> — write, debug, and optimize with expert assistance<br>• <strong>Analyze</strong> — transform your data into actionable insights<br>• <strong>Research</strong> — extract knowledge from documents instantly<br>• <strong>Create</strong> — generate diagrams, visualizations, and more<br><br>How can I assist you today?</div>
                         <span class="message-time">${this.formatTime(new Date())}</span>
                     </div>
                 </div>
@@ -2708,6 +2927,25 @@ class LaplacianAssistant {
         }
     }
 
+    // Handle DocIQ suggestion chip clicks
+    useDocIQSuggestion(text) {
+        const input = document.getElementById('dociq-input');
+
+        // Check if documents are uploaded
+        if (this.dociqDocuments.length === 0) {
+            this.addDocIQMessage('Please upload a document first to use this feature.', 'error');
+            return;
+        }
+
+        input.value = text;
+        input.focus();
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+
+        // Auto-send the message
+        this.sendDocIQMessage();
+    }
+
     async sendDocIQMessage() {
         const input = document.getElementById('dociq-input');
         const message = input.value.trim();
@@ -2882,15 +3120,25 @@ class LaplacianAssistant {
                 </div>
                 <div class="message-content">
                     <div class="message-text">
-                        <strong>Welcome to DocIQ!</strong><br><br>
-                        I'm your intelligent document assistant. Upload PDF, Word, or text files and ask me anything about their content.<br><br>
-                        <em>Features:</em>
-                        <ul>
-                            <li>Extract key information</li>
-                            <li>Summarize documents</li>
-                            <li>Answer specific questions</li>
-                            <li>Compare multiple documents</li>
-                        </ul>
+                        <strong>Welcome to DocIQ</strong> — Your Intelligent Document Assistant<br><br>
+                        Upload your documents and unlock instant insights. I can read, analyze, and answer questions about your files in seconds.<br><br>
+                        <strong>Supported formats:</strong> PDF, DOCX, TXT (up to 16MB)<br><br>
+                        <strong>What I can do:</strong><br>
+                        • <strong>Summarize</strong> — Get concise overviews of lengthy documents<br>
+                        • <strong>Extract</strong> — Pull specific data, quotes, or key points<br>
+                        • <strong>Analyze</strong> — Understand patterns and insights<br>
+                        • <strong>Compare</strong> — Cross-reference multiple documents
+                    </div>
+                    <div class="suggestion-chips">
+                        <button class="suggestion-chip" onclick="laplacian.useDocIQSuggestion('Summarize this document in 5 key points')">
+                            <span class="chip-icon">📝</span> Summarize
+                        </button>
+                        <button class="suggestion-chip" onclick="laplacian.useDocIQSuggestion('What are the main topics covered?')">
+                            <span class="chip-icon">🎯</span> Key Topics
+                        </button>
+                        <button class="suggestion-chip" onclick="laplacian.useDocIQSuggestion('Extract all important dates and numbers')">
+                            <span class="chip-icon">📊</span> Extract Data
+                        </button>
                     </div>
                     <span class="message-time">${this.formatTime(new Date())}</span>
                 </div>

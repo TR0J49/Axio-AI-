@@ -1330,6 +1330,57 @@ body::before {
     padding: 0 var(--spacing-sm);
 }
 
+/* Suggestion Chips */
+.suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0 var(--spacing-sm);
+}
+
+.suggestion-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: rgba(102, 126, 234, 0.15);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 20px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-family: var(--font-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.suggestion-chip:hover {
+    background: rgba(102, 126, 234, 0.3);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.suggestion-chip:active {
+    transform: translateY(0);
+}
+
+.suggestion-chip .chip-icon {
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .suggestion-chips {
+        gap: 0.4rem;
+    }
+
+    .suggestion-chip {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}
+
 /* Search Indicator */
 .message.searched .message-content::before {
     content: '🔍 Web Search';
@@ -3338,6 +3389,47 @@ body::before {
     flex-wrap: wrap;
 }
 
+.viziq-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+}
+
+.viziq-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+}
+
+.viziq-feature {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.viziq-feature strong {
+    color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+    .viziq-features {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .viziq-feature {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+}
+
 /* VizIQ Processing Animation */
 .viziq-processing {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%);
@@ -5307,5 +5399,297 @@ body::before {
 
     .chat-input-container {
         padding-bottom: max(var(--spacing-sm), env(safe-area-inset-bottom));
+    }
+}
+
+/* ================================
+   CODE RUNNER MODAL (Backend Code Execution)
+   ================================ */
+
+.code-runner-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.code-runner-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.runner-modal-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.code-runner-modal.active .runner-modal-container {
+    transform: translateY(0);
+}
+
+.runner-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.runner-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.runner-icon {
+    font-size: 1.5rem;
+}
+
+.runner-modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.runner-language-badge {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.runner-header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.runner-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.runner-action-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.runner-action-btn.primary {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.runner-action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.runner-action-btn.close {
+    padding: 0.5rem;
+}
+
+.runner-action-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.runner-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.runner-section {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.runner-section .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section-icon {
+    font-size: 1rem;
+}
+
+.section-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.section-hint {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.runner-code-display {
+    margin: 0;
+    padding: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--bg-primary);
+    font-family: var(--font-code);
+    font-size: 0.85rem;
+}
+
+.runner-code-display code {
+    font-family: inherit;
+}
+
+.runner-section textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--font-code);
+    font-size: 0.85rem;
+    resize: vertical;
+}
+
+.runner-section textarea:focus {
+    outline: none;
+}
+
+.runner-section textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.runner-output {
+    padding: 1rem;
+    min-height: 120px;
+    background: var(--bg-primary);
+    font-family: var(--font-code);
+    font-size: 0.85rem;
+}
+
+.output-placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.runner-loading {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--primary);
+}
+
+.runner-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.output-section {
+    margin-bottom: 1rem;
+}
+
+.output-section:last-child {
+    margin-bottom: 0;
+}
+
+.output-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.output-content {
+    margin: 0;
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-sm);
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--success);
+}
+
+.output-content.error {
+    color: var(--accent);
+}
+
+.output-meta {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .runner-modal-container {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .runner-modal-header {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .runner-header-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .runner-action-btn.primary {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .runner-code-display {
+        max-height: 150px;
     }
 }

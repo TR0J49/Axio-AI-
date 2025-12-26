@@ -368,9 +368,7 @@
                                 </div>
                             </div>
                             <div class="message-content">
-                                <div class="message-text">Hello! I'm Laplacian, your AI coding assistant by Perfionix AI. I
-                                    can help you with code, debugging, algorithms, and programming questions. What would
-                                    you like to work on?</div>
+                                <div class="message-text"><strong>Welcome to Laplacian</strong> — your private AI workspace by Perfionix AI.<br><br>I'm here to help you:<br>• <strong>Code</strong> — write, debug, and optimize with expert assistance<br>• <strong>Analyze</strong> — transform your data into actionable insights<br>• <strong>Research</strong> — extract knowledge from documents instantly<br>• <strong>Create</strong> — generate diagrams, visualizations, and more<br><br>How can I assist you today?</div>
                                 <span class="message-time">Just now</span>
                             </div>
                         </div>
@@ -603,16 +601,25 @@
                                 </div>
                                 <div class="message-content">
                                     <div class="message-text">
-                                        <strong>Welcome to DocIQ!</strong><br><br>
-                                        I'm your intelligent document assistant. Upload PDF, Word, or text files and ask
-                                        me anything about their content.<br><br>
-                                        <em>Features:</em>
-                                        <ul>
-                                            <li>Extract key information</li>
-                                            <li>Summarize documents</li>
-                                            <li>Answer specific questions</li>
-                                            <li>Compare multiple documents</li>
-                                        </ul>
+                                        <strong>Welcome to DocIQ</strong> — Your Intelligent Document Assistant<br><br>
+                                        Upload your documents and unlock instant insights. I can read, analyze, and answer questions about your files in seconds.<br><br>
+                                        <strong>Supported formats:</strong> PDF, DOCX, TXT (up to 16MB)<br><br>
+                                        <strong>What I can do:</strong><br>
+                                        • <strong>Summarize</strong> — Get concise overviews of lengthy documents<br>
+                                        • <strong>Extract</strong> — Pull specific data, quotes, or key points<br>
+                                        • <strong>Analyze</strong> — Understand patterns and insights<br>
+                                        • <strong>Compare</strong> — Cross-reference multiple documents
+                                    </div>
+                                    <div class="suggestion-chips">
+                                        <button class="suggestion-chip" onclick="laplacian.useDocIQSuggestion('Summarize this document in 5 key points')">
+                                            <span class="chip-icon">📝</span> Summarize
+                                        </button>
+                                        <button class="suggestion-chip" onclick="laplacian.useDocIQSuggestion('What are the main topics covered?')">
+                                            <span class="chip-icon">🎯</span> Key Topics
+                                        </button>
+                                        <button class="suggestion-chip" onclick="laplacian.useDocIQSuggestion('Extract all important dates and numbers')">
+                                            <span class="chip-icon">📊</span> Extract Data
+                                        </button>
                                     </div>
                                     <span class="message-time">Just now</span>
                                 </div>
@@ -682,8 +689,8 @@
                                     <line x1="12" y1="3" x2="12" y2="15"></line>
                                 </svg>
                             </div>
-                            <h3>Upload Your Data</h3>
-                            <p>Drag & drop CSV, Excel, or connect to SQL database</p>
+                            <h3>Welcome to VizIQ — Your Data Intelligence Hub</h3>
+                            <p class="viziq-subtitle">Transform raw data into powerful insights with AI-generated dashboards</p>
                             <input type="file" id="viziq-file-input" accept=".csv,.xlsx,.xls,.json" multiple hidden>
                             <div class="viziq-upload-buttons">
                                 <button class="btn-primary upload-btn" id="viziq-browse-files">
@@ -691,11 +698,11 @@
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                         <polyline points="14 2 14 8 20 8"></polyline>
                                     </svg>
-                                    Browse Files
+                                    Upload Data File
                                 </button>
                             </div>
                             <div class="supported-formats">
-                                <span>Supported: CSV, XLSX, XLS, JSON</span>
+                                <span>Drag & drop or browse — Supports CSV, XLSX, XLS, JSON</span>
                             </div>
                         </div>
 

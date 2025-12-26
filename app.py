@@ -1215,16 +1215,154 @@ def text_to_speech():
     """Convert text to speech"""
     data = request.json
     text = data.get('text', '')
-    
+
     if not text:
         return jsonify({'error': 'No text provided'}), 400
-    
+
     audio_bytes = generate_speech(text)
-    
+
     if audio_bytes:
         return audio_bytes, 200, {'Content-Type': 'audio/mpeg'}
     else:
         return jsonify({'error': 'Speech generation failed'}), 500
+
+
+# -------------------------------
+# Code Execution API (for DSA Practice)
+# -------------------------------
+
+# Piston API for code execution (free, no API key required)
+PISTON_API_URL = "https://emkc.org/api/v2/piston/execute"
+
+# Language mapping for Piston API
+PISTON_LANGUAGES = {
+    'python': {'language': 'python', 'version': '3.10.0'},
+    'py': {'language': 'python', 'version': '3.10.0'},
+    'javascript': {'language': 'javascript', 'version': '18.15.0'},
+    'js': {'language': 'javascript', 'version': '18.15.0'},
+    'java': {'language': 'java', 'version': '15.0.2'},
+    'cpp': {'language': 'cpp', 'version': '10.2.0'},
+    'c++': {'language': 'cpp', 'version': '10.2.0'},
+    'c': {'language': 'c', 'version': '10.2.0'},
+    'go': {'language': 'go', 'version': '1.16.2'},
+    'rust': {'language': 'rust', 'version': '1.68.2'},
+    'ruby': {'language': 'ruby', 'version': '3.0.1'},
+    'php': {'language': 'php', 'version': '8.2.3'},
+}
+
+@app.route('/api/execute', methods=['POST'])
+def execute_code():
+    """Execute code using Piston API"""
+    import time
+
+    data = request.json
+    language = data.get('language', '').lower()
+    code = data.get('code', '')
+    stdin = data.get('stdin', '')
+
+    if not code:
+        return jsonify({'success': False, 'error': 'No code provided'})
+
+    if language not in PISTON_LANGUAGES:
+        return jsonify({
+            'success': False,
+            'error': f'Unsupported language: {language}. Supported: Python, JavaScript, Java, C++, C, Go, Rust, Ruby, PHP'
+        })
+
+    lang_config = PISTON_LANGUAGES[language]
+
+    # Prepare request for Piston API
+    payload = {
+        'language': lang_config['language'],
+        'version': lang_config['version'],
+        'files': [
+            {
+                'name': f'main.{get_file_extension(lang_config["language"])}',
+                'content': code
+            }
+        ],
+        'stdin': stdin,
+        'args': [],
+        'compile_timeout': 10000,
+        'run_timeout': 5000,
+        'compile_memory_limit': -1,
+        'run_memory_limit': -1
+    }
+
+    try:
+        start_time = time.time()
+
+        response = requests.post(
+            PISTON_API_URL,
+            json=payload,
+            headers={'Content-Type': 'application/json'},
+            timeout=30
+        )
+
+        execution_time = int((time.time() - start_time) * 1000)
+
+        if response.status_code == 200:
+            result = response.json()
+
+            # Extract output and errors
+            run_result = result.get('run', {})
+            compile_result = result.get('compile', {})
+
+            output = run_result.get('stdout', '')
+            error = run_result.get('stderr', '')
+
+            # Check for compilation errors
+            if compile_result.get('stderr'):
+                error = compile_result.get('stderr', '') + '\n' + error
+
+            # Check exit code
+            exit_code = run_result.get('code', 0)
+
+            return jsonify({
+                'success': True,
+                'output': output,
+                'error': error,
+                'exit_code': exit_code,
+                'execution_time': execution_time
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Execution service error: {response.status_code}'
+            })
+
+    except requests.exceptions.Timeout:
+        return jsonify({
+            'success': False,
+            'error': 'Code execution timed out (max 30 seconds)'
+        })
+    except requests.exceptions.RequestException as e:
+        return jsonify({
+            'success': False,
+            'error': f'Connection error: {str(e)}'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Execution failed: {str(e)}'
+        })
+
+
+def get_file_extension(language):
+    """Get file extension for language"""
+    extensions = {
+        'python': 'py',
+        'javascript': 'js',
+        'java': 'java',
+        'cpp': 'cpp',
+        'c': 'c',
+        'go': 'go',
+        'rust': 'rs',
+        'ruby': 'rb',
+        'php': 'php'
+    }
+    return extensions.get(language, 'txt')
+
 
 @app.route('/api/notes', methods=['GET', 'POST', 'DELETE'])
 def notes():
