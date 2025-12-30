@@ -161,6 +161,22 @@ IMPORTANT FORMATTING RULES:
 - Be concise but thorough
 - Include code examples when helpful
 
+MERMAID DIAGRAM RULES (CRITICAL):
+When creating Mermaid diagrams, you MUST follow these syntax rules to avoid parse errors:
+- ALWAYS quote node text that contains special characters: parentheses (), brackets [], braces {{}}, quotes, or angle brackets <>
+- Use double quotes for node content: A["text with (parens)"] NOT A[text with (parens)]
+- Examples of CORRECT syntax:
+  * A["Request Body (POST/PUT)"] ✓
+  * B["Array[0] = value"] ✓
+  * C["Check if x > 0"] ✓
+  * D["User's input"] ✓
+- Examples of WRONG syntax (will cause parse errors):
+  * A[Request Body (POST/PUT)] ✗ - parentheses break parsing
+  * B[Array[0] = value] ✗ - brackets break parsing
+  * C[Check if x > 0] ✗ - angle brackets break parsing
+- For simple text without special chars, quotes are optional: A[Simple Text] is fine
+- Use <br/> for line breaks inside quoted text: A["Line 1<br/>Line 2"]
+
 Current date and time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"""
 
 
@@ -175,7 +191,7 @@ def get_conversation():
     """Get or initialize conversation for current session"""
     session_id = get_session_id()
 
-    # Try to get from MongoDB first
+    # Try to get from MongoDB first (primary storage)
     if USE_MONGODB and db.is_connected():
         messages = db.get_chat_history(session_id, limit=50)
         if messages:
@@ -188,23 +204,26 @@ def get_conversation():
                     "_id": msg.get("id")  # Store MongoDB ID for editing
                 })
             return conversation
+        else:
+            # No messages yet, return fresh conversation
+            return [{"role": "system", "content": get_system_prompt()}]
 
-    # Fallback to session storage
-    if 'conversation' not in session:
-        session['conversation'] = [
-            {
-                "role": "system",
-                "content": get_system_prompt()
-            }
+    # Fallback to in-memory storage (not session cookie) when MongoDB unavailable
+    # Use a simple in-memory dict keyed by session_id
+    if not hasattr(get_conversation, '_memory_store'):
+        get_conversation._memory_store = {}
+
+    if session_id not in get_conversation._memory_store:
+        get_conversation._memory_store[session_id] = [
+            {"role": "system", "content": get_system_prompt()}
         ]
-        session.modified = True
-    return session['conversation']
+    return get_conversation._memory_store[session_id]
 
 def save_conversation(conversation):
-    """Save conversation to session and MongoDB"""
+    """Save conversation to MongoDB (no longer uses session cookie to avoid size limits)"""
     session_id = get_session_id()
 
-    # Save to MongoDB if connected
+    # Save to MongoDB if connected (primary storage)
     if USE_MONGODB and db.is_connected():
         # Get the last two messages (user + assistant) to save
         if len(conversation) >= 2:
@@ -218,10 +237,10 @@ def save_conversation(conversation):
                         metadata={"searched": msg.get("searched", False)}
                     )
                     msg["_id"] = msg_id
-
-    # Also save to session as backup
-    session['conversation'] = conversation
-    session.modified = True
+    else:
+        # Fallback: save to in-memory storage
+        if hasattr(get_conversation, '_memory_store'):
+            get_conversation._memory_store[session_id] = conversation
 
 def get_current_model():
     """Get the current AI model from session"""
@@ -1146,8 +1165,10 @@ def reset_chat():
     if USE_MONGODB and db.is_connected():
         db.clear_chat_history(session_id)
 
-    # Clear from session
-    session.pop('conversation', None)
+    # Clear from in-memory storage (fallback)
+    if hasattr(get_conversation, '_memory_store') and session_id in get_conversation._memory_store:
+        del get_conversation._memory_store[session_id]
+
     return jsonify({'status': 'success', 'message': 'Conversation reset'})
 
 @app.route('/api/chat/debug', methods=['GET'])

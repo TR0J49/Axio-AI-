@@ -1816,50 +1816,84 @@ class LaplacianAssistant {
     }
 
     sanitizeMermaidCode(code) {
-        // Fix common Mermaid syntax issues
+        // Minimal sanitization for Mermaid 10.x - only fix what's truly broken
         let sanitized = code;
 
-        // Replace problematic characters inside square brackets []
-        // Match node definitions like A[text with (parentheses) or special/chars]
-        sanitized = sanitized.replace(/\[([^\]]*)\]/g, (match, content) => {
-            // Replace parentheses with angle brackets or remove them
-            let fixed = content
-                .replace(/\(/g, '<')
-                .replace(/\)/g, '>')
-                .replace(/\//g, '-')
-                .replace(/\\/g, '-')
-                .replace(/"/g, "'")
-                .replace(/&/g, 'and');
-            return `["${fixed}"]`;
-        });
+        // 1. Remove invisible/zero-width characters
+        sanitized = sanitized.replace(/[\u200B-\u200D\uFEFF]/g, '');
 
-        // Fix node definitions with parentheses () - stadium shape
-        sanitized = sanitized.replace(/\(([^\)]*)\)/g, (match, content, offset, str) => {
-            // Check if this is inside a node definition (preceded by letter/number and bracket)
-            const before = str.substring(Math.max(0, offset - 3), offset);
-            if (/\w\s*$/.test(before) || /\]\s*$/.test(before)) {
-                // This might be a stadium node, keep it but sanitize content
-                let fixed = content
-                    .replace(/\//g, '-')
-                    .replace(/\\/g, '-')
-                    .replace(/"/g, "'")
-                    .replace(/&/g, 'and');
-                return `("${fixed}")`;
+        // 2. Normalize line endings
+        sanitized = sanitized.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+        // 3. Remove markdown code fence markers
+        sanitized = sanitized.replace(/^```mermaid\s*\n?/im, '');
+        sanitized = sanitized.replace(/\n?```\s*$/m, '');
+
+        // 4. Normalize unicode characters that look like ASCII but aren't
+        sanitized = sanitized.replace(/\u2011/g, '-');           // non-breaking hyphen
+        sanitized = sanitized.replace(/[\u2013\u2014]/g, '--');  // en-dash, em-dash
+        sanitized = sanitized.replace(/[\u2018\u2019\u0060\u00B4]/g, "'"); // smart quotes, backticks
+        sanitized = sanitized.replace(/[\u201C\u201D]/g, '"');   // smart double quotes
+
+        // 5. Trim each line but preserve structure
+        sanitized = sanitized.split('\n').map(line => line.trim()).join('\n');
+
+        // 6. Remove empty lines at start
+        sanitized = sanitized.replace(/^\n+/, '');
+
+        // 7. SAFETY NET: Auto-quote node content with special characters
+        sanitized = this.autoQuoteNodeContent(sanitized);
+
+        return sanitized.trim();
+    }
+
+    autoQuoteNodeContent(code) {
+        // Safety net: Fix unquoted node content that contains special characters
+        // This catches cases where the AI forgot to quote properly
+
+        const lines = code.split('\n');
+        const fixedLines = lines.map(line => {
+            // Skip diagram declarations, comments, and directives
+            if (/^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|mindmap|timeline|subgraph|end|%%|style|linkStyle|class\s)/i.test(line)) {
+                return line;
             }
-            return match;
+
+            // Fix square bracket nodes: A[text (with parens)] → A["text (with parens)"]
+            // Pattern: word followed by [ then content with special chars then ]
+            // But NOT already quoted content
+            line = line.replace(/(\b[A-Za-z_][A-Za-z0-9_]*)\[([^\]"]+)\]/g, (match, nodeId, content) => {
+                // Check if content has special chars that need quoting
+                if (/[()<>{}\[\]"']/.test(content)) {
+                    // Escape any internal quotes
+                    const escaped = content.replace(/"/g, "'");
+                    return `${nodeId}["${escaped}"]`;
+                }
+                return match;
+            });
+
+            // Fix curly brace nodes: A{text (with parens)} → A{"text (with parens)"}
+            line = line.replace(/(\b[A-Za-z_][A-Za-z0-9_]*)\{([^}"]+)\}/g, (match, nodeId, content) => {
+                if (/[()<>\[\]"']/.test(content)) {
+                    const escaped = content.replace(/"/g, "'");
+                    return `${nodeId}{"${escaped}"}`;
+                }
+                return match;
+            });
+
+            // Fix stadium nodes: A(text [with brackets]) → A("text [with brackets]")
+            // Be careful not to match arrow syntax like -->
+            line = line.replace(/(\b[A-Za-z_][A-Za-z0-9_]*)\(([^)"]+)\)(?![->])/g, (match, nodeId, content) => {
+                if (/[<>{}\[\]"']/.test(content)) {
+                    const escaped = content.replace(/"/g, "'");
+                    return `${nodeId}("${escaped}")`;
+                }
+                return match;
+            });
+
+            return line;
         });
 
-        // Fix double brackets/quotes that may have been introduced
-        sanitized = sanitized.replace(/\[\["/g, '["');
-        sanitized = sanitized.replace(/"\]\]/g, '"]');
-        sanitized = sanitized.replace(/\(\("/g, '("');
-        sanitized = sanitized.replace(/"\)\)/g, '")');
-
-        // Remove any empty quotes
-        sanitized = sanitized.replace(/\[""\]/g, '[ ]');
-        sanitized = sanitized.replace(/\(""\)/g, '( )');
-
-        return sanitized;
+        return fixedLines.join('\n');
     }
 
     addDiagramInteractivity(container) {
