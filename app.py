@@ -28,6 +28,10 @@ ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
+# DocIQ Model Configuration - Use gpt-oss:20b-cloud for structured document analysis
+DOCIQ_MODEL = os.getenv('DOCIQ_MODEL', 'gpt-oss:20b-cloud')
+DOCIQ_USE_LITE = False  # Use main GPT model for DocIQ (structured responses)
+
 # Create uploads folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -963,7 +967,7 @@ def search_documents(query, session_data, max_results=5):
     return results[:max_results]
 
 def generate_dociq_response(user_message, session_data):
-    """Generate AI response based on document context"""
+    """Generate AI response based on document context with structured output"""
     # Search for relevant chunks
     relevant_chunks = search_documents(user_message, session_data)
 
@@ -988,14 +992,41 @@ def generate_dociq_response(user_message, session_data):
             "content": f"""You are DocIQ, an intelligent document assistant by Perfionix AI.
 You help users understand, analyze, and extract information from their uploaded documents.
 
+CRITICAL OUTPUT FORMAT RULES:
+You MUST always respond in STRUCTURED FORMAT - NEVER write long paragraphs.
+
+FORMAT YOUR RESPONSES AS:
+
+## Summary
+- One line summary of the answer
+
+## Key Points
+- Point 1
+- Point 2
+- Point 3
+
+## Details
+| Aspect | Information |
+|--------|-------------|
+| Item 1 | Details |
+| Item 2 | Details |
+
+## Visual Diagram (when applicable)
+```mermaid
+graph TD
+    A["Topic"] --> B["Subtopic 1"]
+    A --> C["Subtopic 2"]
+```
+
 IMPORTANT GUIDELINES:
-- Base your answers ONLY on the document content provided below
-- If the information is not in the documents, clearly state that
-- Quote relevant passages when appropriate
-- Be precise and accurate
-- If asked to summarize, provide key points
-- If asked to compare, highlight differences and similarities
-- Always cite which document the information comes from
+- ALWAYS use bullet points (-)
+- ALWAYS use tables for comparisons
+- ALWAYS include a Mermaid diagram for processes, flows, or relationships
+- Keep each point SHORT and CONCISE
+- Use headers (##) to organize sections
+- Quote relevant passages with > blockquote
+- Cite which document the information comes from
+- If information is not in documents, clearly state that
 
 UPLOADED DOCUMENT CONTENT:
 {context}
@@ -1013,6 +1044,8 @@ Current date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"""
         if msg['role'] in ['user', 'assistant']:
             conversation.insert(-1, msg)
 
+    # Use gpt-oss:20b-cloud for DocIQ - structured responses
+    print(f"[DocIQ] Using {DOCIQ_MODEL} for structured document analysis")
     return generate_ai_response(conversation)
 
 # -------------------------------
@@ -1785,7 +1818,7 @@ def dociq_chat():
 
 @app.route('/api/dociq/summary', methods=['GET'])
 def dociq_summary():
-    """Get summary of uploaded documents"""
+    """Get structured summary of uploaded documents"""
     session_data = get_dociq_documents()
 
     if not session_data['documents']:
@@ -1800,22 +1833,57 @@ def dociq_summary():
         total_text_length += doc.get('text_length', 0)
 
     # Generate summary using AI
-    summary_prompt = f"""Please provide a brief summary of the following documents:
+    summary_prompt = f"""Analyze and summarize the following documents in STRUCTURED FORMAT:
 
 {doc_overview}
 
-Combined document content preview:
-{get_combined_document_context(session_data, max_context_length=4000)}
+Document content:
+{get_combined_document_context(session_data, max_context_length=6000)}
 
-Provide:
-1. A brief overview of what these documents contain
-2. Key topics covered
-3. Main takeaways"""
+YOU MUST respond in this EXACT structure:
+
+## Overview
+- One line describing what these documents are about
+
+## Document List
+| Document | Type | Key Content |
+|----------|------|-------------|
+| name | type | brief description |
+
+## Key Topics
+- Topic 1
+- Topic 2
+- Topic 3
+
+## Important Information
+- Key fact 1
+- Key fact 2
+- Key data point
+
+## Document Structure
+```mermaid
+graph TD
+    A["Documents"] --> B["Document 1"]
+    A --> C["Document 2"]
+    B --> D["Key Topics"]
+    C --> E["Key Topics"]
+```
+
+## Takeaways
+- Main conclusion 1
+- Main conclusion 2"""
 
     summary_conversation = [
         {
             "role": "system",
-            "content": "You are DocIQ, a document analysis assistant. Provide clear, concise summaries."
+            "content": """You are DocIQ, a document analysis assistant by Perfionix AI.
+
+CRITICAL: You MUST respond in STRUCTURED FORMAT only.
+- Use bullet points (-) for all lists
+- Use tables for comparisons
+- Include Mermaid diagrams for structure visualization
+- NO long paragraphs - only short, concise points
+- Use ## headers to organize sections"""
         },
         {
             "role": "user",
@@ -1823,6 +1891,8 @@ Provide:
         }
     ]
 
+    # Use gpt-oss:20b-cloud for structured summarization
+    print(f"[DocIQ Summary] Using {DOCIQ_MODEL} for structured summary")
     summary = generate_ai_response(summary_conversation)
 
     return jsonify({
