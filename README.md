@@ -1,828 +1,766 @@
 <p align="center">
-  <img src="static/logo.png" alt="Laplacian Logo" width="150" height="150">
+  <img src="static/logo.png" alt="Laplacian AI Logo" width="120" height="120">
 </p>
 
-<h1 align="center">LAPLACIAN</h1>
-<h3 align="center">AI Code Assistant & Productivity Platform</h3>
+<h1 align="center">LAPLACIAN AI</h1>
+<h3 align="center">India's First AI Workspace for Secure Enterprise Intelligence</h3>
 
 <p align="center">
-  <strong>by Perfionix AI Technology Pvt Ltd</strong>
-</p>
-<p align="center">
-  <img src="https://img.shields.io/badge/Version-2.0-667eea?style=for-the-badge" alt="Version">
-  <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/Flask-3.0.0-000000?style=for-the-badge&logo=flask" alt="Flask">
-  <img src="https://img.shields.io/badge/MongoDB-Supported-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB">
+  <strong>Empowering Indian Enterprises with Sovereign AI Solutions</strong>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Ollama-LLM_Engine-FF6F00?style=for-the-badge" alt="Ollama">
-  <img src="https://img.shields.io/badge/Mermaid-Diagrams-FF3670?style=for-the-badge" alt="Mermaid">
-  <img src="https://img.shields.io/badge/Chart.js-Visualizations-FF6384?style=for-the-badge&logo=chartdotjs" alt="Chart.js">
+  <a href="https://www.perfionixai.com">
+    <img src="https://img.shields.io/badge/Website-perfionixai.com-667eea?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Website">
+  </a>
+  <img src="https://img.shields.io/badge/Made%20in-India-orange?style=for-the-badge" alt="Made in India">
+  <img src="https://img.shields.io/badge/Version-1.0-brightgreen?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge" alt="License">
+</p>
+
+<p align="center">
+  <a href="#abstract">Abstract</a> •
+  <a href="#introduction">Introduction</a> •
+  <a href="#problem-statement">Problem</a> •
+  <a href="#solution">Solution</a> •
+  <a href="#features">Features</a> •
+  <a href="#technology-stack">Tech Stack</a> •
+  <a href="#installation">Installation</a>
 </p>
 
 ---
 
 ## Company Information
 
-| Field | Details |
-|-------|---------|
-| **Company** | Perfionix AI Technology Pvt Ltd |
-| **Product** | LAPLACIAN v2.0 |
-| **Founder** | Shubham Rahangdale |
-| **Email** | connect@perfionixai.com |
-| **Status** | Production Ready |
+| | |
+|---|---|
+| **Organization** | Perfionix AI Technology Pvt Ltd |
+| **Product** | Laplacian AI - Enterprise AI Workspace |
+| **Version** | 1.0 |
+| **Founder & CEO** | Shubham Rahangdale |
+| **Headquarters** | India |
+| **Website** | [www.perfionixai.com](https://www.perfionixai.com) |
+| **Contact** | connect@perfionixai.com |
+| **Industry** | Artificial Intelligence / Enterprise Software |
 
 ---
 
-## Executive Summary
+## Abstract
 
-**LAPLACIAN** is an enterprise-grade AI-powered code assistant and productivity platform developed by **Perfionix AI Technology Pvt Ltd**. It combines cutting-edge Large Language Models with modern web technologies to deliver an intelligent, privacy-focused solution for developers, analysts, and professionals.
+**Laplacian AI** is India's pioneering AI Workspace platform, designed to address the critical need for data sovereignty and secure artificial intelligence solutions in the Indian enterprise ecosystem. As organizations increasingly rely on AI-powered tools for document analysis, data visualization, and intelligent automation, concerns about data privacy, cross-border data transfer, and dependency on foreign AI infrastructure have become paramount.
 
-### Platform Highlights
-
-| Metric | Value |
-|--------|-------|
-| **Total Modules** | 6 Integrated Modules |
-| **AI Models** | 2 (Core, Coder) |
-| **Document Formats** | PDF, DOCX, TXT |
-| **Data Formats** | CSV, XLSX, JSON |
-| **Chart Types** | 4 Auto-Generated |
-| **Code Languages** | 10+ Syntax Highlighted |
-| **Diagram Types** | 15+ Mermaid Diagrams |
+Laplacian AI provides a comprehensive, locally-deployable AI workspace that combines **conversational AI**, **document intelligence (DocIQ)**, and **data visualization (VizIQ)** capabilities—all while ensuring that sensitive enterprise data never leaves Indian jurisdiction. Built on open-source foundation models and designed for on-premise deployment, Laplacian AI represents a strategic shift towards technological self-reliance in India's digital transformation journey.
 
 ---
 
-## Key Features Overview
+## Introduction
 
-### Feature Matrix
+### The AI Revolution and India's Opportunity
 
-| Module | Feature | Description |
-|--------|---------|-------------|
-| **Chat** | Multi-Model AI | Switch between Core, Lite, and Coder models |
-| **Chat** | Web Search | Real-time web search with AI summarization |
-| **Chat** | Code Execution | Run HTML/CSS/JS in live preview |
-| **Chat** | Mermaid Diagrams | Auto-render flowcharts, sequences, etc. |
-| **Chat** | Message Editing | Edit past messages and regenerate |
-| **Chat** | Generation Controls | Pause, Continue, Stop AI responses |
-| **DocIQ** | RAG Q&A | Chat with uploaded documents |
-| **VizIQ** | Auto Dashboards | Instant KPIs and charts from data |
-| **Tasks** | Task Management | Priority-based task tracking |
-| **Notes** | Note Taking | Card-based notes with timestamps |
-| **Reminders** | Scheduling | Date/time reminder alerts |
+The global artificial intelligence market is projected to reach **$1.8 trillion by 2030**, with enterprise AI applications driving significant productivity gains across industries. India, with its vast talent pool and rapidly digitizing economy, stands at a pivotal moment in this technological revolution.
 
----
+However, the current landscape presents a critical challenge: **over 90% of enterprise AI tools used by Indian organizations** route sensitive data through servers located in the United States, European Union, and other foreign jurisdictions. This dependency creates risks related to:
 
-## Chat System - Complete Features
+- Data privacy and sovereignty
+- Regulatory compliance (IT Act, DPDP Act 2023)
+- Intellectual property protection
+- Business continuity and geopolitical stability
 
-### 1. Multi-Model AI Selection
+### Vision
 
-| Model | ID | Description | Use Case |
-|-------|-----|-------------|----------|
-| **LAPLACIAN Core** | `gpt` | `gpt-oss:20b-cloud` | General thinking, complex reasoning |
-| **LAPLACIAN Coder** | `coder` | `qwen3-coder:480b-cloud` | Code generation, debugging |
+> *"To establish India as a global leader in sovereign AI infrastructure, enabling enterprises to harness artificial intelligence without compromising data security or national interests."*
 
-**Features:**
-- Dropdown selector in header
-- Real-time model switching
-- Availability checking on startup
-- Notification on model change
+### Mission
+
+Laplacian AI is committed to:
+
+1. **Data Sovereignty** - Ensuring Indian data remains within Indian borders
+2. **Enterprise Empowerment** - Providing world-class AI tools accessible to all organizations
+3. **Technological Independence** - Reducing dependency on foreign AI infrastructure
+4. **Innovation Excellence** - Continuously advancing AI capabilities for Indian enterprises
 
 ---
 
-### 2. Web Search Integration
-```mermaid
-flowchart TD
-    A[USER QUERY] --> B[Keyword Detection]
-    B --> C{Search Type}
-    C -->|Auto| D[Auto Search]
-    C -->|Manual| E["Manual 🔍"]
-    D --> F[Search Providers]
-    E --> F
-    F --> G[1. Google API]
-    F --> H[2. DuckDuckGo]
-    F --> I[3. Direct Scrape]
-    G --> J[AI Summarization + Citations]
-    H --> J
-    I --> J
-```
-#### Trigger Keywords
-| Category | Keywords |
-|----------|----------|
-| **Search** | `search`, `google`, `find`, `look up` |
-| **Questions** | `what is`, `who is`, `when did` |
-| **Time** | `latest`, `recent`, `news`, `current`, `today` |
-| **Year** | `2024`, `2025` |
-| **Info** | `price`, `weather`, `definition`, `meaning` |
+## Problem Statement
 
-#### Shortcuts
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl + Enter` | Force web search |
-| 🔍 Button | Manual search trigger |
+### The Data Sovereignty Crisis in Indian Enterprises
 
----
-
-### 3. Message Editing & Regeneration
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant M as Message
-    participant AI as AI Assistant
-    U->>M: Hover over message
-    Note right of M: ✏️ Edit button appears
-    U->>M: Click Edit
-    Note right of M: Textarea opens
-    U->>M: Modify message
-    U->>M: Save & Submit
-    M->>M: Truncate history after edit
-    M->>AI: Send updated message
-    AI->>M: Generate new response
-    Note right of M: New AI Response displayed
-```
-| Step | Action | Description |
-|------|--------|-------------|
-| 1 | **Hover** | Edit button (✏️) appears on user message |
-| 2 | **Click Edit** | Textarea opens for editing |
-| 3 | **Submit** | History truncated, AI regenerates response |
-
-| Feature | Description |
-|---------|-------------|
-| **Edit Button** | Appears on hover over user messages |
-| **Inline Editing** | Textarea replaces message text |
-| **History Truncation** | Removes all messages after edited one |
-| **Auto-Regenerate** | AI generates fresh response |
-| **Keyboard Support** | `Enter` = save, `Escape` = cancel |
-
----
-
-### 4. Generation Controls
-```mermaid
-stateDiagram-v2
-    [*] --> Generating: User sends message
-    Generating --> Paused: Click Pause ⏸
-    Generating --> Stopped: Click Stop ⏹
-    Paused --> Generating: Click Continue ▶
-    Paused --> Stopped: Click Stop ⏹
-    Generating --> Complete: Response finished
-    Stopped --> [*]: Partial text shown
-    Complete --> [*]: Full response displayed
-```
-| State | Controls Available | Cursor |
-|-------|-------------------|--------|
-| **During Generation** | `[⏸ Pause]` `[⏹ Stop]` | `▌` (animated) |
-| **When Paused** | `[▶ Continue]` `[⏹ Stop]` | `⏸` (paused) |
-| **When Stopped** | Generation stopped message | None |
-
-#### State Variables
-| Variable | Type | Description |
-|----------|------|-------------|
-| `isGenerating` | `boolean` | Currently generating response |
-| `isPaused` | `boolean` | Generation is paused |
-| `isStopped` | `boolean` | Generation was stopped |
-
----
-
-### 5. Typewriter Effect
-```mermaid
-sequenceDiagram
-    participant AI as AI Response
-    participant TE as Typewriter Engine
-    participant UI as Display
-    AI->>TE: Full response text
-    loop Every 5ms
-        TE->>TE: Get next 3 characters
-        TE->>UI: Append chunk + cursor ▌
-        UI->>UI: Render update
-    end
-    TE->>UI: Remove cursor
-    Note over UI: Complete message displayed
-```
-| Parameter | Value |
-|-----------|-------|
-| **Speed** | 5ms per character |
-| **Chunk Size** | 3 characters per update |
-| **Cursor** | `▌` (animated) |
-| **Pause Cursor** | `⏸` |
-
----
-
-### 6. Markdown Rendering
-```mermaid
-flowchart TD
-    A[Markdown Text] --> B[marked.js Parser]
-    B --> C[HTML DOM]
-    C --> D[Highlight.js]
-    D --> E[Rendered Output]
-    subgraph Processing
-        B
-        C
-        D
-    end
-```
-#### Supported Elements
-| Element | Syntax |
-|---------|--------|
-| Headers | `# H1` to `###### H6` |
-| Bold | `**bold**` |
-| Italic | `*italic*` |
-| Strikethrough | `~~strike~~` |
-| Lists | `-` or `1.` |
-| Code | `` `inline` `` or ` ``` block ``` ` |
-| Links | `[text](url)` |
-| Images | `![alt](url)` |
-| Tables | `| col1 | col2 |` |
-| Blockquotes | `> quote` |
-
----
-
-### 7. Syntax Highlighting
-#### Supported Languages
-| Category | Languages |
-|----------|-----------|
-| **Web** | HTML, CSS, JavaScript, TypeScript |
-| **Backend** | Python, Java, PHP, Ruby |
-| **Systems** | C++, Go, Rust |
-| **Data** | SQL, JSON, YAML |
-| **Shell** | Bash, Markdown |
-
----
-
-## Frontend Code Execution
-### Live Preview Feature
-LAPLACIAN can execute HTML, CSS, and JavaScript code directly in a sandboxed iframe preview.
-
-### Supported Languages
-| Language | Execution Type | Description |
-|----------|---------------|-------------|
-| `html` | Full document | Complete HTML documents or fragments |
-| `css` | Demo wrapped | Styles applied to demo elements |
-| `javascript` / `js` | Console capture | Output captured and displayed |
-| `jsx` / `tsx` | Detected | React/TypeScript components |
-| `vue` / `svelte` | Basic | Basic framework rendering |
-
-### Code Block with Run Button
 ```mermaid
 flowchart LR
-    subgraph CodeBlock["Code Block UI"]
-        A["Language Label"] --> B["📋 Copy Button"]
-        B --> C["▶ Run Button"]
+    subgraph INDIA["🇮🇳 INDIAN ENTERPRISE"]
+        A["📄 Documents<br/>📊 Data<br/>💬 Queries"]
     end
-    C --> D{Executable?}
-    D -->|Yes| E[Open Preview Modal]
-    D -->|No| F[Run disabled]
-    B --> G[Copy to Clipboard]
-```
-| Button | Action |
-|--------|--------|
-| **📋 Copy** | Copy code to clipboard |
-| **▶ Run** | Execute in preview modal |
 
-#### Detection
-```javascript
-isExecutableCode(lang, content) {
-  const executable = [
-    'html', 'css',
-    'javascript', 'js',
-    'jsx', 'tsx',
-    'vue', 'svelte'
-  ];
-  return executable.includes(lang);
-}
+    subgraph FOREIGN["🌐 FOREIGN AI PROVIDERS"]
+        B["OpenAI<br/>Google AI<br/>Microsoft Azure"]
+    end
+
+    subgraph SERVERS["🏢 FOREIGN SERVERS"]
+        C["☁️ US/EU Data Centers<br/>📦 Storage<br/>🧠 Model Training"]
+    end
+
+    A -->|"Sensitive Data"| B
+    B -->|"Cross-Border Transfer"| C
+    C -->|"Processed Results"| B
+    B -->|"Response"| A
+
+    style INDIA fill:#1a472a,stroke:#2d7a4a,color:#fff
+    style FOREIGN fill:#8b0000,stroke:#cc0000,color:#fff
+    style SERVERS fill:#8b0000,stroke:#cc0000,color:#fff
 ```
 
-### Preview Modal Features
+> ⚠️ **RISK:** Sensitive Indian enterprise data processed and stored on foreign soil
+
+### Key Challenges Facing Indian Enterprises
+
+| Challenge | Impact | Scale |
+|-----------|--------|-------|
+| **Data Privacy Violations** | Sensitive corporate data exposed to foreign entities | 78% of Indian enterprises use foreign AI tools |
+| **Regulatory Non-Compliance** | Violation of IT Act 2000, DPDP Act 2023 | ₹250 Cr penalty provisions under DPDP |
+| **Intellectual Property Risk** | Training data potentially used by foreign AI | Affects 65% of R&D-intensive organizations |
+| **Latency Issues** | Degraded performance due to cross-border routing | 200-500ms additional latency |
+| **Cost Escalation** | Dollar-denominated pricing affecting budgets | 15-30% YoY cost increase |
+| **Service Continuity** | Dependency on foreign policy decisions | Single point of failure |
+
+### Regulatory Landscape
+
+**Digital Personal Data Protection Act, 2023 (DPDP)**
+
+- Mandates explicit consent for data processing
+- Restricts cross-border data transfer to notified countries
+- Imposes penalties up to ₹250 crore for violations
+- Requires Data Protection Impact Assessments
+
+**IT Act 2000 & Amendments**
+
+- Section 43A: Compensation for failure to protect data
+- Section 72A: Punishment for disclosure of information
+- Intermediary guidelines requiring data localization
+
+### Market Gap Analysis
+
 ```mermaid
 flowchart TB
-    subgraph Modal["▶ Live Preview Modal"]
+    subgraph MARKET["🎯 ENTERPRISE AI MARKET GAP"]
         direction TB
-        subgraph Header["Header Controls"]
-            R["🔄 Refresh"] --- N["↗️ New Tab"] --- F["⛶ Fullscreen"] --- X["✕ Close"]
+
+        subgraph FOREIGN["❌ Foreign AI Providers"]
+            F1["✅ Advanced AI"]
+            F2["✅ Full-featured"]
+            F3["❌ Data Abroad"]
+            F4["❌ Compliance Issues"]
+            F5["❌ USD Pricing"]
         end
-        subgraph Content["Sandboxed iframe"]
-            O[RENDERED OUTPUT]
+
+        subgraph LOCAL["⚠️ Basic Local Tools"]
+            L1["✅ Data Local"]
+            L2["❌ Limited AI"]
+            L3["❌ No RAG"]
+            L4["❌ No Visualization"]
+            L5["✅ Low Cost"]
         end
-        subgraph Footer["Device Simulation"]
-            D["💻 Desktop 100%"] --- T["📱 Tablet 768px"] --- M["📱 Mobile 375px"]
-        end
-    end
-```
-| Button | Function |
-|--------|----------|
-| 🔄 | Refresh/Reload iframe |
-| ↗️ | Open in new tab |
-| ⛶ | Toggle fullscreen |
-| ✕ | Close modal |
 
-| Mode | Width | Icon |
-|------|-------|------|
-| Desktop | 100% | 💻 |
-| Tablet | 768px | 📱 |
-| Mobile | 375px | 📱 |
-
----
-
-### JavaScript Console Capture
-| Method | Color | Example |
-|--------|-------|---------|
-| `console.log()` | Blue | `console.log("Hello");` |
-| `console.error()` | Red | `console.error("Error!");` |
-| `console.warn()` | Yellow | `console.warn("Warning");` |
-| `console.info()` | Blue | `console.info("Info");` |
-
----
-
-## Mermaid Diagram Rendering
-### Auto-Detection
-LAPLACIAN automatically detects and renders Mermaid diagrams in code blocks.
-
-### Supported Diagram Types
-| Category | Types | Example Syntax |
-|----------|-------|----------------|
-| **Flow** | `flowchart`, `graph` | `graph LR A --> B --> C` |
-| **Sequence** | `sequenceDiagram` | `A ->> B: Message` |
-| **Class** | `classDiagram` | `class Animal { +name }` |
-| **State** | `stateDiagram-v2` | `[*] --> Active` |
-| **Entity** | `erDiagram` | `USER \|\|--o{ ORDER` |
-| **Gantt** | `gantt` | `Task 1: a1, 2024-01-01, 7d` |
-| **Pie** | `pie` | `"A": 30, "B": 70` |
-| **Other** | `gitGraph`, `journey`, `mindmap`, `timeline`, `C4` | Various syntaxes |
-
----
-
-### Diagram Block UI
-```mermaid
-flowchart TB
-    subgraph DiagramUI["Mermaid Diagram Block"]
-        direction TB
-        subgraph Tabs["View Tabs"]
-            C["Code"] --- V["Visual"]
-        end
-        subgraph Controls["📐 Architecture"]
-            CP["📋 Copy"] --- EX["⬇ Export SVG"]
-        end
-        subgraph Preview["Interactive Preview"]
-            DG["Rendered Diagram"]
-            Z["Zoom: 0.5x - 3x"]
-            P["Pan: Click & Drag"]
+        subgraph LAPLACIAN["✅ LAPLACIAN AI"]
+            P1["✅ Advanced AI"]
+            P2["✅ Full-featured"]
+            P3["✅ Data Local"]
+            P4["✅ DPDP Compliant"]
+            P5["✅ INR Pricing"]
         end
     end
+
+    LAPLACIAN --> OPTIMAL["🏆 OPTIMAL SOLUTION"]
+
+    style FOREIGN fill:#8b0000,stroke:#cc0000,color:#fff
+    style LOCAL fill:#8b4513,stroke:#d2691e,color:#fff
+    style LAPLACIAN fill:#1a472a,stroke:#2d7a4a,color:#fff
+    style OPTIMAL fill:#667eea,stroke:#764ba2,color:#fff
 ```
-| Feature | Description |
-|---------|-------------|
-| **Tab: Code** | View source code |
-| **Tab: Visual** | View rendered diagram |
-| **📋 Copy** | Copy source code |
-| **⬇ Export** | Download as SVG |
-| **Zoom** | Mouse wheel (0.5x - 3x) |
-| **Pan** | Click and drag |
-| **Fullscreen** | Expand view |
 
 ---
 
-## DocIQ - Document Intelligence
-### RAG (Retrieval Augmented Generation)
+## Solution
+
+### Laplacian AI: The Sovereign AI Workspace
+
+Laplacian AI addresses these challenges through a comprehensive, locally-deployable AI workspace that delivers enterprise-grade capabilities while ensuring complete data sovereignty.
+
 ```mermaid
 flowchart LR
-    subgraph Upload["1. UPLOAD"]
-        A[PDF] --> D[Document Processor]
-        B[DOCX] --> D
-        C[TXT] --> D
-    end
-    subgraph Process["2. PROCESS"]
-        D --> E[Extract Text]
-        E --> F["Chunk (1000 chars)"]
-        F --> G[Store in DB]
-    end
-    subgraph Query["3. QUERY"]
-        H[User Question] --> I[Search Chunks]
-        I --> J[Retrieve Top 5]
-        J --> K[LLM + Context]
-        K --> L[Answer]
-    end
-    G --> I
-```
-### Configuration
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| **Max File Size** | 16 MB | Maximum upload size |
-| **Chunk Size** | 1000 chars | Text split size |
-| **Chunk Overlap** | 200 chars | Overlap between chunks |
-| **Top K Results** | 5 chunks | Retrieved for context |
+    subgraph INDIA["🇮🇳 INDIAN JURISDICTION"]
+        subgraph ENTERPRISE["🏢 Indian Enterprise"]
+            A["📄 Documents<br/>📊 Data<br/>💬 Queries"]
+        end
 
-### Supported Formats
-| Format | Library | Features |
-|--------|---------|----------|
-| **PDF** | PyPDF2 | Text extraction from pages |
-| **DOCX** | python-docx | Paragraph extraction |
-| **TXT** | Built-in | UTF-8/Latin-1 encoding |
+        subgraph LAPLACIAN["🚀 LAPLACIAN AI WORKSPACE"]
+            B["💬 AI Chat<br/>📄 DocIQ<br/>📊 VizIQ"]
+        end
+
+        subgraph LOCAL["🖥️ Local Servers"]
+            C["🗄️ MongoDB<br/>🤖 Ollama LLM<br/>📁 File Storage"]
+        end
+
+        A <-->|"Secure Connection"| B
+        B <-->|"Local Processing"| C
+    end
+
+    style INDIA fill:#0d1117,stroke:#1a472a,color:#fff
+    style ENTERPRISE fill:#1a472a,stroke:#2d7a4a,color:#fff
+    style LAPLACIAN fill:#667eea,stroke:#764ba2,color:#fff
+    style LOCAL fill:#1a472a,stroke:#2d7a4a,color:#fff
+```
+
+> ✅ **SECURE:** All data processed and stored within Indian jurisdiction
+
+### Core Value Propositions
+
+| Proposition | Description | Benefit |
+|-------------|-------------|---------|
+| **100% Data Sovereignty** | All processing occurs on local/Indian infrastructure | Full DPDP compliance |
+| **Enterprise-Grade AI** | Advanced LLM capabilities via Ollama | No compromise on quality |
+| **Unified Workspace** | Chat + Documents + Data in one platform | Improved productivity |
+| **On-Premise Deployment** | Deploy on your own servers | Complete control |
+| **Cost Efficiency** | INR-based, predictable pricing | 40-60% cost reduction |
+| **Customizable Models** | Choose and fine-tune your AI models | Domain-specific excellence |
 
 ---
 
-## VizIQ - Data Visualization
-### Auto-Dashboard Generation
+## Features
+
+Laplacian AI provides a comprehensive AI workspace with three core intelligence modules and productivity tools:
+
 ```mermaid
-flowchart TD
-    subgraph Input["📁 UPLOAD"]
-        A[CSV]
-        B[XLSX]
-        C[JSON]
-    end
-    subgraph Processing["🔍 PARSE & ANALYZE"]
-        D[Detect Column Types]
-        E[Calculate Statistics]
-        F[Generate KPIs]
-    end
-    subgraph Dashboard["📊 GENERATED DASHBOARD"]
-        subgraph KPIs["KPI Cards"]
-            K1["📊 $1.2M"]
-            K2["📊 156"]
-            K3["📊 7,689"]
-            K4["📊 +12.5%"]
-        end
-        subgraph Charts["Visualizations"]
-            CH1["📊 Column Chart"]
-            CH2["🍩 Doughnut Chart"]
-            CH3["📈 Line Chart"]
-        end
-        subgraph Insights["💡 AI Insights"]
-            I1["Insight 1"]
-            I2["Insight 2"]
-            I3["Insight 3"]
-        end
-    end
-    A --> D
-    B --> D
-    C --> D
-    D --> E --> F --> Dashboard
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#667eea', 'primaryTextColor': '#000000', 'primaryBorderColor': '#764ba2', 'lineColor': '#333333', 'secondaryColor': '#f0f0f0', 'tertiaryColor': '#ffffff'}}}%%
+mindmap
+  root((LAPLACIAN AI))
+    AI Chat
+      Conversational AI
+      Web Search
+      Code Generation
+      Mermaid Diagrams
+      Voice Support
+    DocIQ
+      PDF Processing
+      DOCX Support
+      RAG Search
+      Summarization
+      Multi Document
+    VizIQ
+      Auto Dashboards
+      Chart Generation
+      KPI Extraction
+      AI Insights
+      CSV Excel JSON
+    Productivity
+      Task Manager
+      Notes
+      Reminders
+      Statistics
 ```
-### Generated Components
-| Component | Icon | Description |
-|-----------|------|-------------|
-| **KPI Cards** | 📊 | Auto-calculated key metrics |
-| **Column Chart** | 📊 | Categorical vs numeric data |
-| **Doughnut Chart** | 🍩 | Distribution breakdown |
-| **Line Chart** | 📈 | Trend analysis over time |
-| **Comparison Chart** | 📉 | Multi-metric comparison |
-| **AI Insights** | 💡 | Pattern detection alerts |
-| **Data Table** | 📋 | First 100 rows preview |
 
-### Column Type Detection
-| Type | Detection Rule | Example |
-|------|---------------|---------|
-| `numeric` | 70%+ values are numbers | `123`, `45.67` |
-| `date` | Contains date separators | `2024-01-15`, `01/15/24` |
-| `categorical` | Everything else | `Red`, `Blue`, `Active` |
+### 🤖 AI Chat - Conversational Intelligence
+
+The heart of Laplacian AI, providing intelligent conversational capabilities powered by locally-deployed language models.
+
+**Capabilities:**
+- Multi-model support (Core, Lite, Coder variants)
+- Real-time web search integration
+- Code generation with syntax highlighting
+- Mermaid diagram visualization
+- Architecture and flowchart generation
+- Voice input/output support (ElevenLabs integration)
+- Conversation history with edit/regenerate
+- Context-aware responses
+
+**Use Cases:**
+- Code development and debugging
+- Technical documentation
+- Problem-solving and brainstorming
+- Learning and explanation
+- Architecture design
 
 ---
 
-## Productivity Suite
-```mermaid
-flowchart LR
-    subgraph Tasks["📋 Tasks Module"]
-        T1["☐ Task 1 [!]"]
-        T2["☑ Task 2 [!!]"]
-        T3["☐ Task 3 [!!!]"]
-    end
-    subgraph Notes["📝 Notes Module"]
-        N1["Note Title"]
-        N2["Content..."]
-        N3["12:30 PM"]
-    end
-    subgraph Reminders["⏰ Reminders Module"]
-        R1["Meeting"]
-        R2["Dec 25, 10:00 AM"]
-    end
-```
-| Module | Features |
-|--------|----------|
-| **Tasks** | Create, Priority (High/Medium/Low), Status (Pending/Done), Filter, Delete |
-| **Notes** | Create (Title + Content), Card Display, Auto-Timestamp, Delete |
-| **Reminders** | Create (Date/Time), Alert Notifications, Delete |
+### 📄 DocIQ - Document Intelligence
+
+An advanced Retrieval-Augmented Generation (RAG) system for intelligent document analysis and question-answering.
+
+**Capabilities:**
+- Multi-format support (PDF, DOCX, DOC, TXT)
+- Intelligent text chunking for optimal context
+- Semantic search across documents
+- Structured response formatting
+- Automatic diagram generation
+- Document summarization
+- Cross-document analysis
+
+**Supported Formats:**
+| Format | Extension | Processing |
+|--------|-----------|------------|
+| PDF Documents | .pdf | PyPDF2/pdfplumber extraction |
+| Word Documents | .docx, .doc | python-docx parsing |
+| Text Files | .txt | Direct text processing |
+
+**Use Cases:**
+- Contract analysis and review
+- Research paper summarization
+- Policy document Q&A
+- Technical manual navigation
+- Legal document analysis
 
 ---
 
-## System Architecture
-### LAPLACIAN Architecture *by Perfionix AI*
+### 📊 VizIQ - Data Intelligence
+
+AI-powered data visualization and analytics platform that transforms raw data into actionable insights.
+
+**Capabilities:**
+- Auto-generated dashboards
+- KPI extraction and display
+- Multiple chart types (Bar, Line, Doughnut, Trend)
+- Statistical analysis (Mean, Median, Min, Max)
+- Data quality alerts
+- AI-generated insights
+- Column type detection
+
+**Supported Formats:**
+| Format | Extension | Features |
+|--------|-----------|----------|
+| CSV | .csv | Full parsing, type detection |
+| Excel | .xlsx, .xls | Multi-sheet support |
+| JSON | .json | Nested structure handling |
+
+**Generated Visualizations:**
+- Column charts (categorical aggregation)
+- Distribution charts (pie/doughnut)
+- Comparison charts (multi-metric)
+- Trend analysis (time-series)
+
+---
+
+### 📝 Productivity Suite
+
+Integrated productivity tools for comprehensive workspace management:
+
+| Tool | Description | Features |
+|------|-------------|----------|
+| **Tasks** | Task management with priorities | Create, complete, delete, priority levels |
+| **Notes** | Quick note-taking | Create, edit, timestamp tracking |
+| **Reminders** | Time-based alerts | Date/time scheduling |
+| **Stats** | Usage analytics | Task completion rates, productivity metrics |
+
+---
+
+## System Workflow
+
 ```mermaid
 flowchart TB
-    subgraph Client["🖥️ CLIENT LAYER - Web Browser"]
-        direction LR
-        subgraph Core["Core Technologies"]
-            H[HTML5 Templates]
-            C[CSS3 Styles]
-            J[ES6+ JS Logic]
-            A[Assets/Fonts]
-        end
-        subgraph Libraries["Frontend Libraries"]
-            CH[Chart.js]
-            ME[Mermaid.js]
-            HL[Highlight.js]
-        end
+    subgraph UI["🖥️ USER INTERFACE"]
+        USER["👤 User Browser"]
     end
-    subgraph Application["⚙️ APPLICATION LAYER - Flask 3.0.0"]
-        direction LR
-        subgraph APIs["API Endpoints"]
-            CA["/api/chat"]
-            DA["/api/dociq"]
-            VA["/api/viziq"]
-            TA["/api/tasks"]
-            NA["/api/notes"]
-            MA["/api/models"]
-        end
+
+    subgraph FEATURES["🎯 AI FEATURES"]
+        CHAT["💬 AI Chat<br/>• User Query<br/>• Web Search<br/>• Code Gen"]
+        DOCIQ["📄 DocIQ<br/>• Upload Doc<br/>• RAG Query<br/>• Summary"]
+        VIZIQ["📊 VizIQ<br/>• Upload Data<br/>• Analytics<br/>• Charts"]
     end
-    subgraph Service["🔧 SERVICE LAYER"]
-        direction LR
-        subgraph AI["AI Services"]
-            OL["Ollama LLM (3 Models)"]
-            WS["Web Search (Google/DDG)"]
-            RAG["RAG Engine"]
-        end
-        subgraph Processing["Data Processing"]
-            DP["Doc Processor (PDF/DOCX/TXT)"]
-            DAN["Data Analyzer (CSV/XLSX/JSON)"]
-            CG["Chart Generator"]
-        end
+
+    subgraph BACKEND["⚙️ FLASK BACKEND"]
+        ROUTES["🔀 Route Handling"]
+        SESSION["🔐 Session Management"]
+        PROCESS["⚡ Request Processing"]
     end
-    subgraph Data["💾 DATA LAYER"]
-        direction LR
-        MO[(MongoDB Primary)]
-        FS[(Flask Session Backup)]
-        UP[(File Storage uploads/)]
+
+    subgraph SERVICES["🛠️ SERVICE LAYER"]
+        AI_SVC["🤖 AI Service<br/>• Ollama API<br/>• Model Mgmt"]
+        DOC_SVC["📑 Document Processing<br/>• PDF Parse<br/>• DOCX Parse<br/>• Chunking"]
+        DATA_SVC["📈 Data Processing<br/>• CSV Parse<br/>• Excel Parse<br/>• Statistics"]
     end
-    Client -->|REST API JSON| Application
-    Application --> Service
-    Service --> Data
+
+    subgraph DATA["💾 DATA LAYER"]
+        MONGO[("🗄️ MongoDB<br/>Primary Store")]
+        MEMORY["📦 In-Memory<br/>Fallback"]
+    end
+
+    subgraph LLM["🧠 LOCAL LLM - OLLAMA"]
+        CORE["⚡ Laplacian Core<br/>gpt-oss:20b"]
+        LITE["🚀 Laplacian Lite<br/>phi3:mini"]
+        CODER["💻 Laplacian Coder<br/>qwen3-coder"]
+    end
+
+    USER --> CHAT & DOCIQ & VIZIQ
+    CHAT & DOCIQ & VIZIQ --> ROUTES
+    ROUTES --> SESSION --> PROCESS
+    PROCESS --> AI_SVC & DOC_SVC & DATA_SVC
+    AI_SVC & DOC_SVC & DATA_SVC --> MONGO
+    MONGO -.->|"Fallback"| MEMORY
+    AI_SVC --> CORE & LITE & CODER
+
+    style UI fill:#1a1b2e,stroke:#667eea,color:#fff
+    style FEATURES fill:#252642,stroke:#764ba2,color:#fff
+    style BACKEND fill:#1a472a,stroke:#2d7a4a,color:#fff
+    style SERVICES fill:#4a1a6b,stroke:#8b5cf6,color:#fff
+    style DATA fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    style LLM fill:#7c2d12,stroke:#f97316,color:#fff
 ```
 
 ---
 
-## Chat System Flow Diagram
-### Complete Chat Pipeline - LAPLACIAN CHAT SYSTEM *by Perfionix AI*
+## Technology Stack
+
 ```mermaid
-flowchart TD
-    A[USER INPUT] --> B{Input Type}
-    B -->|Enter| C[Send Message]
-    B -->|Ctrl+Enter| D[Force Search]
-    B -->|Edit Button| E[Edit Message]
-    C --> F["Show Typing ● ● ●"]
-    D --> F
-    E --> F
-    F --> G{should_search_web?}
-    G -->|Yes| H[Web Search]
-    G -->|No| I[Direct Query]
-    subgraph Search["Search Providers"]
-        H --> H1[1. Google API]
-        H --> H2[2. DuckDuckGo]
-        H --> H3[3. Direct Scrape]
+flowchart LR
+    subgraph FRONTEND["🎨 Frontend"]
+        HTML["HTML5/CSS3"]
+        JS["JavaScript ES6+"]
+        CHART["Chart.js"]
+        MERMAID["Mermaid.js"]
+        HLJS["Highlight.js"]
     end
-    H1 --> J
-    H2 --> J
-    H3 --> J
-    I --> J
-    J[Model Selection] --> K{Selected Model}
-    K -->|Core| L["gpt-oss:20b-cloud"]
-    K -->|Lite| M["-"]
-    K -->|Coder| N["qwen3-coder:480b-cloud"]
-    L --> O["OLLAMA API :11434"]
-    M --> O
-    N --> O
-    O --> P[AI RESPONSE]
-    P --> Q["Generation Controls<br/>⏸ Pause | ▶ Continue | ⏹ Stop"]
-    Q --> R["Typewriter Effect<br/>5ms | 3 chars | ▌"]
-    R --> S["Markdown Rendering<br/>marked.js → HTML"]
-    S --> T{Content Type}
-    T -->|Code| U["CODE BLOCK<br/>[Copy] [Run]"]
-    T -->|Mermaid| V["MERMAID DIAGRAM<br/>[Export]"]
-    T -->|Text| W[PLAIN TEXT]
-    U --> X["Save to Storage<br/>MongoDB + Session"]
-    V --> X
-    W --> X
-    X --> Y["Display Message<br/>+ Edit Button + Timestamp"]
+
+    subgraph BACKEND["⚙️ Backend"]
+        FLASK["Flask 3.0"]
+        ROUTES["Blueprints"]
+        SERVICES["Service Layer"]
+    end
+
+    subgraph AI["🧠 AI Layer"]
+        OLLAMA["Ollama"]
+        MODELS["LLM Models"]
+    end
+
+    subgraph DATA["💾 Data Layer"]
+        MONGO[("MongoDB")]
+        FILES["File Storage"]
+    end
+
+    subgraph EXTERNAL["🌐 External APIs"]
+        ELEVEN["ElevenLabs TTS"]
+        GOOGLE["Google Search"]
+        PISTON["Piston Code Exec"]
+    end
+
+    FRONTEND --> BACKEND
+    BACKEND --> AI
+    BACKEND --> DATA
+    BACKEND --> EXTERNAL
+
+    style FRONTEND fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    style BACKEND fill:#10b981,stroke:#059669,color:#fff
+    style AI fill:#f59e0b,stroke:#d97706,color:#fff
+    style DATA fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style EXTERNAL fill:#ef4444,stroke:#dc2626,color:#fff
 ```
 
-### State Machine
-```mermaid
-stateDiagram-v2
-    [*] --> IDLE
-    IDLE --> SENDING: User sends message
-    SENDING --> SEARCHING: Search keywords found
-    SENDING --> PROCESSING: Direct query
-    SEARCHING --> PROCESSING: Search complete
-    PROCESSING --> GENERATING: LLM responds
-    GENERATING --> PAUSED: Click Pause
-    GENERATING --> STOPPED: Click Stop
-    GENERATING --> RENDERING: Complete
-    PAUSED --> GENERATING: Click Continue
-    PAUSED --> STOPPED: Click Stop
-    STOPPED --> RENDERING: Partial content
-    RENDERING --> SAVING: Markdown done
-    SAVING --> IDLE: Message displayed
+### Backend Architecture
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **Web Framework** | Flask 3.0 | REST API, routing, session management |
+| **AI Engine** | Ollama | Local LLM inference |
+| **Database** | MongoDB | Document storage, chat history |
+| **Search** | Multi-provider | Google API, DuckDuckGo, web scraping |
+| **TTS** | ElevenLabs API | Voice synthesis |
+| **Code Execution** | Piston API | Sandboxed code running |
+
+### Frontend Technologies
+
+| Technology | Purpose |
+|------------|---------|
+| **HTML5/CSS3** | Structure and styling |
+| **JavaScript (ES6+)** | Interactive functionality |
+| **Chart.js** | Data visualization |
+| **Mermaid.js** | Diagram rendering |
+| **Highlight.js** | Code syntax highlighting |
+| **Marked.js** | Markdown parsing |
+
+### AI Models (Ollama)
+
+| Model | Alias | Parameters | Use Case |
+|-------|-------|------------|----------|
+| gpt-oss:20b-cloud | Laplacian Core | 20B | General purpose, complex tasks |
+| phi3:mini | Laplacian Lite | 3.8B | Fast responses, lightweight tasks |
+| qwen3-coder:480b-cloud | Laplacian Coder | Variable | Code generation, debugging |
+
+### Dependencies
+
 ```
-#### State Transitions
-| From | To | Trigger |
-|------|----|---------|
-| IDLE | SENDING | User sends message |
-| SENDING | SEARCHING | Search keywords found |
-| SENDING | PROCESSING | Direct query |
-| SEARCHING | PROCESSING | Search complete |
-| PROCESSING | GENERATING | LLM responds |
-| GENERATING | PAUSED | User clicks Pause |
-| GENERATING | STOPPED | User clicks Stop |
-| PAUSED | GENERATING | User clicks Continue |
-| PAUSED | STOPPED | User clicks Stop |
-| GENERATING | RENDERING | Complete |
-| STOPPED | RENDERING | Partial content |
-| RENDERING | SAVING | Markdown done |
-| SAVING | IDLE | Message displayed |
+Flask==3.0.0              # Web framework
+requests==2.31.0          # HTTP client
+python-dotenv==1.0.0      # Environment management
+beautifulsoup4==4.12.2    # Web scraping
+googlesearch-python==1.2.4 # Search integration
+PyPDF2==3.0.1             # PDF processing
+python-docx==1.1.0        # DOCX processing
+openpyxl==3.1.2           # Excel processing
+pymongo==4.6.1            # MongoDB driver
+Werkzeug==3.0.1           # WSGI utilities
+pydub==0.25.1             # Audio processing
+SpeechRecognition==3.10.0 # Voice input
+```
 
 ---
 
-## Tech Stack
-### Backend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Python** | 3.8+ | Core Language |
-| **Flask** | 3.0.0 | Web Framework |
-| **pymongo** | 4.6.1 | MongoDB Driver |
-| **PyPDF2** | 3.0.1 | PDF Processing |
-| **python-docx** | 1.1.0 | Word Documents |
-| **openpyxl** | 3.1.2 | Excel Files |
-| **BeautifulSoup4** | 4.12.2 | Web Scraping |
-| **requests** | 2.31.0 | HTTP Client |
+## Project Structure
 
-### Frontend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **HTML5** | - | Structure |
-| **CSS3** | - | Glassmorphism Dark Theme |
-| **JavaScript** | ES6+ | Interactivity |
-| **Chart.js** | Latest | Data Visualization |
-| **Mermaid.js** | 10.6.1 | Diagram Rendering |
-| **Highlight.js** | 11.9.0 | Syntax Highlighting |
-| **Marked.js** | Latest | Markdown Parsing |
-
-### External Services
-| Service | Purpose |
-|---------|---------|
-| **Ollama** | Local LLM Inference |
-| **MongoDB** | Persistent Storage |
-| **Google/DuckDuckGo** | Web Search |
-| **ElevenLabs** | Text-to-Speech (Optional) |
-
----
-
-## API Reference
-### Chat Endpoints
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/chat` | POST | Send message to AI |
-| `/api/chat/edit` | POST | Edit message and regenerate |
-| `/api/chat/reset` | POST | Clear conversation |
-| `/api/chat/debug` | GET | Debug conversation state |
-| `/api/models` | GET | List available AI models |
-| `/api/models/select` | POST | Switch AI model |
-| `/api/search` | POST | Web search with summary |
-| `/api/speech` | POST | Text-to-speech |
-
-### DocIQ Endpoints
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/dociq/upload` | POST | Upload document |
-| `/api/dociq/documents` | GET | List uploaded documents |
-| `/api/dociq/documents/<id>` | DELETE | Delete document |
-| `/api/dociq/chat` | POST | Query documents |
-| `/api/dociq/summary` | GET | Get document summary |
-| `/api/dociq/clear` | POST | Clear all documents |
-
-### VizIQ Endpoints
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/viziq/upload` | POST | Upload data file |
-| `/api/viziq/data` | GET | Get current data |
-| `/api/viziq/clear` | POST | Clear data |
-
-### Productivity Endpoints
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/tasks` | GET/POST | List/Create tasks |
-| `/api/tasks/<id>` | PUT/DELETE | Update/Delete task |
-| `/api/notes` | GET/POST | List/Create notes |
-| `/api/notes/<id>` | DELETE | Delete note |
-| `/api/reminders` | GET/POST | List/Create reminders |
-| `/api/reminders/<id>` | DELETE | Delete reminder |
-| `/api/stats` | GET | Get user statistics |
+```
+laplacian-ai/
+├── app/                          # Application package
+│   ├── __init__.py               # Application factory
+│   ├── config/                   # Configuration
+│   │   ├── settings.py           # Environment settings
+│   │   └── constants.py          # Static constants
+│   ├── routes/                   # API endpoints
+│   │   ├── main.py               # Index route
+│   │   ├── chat.py               # Chat API
+│   │   ├── models.py             # Model selection
+│   │   ├── search.py             # Web search
+│   │   ├── code.py               # Code execution
+│   │   ├── dociq.py              # Document intelligence
+│   │   ├── viziq.py              # Data visualization
+│   │   └── productivity.py       # Tasks, notes, reminders
+│   ├── services/                 # Business logic
+│   │   ├── ai_service.py         # AI response generation
+│   │   ├── chat_service.py       # Conversation management
+│   │   ├── search_service.py     # Web search providers
+│   │   ├── speech_service.py     # Text-to-speech
+│   │   ├── code_service.py       # Code execution
+│   │   ├── dociq_service.py      # Document RAG
+│   │   ├── viziq_service.py      # Data analytics
+│   │   └── productivity_service.py
+│   └── utils/                    # Utilities
+│       ├── session.py            # Session management
+│       ├── file_helpers.py       # File operations
+│       ├── text_processing.py    # Document parsing
+│       └── data_processing.py    # Data analysis
+├── templates/                    # HTML templates
+│   └── index.html                # Main SPA template
+├── static/                       # Static assets
+│   ├── style.css                 # Main styles
+│   ├── enhancements.css          # UI enhancements
+│   ├── script.js                 # Frontend logic
+│   └── logo.png                  # Brand assets
+├── uploads/                      # File upload directory
+├── database.py                   # MongoDB integration
+├── run.py                        # Application entry point
+├── requirements.txt              # Python dependencies
+└── .env                          # Environment variables
+```
 
 ---
 
-## Installation Guide
+## Installation
+
 ### Prerequisites
-- Python 3.8+
-- MongoDB (optional, recommended)
-- Ollama with models installed
-- Modern web browser
+
+- Python 3.10 or higher
+- Ollama (for local LLM)
+- MongoDB (optional, falls back to in-memory)
+- Node.js (for frontend development)
 
 ### Quick Start
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/TR0J49/laplacian-ai.git
-cd laplacian
+# Clone the repository
+git clone https://github.com/perfionix-ai/laplacian-ai.git
+cd laplacian-ai
 
-# 2. Create virtual environment
+# Create virtual environment
 python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Windows
-venv\Scripts\activate
-
-# Linux/Mac
-source venv/bin/activate
-
-# 3. Install dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# 4. Configure environment
-cp .env.example .env
-# Edit .env with your settings
-
-# 5. Start Ollama and pull models
-ollama serve
+# Pull Ollama models
 ollama pull phi3:mini
 ollama pull qwen3-coder
 
-# 6. Run application
-python app.py
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings
 
-# 7. Access Laplacian
-# Open http://localhost:5000
+# Run the application
+python run.py
+```
+
+### Environment Configuration
+
+```env
+# Flask Configuration
+FLASK_SECRET_KEY=your-secure-secret-key
+FLASK_DEBUG=True
+FLASK_ENV=development
+
+# Ollama Configuration
+GPT_SERVER_URL=http://localhost:11434/api/chat
+GPT_MODEL=gpt-oss:20b-cloud
+LITE_MODEL=phi3:mini
+CODER_MODEL=qwen3-coder:480b-cloud
+
+# MongoDB (optional)
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB=laplacian_ai
+
+# Optional APIs
+ELEVENLABS_API_KEY=your-elevenlabs-key
+GOOGLE_API_KEY=your-google-api-key
+GOOGLE_CSE_ID=your-google-cse-id
 ```
 
 ---
 
-## Future Roadmap
-### Version 2.1 (Q1 2025)
-- [ ] Voice input with speech recognition
-- [ ] Multi-language interface support
-- [ ] Advanced RAG with embeddings
-- [ ] Export chat history as PDF
-- [ ] Code execution for Python (sandboxed)
+## Deployment Options
 
-### Version 2.2 (Q2 2025)
-- [ ] User authentication system
+### On-Premise Deployment
+
+Recommended for enterprises requiring maximum data security:
+
+```mermaid
+flowchart TB
+    subgraph NETWORK["🏢 ENTERPRISE NETWORK - Secured Perimeter"]
+        subgraph SERVERS["🖥️ Server Infrastructure"]
+            LAP["🚀 Laplacian AI<br/>Flask Server"]
+            OLLAMA["🤖 Ollama<br/>LLM Server"]
+            DB[("🗄️ MongoDB<br/>Database")]
+        end
+
+        subgraph USERS["👥 Enterprise Users"]
+            EMP1["👤 Employee 1"]
+            EMP2["👤 Employee 2"]
+            EMP3["👤 Employee N"]
+        end
+
+        LAP <--> OLLAMA
+        OLLAMA <--> DB
+        LAP <--> DB
+        EMP1 & EMP2 & EMP3 --> LAP
+    end
+
+    FIREWALL["🔥 Enterprise Firewall"] --> NETWORK
+
+    style NETWORK fill:#0d1117,stroke:#1a472a,color:#fff
+    style SERVERS fill:#1a472a,stroke:#2d7a4a,color:#fff
+    style USERS fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    style FIREWALL fill:#7c2d12,stroke:#f97316,color:#fff
+```
+
+### Indian Cloud Deployment
+
+For organizations preferring managed infrastructure:
+
+- **AWS Mumbai Region** (ap-south-1)
+- **Azure Central India**
+- **Google Cloud Mumbai**
+- **Indian Cloud Providers** (Yotta, CtrlS, NxtGen)
+
+---
+
+## Security & Compliance
+
+### Data Protection Measures
+
+| Measure | Implementation |
+|---------|----------------|
+| **Data Localization** | All processing within Indian servers |
+| **Encryption** | TLS 1.3 for transit, AES-256 for storage |
+| **Access Control** | Session-based authentication |
+| **Audit Logging** | Comprehensive activity logs |
+| **Data Isolation** | Per-session document separation |
+
+### Regulatory Compliance
+
+- ✅ **DPDP Act 2023** - Full compliance with data localization
+- ✅ **IT Act 2000** - Adherence to intermediary guidelines
+- ✅ **ISO 27001** - Security management standards
+- ✅ **SOC 2 Type II** - Enterprise security controls
+
+---
+
+## Roadmap
+
+```mermaid
+gantt
+    title Laplacian AI Development Roadmap 2026-27
+    dateFormat  YYYY-MM
+    section Phase 1: Foundation
+    Core AI Chat           :done, p1a, 2026-01, 2026-03
+    DocIQ Intelligence     :done, p1b, 2026-02, 2026-04
+    VizIQ Analytics        :done, p1c, 2026-03, 2026-05
+    Productivity Suite     :done, p1d, 2026-04, 2026-06
+    Multi-model Support    :done, p1e, 2026-05, 2026-07
+
+    section Phase 2: Enterprise
+    Multi-user Auth        :active, p2a, 2026-07, 2026-09
+    Role-based Access      :p2b, 2026-08, 2026-10
+    Team Collaboration     :p2c, 2026-09, 2026-11
+    API Integration        :p2d, 2026-10, 2026-12
+    Model Fine-tuning      :p2e, 2026-11, 2027-01
+
+    section Phase 3: Scale
+    Kubernetes Deploy      :p3a, 2027-01, 2027-03
+    Horizontal Scaling     :p3b, 2027-02, 2027-04
+    Advanced Analytics     :p3c, 2027-03, 2027-05
+    Workflow Automation    :p3d, 2027-04, 2027-06
+    Enterprise Connectors  :p3e, 2027-05, 2027-07
+```
+
+### Phase 1: Foundation ✅ (Current)
+- [x] Core AI Chat functionality
+- [x] DocIQ document intelligence
+- [x] VizIQ data visualization
+- [x] Productivity suite
+- [x] Multi-model support
+
+### Phase 2: Enterprise 🚧 (Q3-Q4 2026)
+- [ ] Multi-user authentication
+- [ ] Role-based access control
 - [ ] Team collaboration features
+- [ ] API access for integration
 - [ ] Custom model fine-tuning
-- [ ] API rate limiting
-- [ ] Webhook integrations
 
-### Version 3.0 (Q3 2025)
-- [ ] Mobile responsive PWA
-- [ ] Plugin architecture
-- [ ] Real-time collaboration
-- [ ] Enterprise SSO integration
-- [ ] Self-hosted deployment guide
+### Phase 3: Scale 📋 (Q1-Q2 2027)
+- [ ] Kubernetes deployment
+- [ ] Horizontal scaling
+- [ ] Advanced analytics
+- [ ] Workflow automation
+- [ ] Enterprise connectors
 
 ---
 
-## Contact & Support
-| | |
-|---|---|
-| **Company** | Perfionix AI Technology Pvt Ltd |
-| **Product** | LAPLACIAN v2.0 |
-| **Founder** | Shubham Rahangdale |
+## Contributing
+
+We welcome contributions from the developer community. Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting pull requests.
+
+---
+
+## Support
+
+| Channel | Contact |
+|---------|---------|
 | **Email** | connect@perfionixai.com |
+| **Website** | [www.perfionixai.com](https://www.perfionixai.com) |
+| **Issues** | GitHub Issues |
 
-**Technical Support:** connect@perfionixai.com
-**Subject Format:** `[LAPLACIAN] <Issue Type> - <Brief Description>`
+---
+
+## License
+
+Copyright © 2026 Perfionix AI Technology Pvt Ltd. All rights reserved.
+
+This software is proprietary and confidential. Unauthorized copying, distribution, or use is strictly prohibited.
 
 ---
 
 <p align="center">
-  <img src="static/logo.png" alt="Perfionix AI" width="100">
+  <strong>Built with ❤️ in India by Perfionix AI</strong>
 </p>
 
 <p align="center">
-  <strong>LAPLACIAN v2.0</strong><br>
-  <em>AI Code Assistant & Productivity Platform</em>
+  <em>"Securing India's AI Future, One Enterprise at a Time"</em>
 </p>
 
 <p align="center">
-  <strong>Perfionix AI Technology Pvt Ltd</strong><br>
-  
+  <a href="https://www.perfionixai.com">www.perfionixai.com</a> |
+  <a href="mailto:connect@perfionixai.com">connect@perfionixai.com</a>
 </p>
-
-<p align="center">
-  <em>"Empowering developers with intelligent AI"</em>
-</p>
-
----
-
-<p align="center">
-  <sub>Copyright 2024 Perfionix AI Technology Pvt Ltd. All rights reserved.</sub>
-</p>
-
----
-
-**Document Version:** 2.0.0
-**Last Updated:** December 2025
-**Status:** Production Ready
-**Classification:** Public Documentation
