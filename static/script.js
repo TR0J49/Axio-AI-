@@ -23,6 +23,12 @@ class LaplacianAssistant {
         this.currentGenerationText = '';
         this.currentGenerationIndex = 0;
 
+        // Follow-up suggestion chips state
+        this.pendingSuggestions = [];
+
+        // Apigee mode state
+        this.apigeeMode = false;
+
         this.init();
     }
 
@@ -32,6 +38,7 @@ class LaplacianAssistant {
         this.setupSidebarToggle();
         this.setupChat();
         this.setupModelSelector();
+        this.setupApigeeToggle();
         this.setupTasks();
         this.setupNotes();
         this.setupReminders();
@@ -366,6 +373,9 @@ class LaplacianAssistant {
             this.isStopped = true;
             this.isPaused = false;
 
+            // Clear pending suggestions so stopped responses show no chips
+            this.pendingSuggestions = [];
+
             // If paused, resolve to let it exit
             if (this.pauseResolve) {
                 this.pauseResolve();
@@ -518,6 +528,7 @@ class LaplacianAssistant {
         let displayName = 'LAPLACIAN Core';
         if (currentModel === 'gemini') displayName = 'LAPLACIAN Lite';
         else if (currentModel === 'coder') displayName = 'LAPLACIAN Coder';
+        else if (currentModel === 'max') displayName = 'LAPLACIAN Max';
 
         if (models) {
             const activeModel = models.find(m => m.id === currentModel);
@@ -578,11 +589,284 @@ class LaplacianAssistant {
         }, 3000);
     }
 
+    // ================================
+    // APIGEE MODE
+    // ================================
+
+    setupApigeeToggle() {
+        const toggleBtn = document.getElementById('apigee-toggle-btn');
+        const toggle = document.getElementById('apigee-toggle');
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                this.toggleApigeeMode();
+            });
+        }
+    }
+
+    toggleApigeeMode() {
+        this.apigeeMode = !this.apigeeMode;
+
+        const toggle = document.getElementById('apigee-toggle');
+        const status = document.getElementById('apigee-status');
+        const input = document.getElementById('chat-input');
+
+        if (this.apigeeMode) {
+            toggle.classList.add('active');
+            status.textContent = 'ON';
+            input.placeholder = 'Describe the API proxy you want to create...';
+            this.showApigeeWelcome();
+
+            // Show toast notification
+            if (typeof toastManager !== 'undefined') {
+                toastManager.success('Apigee Mode enabled', 2000);
+            }
+        } else {
+            toggle.classList.remove('active');
+            status.textContent = 'OFF';
+            input.placeholder = 'Ask me anything...';
+
+            // Show toast notification
+            if (typeof toastManager !== 'undefined') {
+                toastManager.info('Apigee Mode disabled', 2000);
+            }
+        }
+    }
+
+    showApigeeWelcome() {
+        const messagesContainer = document.getElementById('chat-messages');
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.className = 'message assistant apigee-mode-message';
+        welcomeDiv.innerHTML = `
+            <div class="message-avatar ai-avatar">
+                <div class="ai-icon">
+                    <div class="ai-core"></div>
+                    <div class="ai-ring"></div>
+                    <div class="ai-particles">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="message-content">
+                <div class="apigee-welcome">
+                    <h4>Apigee Proxy Generator Active</h4>
+                    <p>Describe the API proxy you want to create and I'll generate a ready-to-deploy Apigee bundle.</p>
+                    <ul>
+                        <li>Specify a <strong>proxy name</strong> (e.g., <code>weather-api</code>)</li>
+                        <li>Include the <strong>target domain</strong> (e.g., <code>api.weather.com</code>)</li>
+                        <li>Optionally add <strong>endpoint path</strong> (e.g., <code>/v1/forecast</code>)</li>
+                    </ul>
+                    <p style="margin-top: 12px; color: var(--text-muted); font-size: 0.85rem;">
+                        Example: "Create a proxy named weather-api for api.weather.com with /forecast endpoint"
+                    </p>
+                </div>
+                <span class="message-time">${this.formatTime(new Date())}</span>
+            </div>
+        `;
+        messagesContainer.appendChild(welcomeDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    async sendApigeeRequest(message) {
+        // Add user message to UI
+        this.addMessageToUI(message, 'user');
+
+        const input = document.getElementById('chat-input');
+        input.value = '';
+        input.style.height = 'auto';
+
+        // Show typing indicator
+        this.showTypingIndicator('Generating Apigee bundle...');
+
+        try {
+            const response = await fetch('/api/apigee/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message })
+            });
+
+            this.removeTypingIndicator();
+
+            if (response.ok) {
+                // Get the blob
+                const blob = await response.blob();
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'apigee-bundle.zip';
+
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (match && match[1]) {
+                        filename = match[1].replace(/['"]/g, '');
+                    }
+                }
+
+                // Trigger download
+                this.downloadBlob(blob, filename);
+
+                // Show success message
+                this.showApigeeSuccessMessage(filename);
+            } else {
+                const data = await response.json();
+
+                if (data.needs_confirmation) {
+                    // Show partial extraction info
+                    this.showApigeeConfirmation(data.extracted, data.error);
+                } else {
+                    // Show error with tips
+                    this.showApigeeError(data.error, data.tips);
+                }
+            }
+        } catch (error) {
+            this.removeTypingIndicator();
+            this.addMessageToUI('Connection error. Please make sure the server is running.', 'assistant');
+        }
+    }
+
+    downloadBlob(blob, filename) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    }
+
+    showApigeeSuccessMessage(filename) {
+        const messagesContainer = document.getElementById('chat-messages');
+        const successDiv = document.createElement('div');
+        successDiv.className = 'message assistant';
+        successDiv.innerHTML = `
+            <div class="message-avatar ai-avatar">
+                <div class="ai-icon">
+                    <div class="ai-core"></div>
+                    <div class="ai-ring"></div>
+                    <div class="ai-particles">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="message-content">
+                <div class="apigee-success">
+                    <h4>Apigee Bundle Generated Successfully!</h4>
+                    <p>Your proxy bundle has been downloaded.</p>
+                    <div class="bundle-info">
+                        <div class="label">Downloaded File</div>
+                        <div class="value">${filename}</div>
+                    </div>
+                    <p style="margin-top: 12px; color: var(--text-muted); font-size: 0.85rem;">
+                        Extract the ZIP and deploy to Apigee X or Edge using the management API or UI.
+                    </p>
+                </div>
+                <span class="message-time">${this.formatTime(new Date())}</span>
+            </div>
+        `;
+        messagesContainer.appendChild(successDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Show toast
+        if (typeof toastManager !== 'undefined') {
+            toastManager.success(`Downloaded ${filename}`, 3000);
+        }
+    }
+
+    showApigeeConfirmation(extracted, error) {
+        const messagesContainer = document.getElementById('chat-messages');
+        const confirmDiv = document.createElement('div');
+        confirmDiv.className = 'message assistant';
+
+        let extractedInfo = '';
+        if (extracted) {
+            extractedInfo = `
+                <div class="bundle-info" style="background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.3);">
+                    <div class="label">Extracted Details</div>
+                    <div class="value">
+                        ${extracted.proxy_name ? `<strong>Name:</strong> ${extracted.proxy_name}<br>` : ''}
+                        ${extracted.domain ? `<strong>Domain:</strong> ${extracted.domain}<br>` : ''}
+                        ${extracted.proxy_endpoint ? `<strong>Endpoint:</strong> ${extracted.proxy_endpoint}<br>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        confirmDiv.innerHTML = `
+            <div class="message-avatar ai-avatar">
+                <div class="ai-icon">
+                    <div class="ai-core"></div>
+                    <div class="ai-ring"></div>
+                    <div class="ai-particles">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="message-content">
+                <div class="apigee-welcome">
+                    <h4>Need More Information</h4>
+                    <p>${error}</p>
+                    ${extractedInfo}
+                    <p style="margin-top: 12px;">Please provide the missing details.</p>
+                </div>
+                <span class="message-time">${this.formatTime(new Date())}</span>
+            </div>
+        `;
+        messagesContainer.appendChild(confirmDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    showApigeeError(error, tips) {
+        const messagesContainer = document.getElementById('chat-messages');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'message assistant';
+
+        let tipsHtml = '';
+        if (tips && tips.length > 0) {
+            tipsHtml = `
+                <ul style="margin-top: 12px;">
+                    ${tips.map(tip => `<li>${tip}</li>`).join('')}
+                </ul>
+            `;
+        }
+
+        errorDiv.innerHTML = `
+            <div class="message-avatar ai-avatar">
+                <div class="ai-icon">
+                    <div class="ai-core"></div>
+                    <div class="ai-ring"></div>
+                    <div class="ai-particles">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="message-content">
+                <div class="apigee-welcome" style="border-color: rgba(244, 67, 54, 0.3); background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(255, 87, 34, 0.1) 100%);">
+                    <h4 style="color: #f44336;">Could Not Generate Bundle</h4>
+                    <p>${error}</p>
+                    ${tipsHtml}
+                </div>
+                <span class="message-time">${this.formatTime(new Date())}</span>
+            </div>
+        `;
+        messagesContainer.appendChild(errorDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
     async sendMessage(forceSearch = false) {
         const input = document.getElementById('chat-input');
         const message = input.value.trim();
 
         if (!message) return;
+
+        // Check if Apigee mode is active
+        if (this.apigeeMode) {
+            return this.sendApigeeRequest(message);
+        }
+
+        // Remove existing follow-up suggestion chips
+        document.querySelectorAll('.followup-suggestions').forEach(el => el.remove());
 
         // Add user message to UI
         this.addMessageToUI(message, 'user');
@@ -607,6 +891,9 @@ class LaplacianAssistant {
             this.removeTypingIndicator();
 
             if (data.response) {
+                // Store pending suggestions to render after typewriter finishes
+                this.pendingSuggestions = data.suggestions || [];
+
                 // Show response with typing effect
                 this.addMessageToUI(data.response, 'assistant', data.ai_index, data.searched, true);
 
@@ -667,6 +954,38 @@ class LaplacianAssistant {
 
         // Place cursor at end of text so user can edit or add more context
         input.setSelectionRange(input.value.length, input.value.length);
+    }
+
+    useFollowUpSuggestion(text) {
+        // Remove existing follow-up chips
+        document.querySelectorAll('.followup-suggestions').forEach(el => el.remove());
+
+        const input = document.getElementById('chat-input');
+        input.value = text;
+        this.sendMessage();
+    }
+
+    renderFollowUpChips(messageDiv, suggestions) {
+        if (!suggestions || suggestions.length === 0) return;
+
+        const container = document.createElement('div');
+        container.className = 'followup-suggestions';
+
+        suggestions.forEach((text, i) => {
+            const chip = document.createElement('button');
+            chip.className = 'followup-chip';
+            chip.textContent = text;
+            chip.style.animationDelay = `${i * 0.1}s`;
+            chip.addEventListener('click', () => this.useFollowUpSuggestion(text));
+            container.appendChild(chip);
+        });
+
+        // Insert after the message div (not inside it)
+        messageDiv.parentNode.insertBefore(container, messageDiv.nextSibling);
+
+        // Scroll to show chips
+        const messagesContainer = document.getElementById('chat-messages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     addMessageToUI(text, role, index = null, searched = false, typeEffect = false) {
@@ -880,6 +1199,12 @@ class LaplacianAssistant {
                 const editBtn = actionsDiv.querySelector('.edit-btn');
                 editBtn.onclick = () => this.startEditing(messageDiv, newText, index);
             }
+
+            // Remove existing follow-up suggestion chips
+            document.querySelectorAll('.followup-suggestions').forEach(el => el.remove());
+
+            // Store pending suggestions to render after typewriter finishes
+            this.pendingSuggestions = data.suggestions || [];
 
             // Add new AI response with typing effect
             this.addMessageToUI(data.response, 'assistant', data.ai_index, false, true);
@@ -2158,6 +2483,17 @@ class LaplacianAssistant {
         this.isStopped = false;
         this.pauseResolve = null;
         this.hideGenerationControls();
+
+        // Render follow-up suggestion chips after typewriter finishes
+        if (this.pendingSuggestions && this.pendingSuggestions.length > 0) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const assistantMsgs = messagesContainer.querySelectorAll('.message.assistant');
+            const lastAssistantMsg = assistantMsgs[assistantMsgs.length - 1];
+            if (lastAssistantMsg) {
+                this.renderFollowUpChips(lastAssistantMsg, this.pendingSuggestions);
+            }
+            this.pendingSuggestions = [];
+        }
     }
 
     async resetChat() {

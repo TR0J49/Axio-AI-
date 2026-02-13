@@ -8,7 +8,7 @@ from app.config.constants import AI_MODELS
 from app.services.ai_service import get_current_model, generate_ai_response
 from app.services.chat_service import (
     chat_with_ai, get_conversation, save_conversation,
-    clear_conversation, get_debug_info
+    clear_conversation, get_debug_info, parse_suggestions
 )
 from app.utils.session import get_session_id
 
@@ -25,7 +25,7 @@ def chat():
     if not user_message:
         return jsonify({'error': 'No message provided'}), 400
 
-    ai_response, user_idx, ai_idx, searched = chat_with_ai(user_message, force_search)
+    ai_response, user_idx, ai_idx, searched, suggestions = chat_with_ai(user_message, force_search)
     current_model = get_current_model()
 
     return jsonify({
@@ -33,6 +33,7 @@ def chat():
         'user_index': user_idx,
         'ai_index': ai_idx,
         'searched': searched,
+        'suggestions': suggestions,
         'model': current_model,
         'model_name': AI_MODELS[current_model]['name'],
         'timestamp': datetime.now().isoformat()
@@ -85,16 +86,20 @@ def edit_chat():
     # Generate new response based on updated history
     ai_response_text = generate_ai_response(conversation)
 
-    # Append new AI response
-    conversation.append({"role": "assistant", "content": ai_response_text})
+    # Parse follow-up suggestions from the response
+    clean_response, suggestions = parse_suggestions(ai_response_text)
+
+    # Append new AI response (clean, without suggestion markers)
+    conversation.append({"role": "assistant", "content": clean_response})
     ai_index = len(conversation) - 1
 
     save_conversation(conversation)
 
     return jsonify({
-        'response': ai_response_text,
+        'response': clean_response,
         'user_index': message_index,
         'ai_index': ai_index,
+        'suggestions': suggestions,
         'timestamp': datetime.now().isoformat()
     })
 

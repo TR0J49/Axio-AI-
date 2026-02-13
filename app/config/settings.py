@@ -27,6 +27,9 @@ LITE_SERVER_URL = os.getenv('GPT_SERVER_URL', 'http://localhost:11434/api/chat')
 # Laplacian Coder Configuration
 CODER_MODEL = os.getenv('CODER_MODEL', 'qwen3-coder:480b-cloud')
 
+# Laplacian Max Configuration (DeepSeek V3.1)
+MAX_MODEL = os.getenv('MAX_MODEL', 'deepseek-v3.1:671b-cloud')
+
 # DocIQ Model Configuration
 DOCIQ_MODEL = os.getenv('DOCIQ_MODEL', 'gpt-oss:20b-cloud')
 DOCIQ_USE_LITE = False
@@ -41,15 +44,28 @@ GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID', '')
 
 
 def _check_model_available(server_url, model_name):
-    """Check if an Ollama model is available"""
+    """Check if an Ollama model is available by checking model list (faster than generation test)"""
     try:
-        response = requests.post(
-            server_url,
-            json={"model": model_name, "messages": [{"role": "user", "content": "Hi"}], "stream": False},
-            timeout=10
-        )
-        return response.status_code == 200
-    except Exception:
+        print(f"[Laplacian AI] Checking if model exists: {model_name}...")
+        # Use /api/tags to list models - much faster than generation test
+        base_url = server_url.replace('/api/chat', '')
+        response = requests.get(f"{base_url}/api/tags", timeout=10)
+
+        if response.status_code == 200:
+            models_data = response.json()
+            available_models = [m['name'] for m in models_data.get('models', [])]
+            is_available = model_name in available_models
+            if is_available:
+                print(f"[Laplacian AI] Model {model_name} found in Ollama")
+            else:
+                print(f"[Laplacian AI] Model {model_name} not found. Available: {available_models}")
+            return is_available
+        return False
+    except requests.exceptions.Timeout:
+        print(f"[Laplacian AI] Timeout checking {model_name}")
+        return False
+    except Exception as e:
+        print(f"[Laplacian AI] Error checking {model_name}: {e}")
         return False
 
 
@@ -66,6 +82,12 @@ if CODER_AVAILABLE:
     print(f"[OK] Laplacian Coder model ({CODER_MODEL}) initialized and verified")
 else:
     print(f"[WARNING] Laplacian Coder model ({CODER_MODEL}) not available")
+
+MAX_AVAILABLE = _check_model_available(LITE_SERVER_URL, MAX_MODEL)
+if MAX_AVAILABLE:
+    print(f"[OK] Laplacian Max model ({MAX_MODEL}) initialized and verified")
+else:
+    print(f"[WARNING] Laplacian Max model ({MAX_MODEL}) not available")
 
 # Default AI Model
 DEFAULT_AI_MODEL = os.getenv('DEFAULT_AI_MODEL', 'gemini' if LITE_AVAILABLE else 'gpt')

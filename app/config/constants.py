@@ -1,7 +1,7 @@
 """
 Constants for Laplacian AI
 """
-from app.config.settings import LITE_MODEL, CODER_MODEL, LITE_AVAILABLE, CODER_AVAILABLE
+from app.config.settings import LITE_MODEL, CODER_MODEL, MAX_MODEL, LITE_AVAILABLE, CODER_AVAILABLE, MAX_AVAILABLE
 
 # Allowed file extensions for DocIQ
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt'}
@@ -25,6 +25,11 @@ AI_MODELS = {
         'name': 'LAPLACIAN Coder',
         'description': f'Code Expert ({CODER_MODEL})',
         'available': CODER_AVAILABLE
+    },
+    'max': {
+        'name': 'LAPLACIAN Max',
+        'description': f'Ultimate AI ({MAX_MODEL})',
+        'available': MAX_AVAILABLE
     }
 }
 

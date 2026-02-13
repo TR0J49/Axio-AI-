@@ -9,7 +9,7 @@ from flask import session
 from app.config.settings import (
     GPT_SERVER_URL, GPT_MODEL,
     LITE_SERVER_URL, LITE_MODEL,
-    CODER_MODEL, DEFAULT_AI_MODEL
+    CODER_MODEL, MAX_MODEL, DEFAULT_AI_MODEL
 )
 from app.config.constants import AI_MODELS
 
@@ -55,6 +55,17 @@ When creating Mermaid diagrams, you MUST follow these syntax rules to avoid pars
   * C[Check if x > 0] ✗ - angle brackets break parsing
 - For simple text without special chars, quotes are optional: A[Simple Text] is fine
 - Use <br/> for line breaks inside quoted text: A["Line 1<br/>Line 2"]
+
+FOLLOW-UP SUGGESTIONS (REQUIRED):
+At the very end of EVERY response, you MUST append exactly 3 short follow-up suggestion questions the user might ask next.
+Format them EXACTLY like this (no extra spaces or newlines inside the block):
+<<<SUGGESTIONS>>>suggestion 1|||suggestion 2|||suggestion 3<<<END_SUGGESTIONS>>>
+Rules:
+- Each suggestion must be under 60 characters
+- Make them contextual and relevant to your response
+- Use natural question or action phrasing (e.g. "How do I optimize this?" or "Show me an example")
+- Do NOT place <<<SUGGESTIONS>>> or <<<END_SUGGESTIONS>>> anywhere else in your response
+- The suggestion block must be the very last thing in your response
 
 Current date and time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"""
 
@@ -190,10 +201,11 @@ def generate_coder_response(conversation):
         "messages": conversation,
         "stream": False,
         "options": {
-            "num_predict": 8192,
+            "num_predict": 4096,
             "temperature": 0.7,
             "top_p": 0.9,
-            "repeat_penalty": 1.1
+            "repeat_penalty": 1.1,
+            "num_ctx": 4096
         }
     }
 
@@ -235,6 +247,60 @@ def generate_coder_response(conversation):
         return f"An unexpected error occurred with Laplacian Coder: {str(e)}"
 
 
+def generate_max_response(conversation):
+    """Generate AI response using DeepSeek V3.1 model for maximum capability"""
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "model": MAX_MODEL,
+        "messages": conversation,
+        "stream": False,
+        "options": {
+            "num_predict": 4096,
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "repeat_penalty": 1.1,
+            "num_ctx": 4096
+        }
+    }
+
+    try:
+        print(f"[Laplacian Max] Using model: {MAX_MODEL}")
+        print(f"[Laplacian Max] Sending request to: {LITE_SERVER_URL}")
+
+        response = requests.post(LITE_SERVER_URL, headers=headers, json=payload, timeout=600)
+        response.raise_for_status()
+        data = response.json()
+
+        if "message" in data and "content" in data["message"]:
+            content = data["message"]["content"]
+            print(f"[Laplacian Max] Response received: {len(content)} characters")
+            return content
+
+        print(f"[Laplacian Max] Unexpected response format: {data}")
+        return "Sorry, I couldn't process that request with Laplacian Max."
+
+    except requests.exceptions.Timeout:
+        print(f"[Laplacian Max] Request timed out")
+        return "Request timed out. The model is taking too long to respond. Please try again."
+    except requests.exceptions.ConnectionError as e:
+        print(f"[Laplacian Max] Connection error: {str(e)}")
+        return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {MAX_MODEL} model pulled."
+    except requests.exceptions.HTTPError as e:
+        print(f"[Laplacian Max] HTTP error: {str(e)}")
+        if "404" in str(e):
+            return f"Model '{MAX_MODEL}' not found. Please run: ollama pull {MAX_MODEL}"
+        return f"HTTP error occurred: {str(e)}"
+    except requests.exceptions.RequestException as e:
+        print(f"[Laplacian Max] Request error: {str(e)}")
+        return f"Connection error: Unable to reach Ollama server for Laplacian Max. Please ensure Ollama is running."
+    except json.JSONDecodeError as e:
+        print(f"[Laplacian Max] JSON decode error: {str(e)}")
+        return "Error parsing response from the model. Please try again."
+    except Exception as e:
+        print(f"[Laplacian Max] Unexpected error: {str(e)}")
+        return f"An unexpected error occurred with Laplacian Max: {str(e)}"
+
+
 def generate_ai_response(conversation, model=None):
     """Generate AI response from conversation history using selected model"""
     current_model = model or get_current_model()
@@ -243,5 +309,7 @@ def generate_ai_response(conversation, model=None):
         return generate_lite_response(conversation)
     elif current_model == 'coder':
         return generate_coder_response(conversation)
+    elif current_model == 'max':
+        return generate_max_response(conversation)
     else:
         return generate_gpt_response(conversation)

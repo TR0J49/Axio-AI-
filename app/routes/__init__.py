@@ -12,6 +12,7 @@ def register_blueprints(app: Flask):
     from app.routes.productivity import productivity_bp
     from app.routes.dociq import dociq_bp
     from app.routes.viziq import viziq_bp
+    from app.routes.apigee import apigee_bp
 
     # Register blueprints
     app.register_blueprint(main_bp)
@@ -22,3 +23,4 @@ def register_blueprints(app: Flask):
     app.register_blueprint(productivity_bp, url_prefix='/api')
     app.register_blueprint(dociq_bp, url_prefix='/api/dociq')
     app.register_blueprint(viziq_bp, url_prefix='/api/viziq')
+    app.register_blueprint(apigee_bp, url_prefix='/api/apigee')

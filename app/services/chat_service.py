@@ -1,6 +1,7 @@
 """
 Chat Service - Conversation management and AI chat
 """
+import re
 from flask import session
 from datetime import datetime
 
@@ -8,6 +9,21 @@ from app.config.settings import USE_MONGODB
 from app.services.ai_service import get_system_prompt, generate_ai_response
 from app.services.search_service import should_search_web, web_search
 from app.utils.session import get_session_id
+
+
+def parse_suggestions(ai_response_text):
+    """Extract follow-up suggestions from AI response and return clean text + suggestions list"""
+    match = re.search(r'<<<SUGGESTIONS>>>(.*?)<<<END_SUGGESTIONS>>>', ai_response_text, re.DOTALL)
+    if not match:
+        return ai_response_text, []
+
+    raw = match.group(1).strip()
+    suggestions = [s.strip() for s in raw.split('|||') if s.strip()]
+    # Validate: max 3 suggestions, each max 80 chars
+    suggestions = [s[:80] for s in suggestions[:3]]
+
+    clean_text = ai_response_text[:match.start()].rstrip()
+    return clean_text, suggestions
 
 
 # In-memory conversation storage (fallback when MongoDB unavailable)
@@ -123,13 +139,16 @@ def chat_with_ai(user_message: str, force_search: bool = False):
     # Get AI response
     ai_response_text = generate_ai_response(temp_conversation)
 
-    # Add AI response
-    ai_msg_obj = {"role": "assistant", "content": ai_response_text}
+    # Parse follow-up suggestions from the response
+    clean_response, suggestions = parse_suggestions(ai_response_text)
+
+    # Add AI response (clean, without suggestion markers)
+    ai_msg_obj = {"role": "assistant", "content": clean_response}
     conversation.append(ai_msg_obj)
     ai_index = len(conversation) - 1
 
     save_conversation(conversation)
-    return ai_response_text, user_index, ai_index, bool(search_results)
+    return clean_response, user_index, ai_index, bool(search_results), suggestions
 
 
 def edit_message(message_index: int, new_content: str):
@@ -153,16 +172,20 @@ def edit_message(message_index: int, new_content: str):
     # Generate new response based on updated history
     ai_response_text = generate_ai_response(conversation)
 
-    # Append new AI response
-    conversation.append({"role": "assistant", "content": ai_response_text})
+    # Parse follow-up suggestions from the response
+    clean_response, suggestions = parse_suggestions(ai_response_text)
+
+    # Append new AI response (clean, without suggestion markers)
+    conversation.append({"role": "assistant", "content": clean_response})
     ai_index = len(conversation) - 1
 
     save_conversation(conversation)
 
     return {
-        'response': ai_response_text,
+        'response': clean_response,
         'user_index': message_index,
         'ai_index': ai_index,
+        'suggestions': suggestions,
         'timestamp': datetime.now().isoformat()
     }, None
 

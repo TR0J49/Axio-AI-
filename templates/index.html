@@ -130,10 +130,10 @@
                     <img src="{{ url_for('static', filename='logo.png') }}" alt="Laplacian AI Logo" class="logo-image">
                     <div class="logo-text">
                         <h1>LAPLACIAN</h1>
-                        <p class="tagline"></p>
+                        <p class="tagline">Perfionix AI</p>
                     </div>
                 </div>
-            </div>
+            </div> 
 
             <nav class="nav-menu">
                 <!-- AI Features -->
@@ -287,6 +287,21 @@
                         <h2>Chat with Laplacian Ai</h2>
                     </div>
                     <div class="header-actions">
+                        <!-- Apigee Toggle -->
+                        <div class="apigee-toggle" id="apigee-toggle">
+                            <button class="apigee-toggle-btn" id="apigee-toggle-btn" title="Toggle Apigee Mode">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <!-- API Gateway icon -->
+                                    <rect x="2" y="3" width="20" height="5" rx="1"></rect>
+                                    <rect x="2" y="16" width="20" height="5" rx="1"></rect>
+                                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                                    <polyline points="8 12 12 8 16 12"></polyline>
+                                    <polyline points="8 12 12 16 16 12"></polyline>
+                                </svg>
+                                <span class="apigee-label">Apigee</span>
+                                <span class="apigee-status" id="apigee-status">OFF</span>
+                            </button>
+                        </div>
                         <!-- Model Selector -->
                         <div class="model-selector" id="model-selector">
                             <button class="model-selector-btn" id="model-selector-btn" title="Select AI Model">
@@ -297,7 +312,7 @@
                                         d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42">
                                     </path>
                                 </svg>
-                                <span class="model-name" id="current-model-name">GPT</span>
+                                <span class="model-name" id="current-model-name">AI Model</span>
                                 <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
                                     <polyline points="6 9 12 15 18 9"></polyline>
@@ -306,29 +321,69 @@
                             <div class="model-dropdown" id="model-dropdown">
                                 <div class="model-option" data-model="gpt">
                                     <div class="model-option-icon gpt-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <!-- Brain icon for Thinking Expert -->
-                                            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v.5a2.5 2.5 0 0 1 2.5-2.5A2.5 2.5 0 0 1 17 5c0 .97-.55 1.81-1.41 2.22A3.5 3.5 0 0 1 18 10.5a3.5 3.5 0 0 1-1.5 2.87A3 3 0 0 1 18 16a3 3 0 0 1-3 3h-1v2h-4v-2H9a3 3 0 0 1-3-3c0-1.16.67-2.16 1.5-2.63A3.5 3.5 0 0 1 6 10.5a3.5 3.5 0 0 1 2.41-3.28A2.5 2.5 0 0 1 7 5a2.5 2.5 0 0 1 2.5-3z"></path>
-                                            <path d="M12 5v5"></path>
-                                            <path d="M10 8h4"></path>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <!-- Futuristic Neural Core -->
+                                            <circle cx="12" cy="12" r="3" class="icon-core"/>
+                                            <circle cx="12" cy="12" r="6" opacity="0.5"/>
+                                            <circle cx="12" cy="12" r="9" opacity="0.25"/>
+                                            <line x1="12" y1="3" x2="12" y2="6"/>
+                                            <line x1="12" y1="18" x2="12" y2="21"/>
+                                            <line x1="3" y1="12" x2="6" y2="12"/>
+                                            <line x1="18" y1="12" x2="21" y2="12"/>
+                                            <line x1="5.64" y1="5.64" x2="7.76" y2="7.76"/>
+                                            <line x1="16.24" y1="16.24" x2="18.36" y2="18.36"/>
+                                            <line x1="5.64" y1="18.36" x2="7.76" y2="16.24"/>
+                                            <line x1="16.24" y1="7.76" x2="18.36" y2="5.64"/>
                                         </svg>
                                     </div>
                                     <div class="model-option-info">
                                         <span class="model-option-name">LAPLACIAN Core</span>
-                                        <span class="model-option-desc">🧠 Thinking Expert</span>
+                                        <span class="model-option-desc">🧠 Neural Intelligence</span>
                                     </div>
                                     <span class="model-active-indicator"></span>
                                 </div>
                                 <div class="model-option" data-model="coder">
                                     <div class="model-option-icon coder-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <polyline points="16 18 22 12 16 6"></polyline>
-                                            <polyline points="8 6 2 12 8 18"></polyline>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <!-- Futuristic Code Terminal -->
+                                            <rect x="2" y="4" width="20" height="16" rx="2" opacity="0.4"/>
+                                            <path d="M6 9l3 3-3 3" class="icon-code"/>
+                                            <path d="M18 9l-3 3 3 3" class="icon-code"/>
+                                            <line x1="11" y1="9" x2="13" y2="15"/>
+                                            <circle cx="12" cy="12" r="1.5" class="icon-core"/>
+                                            <line x1="2" y1="7" x2="22" y2="7" opacity="0.3"/>
+                                            <circle cx="5" cy="5.5" r="0.5" fill="currentColor" opacity="0.5"/>
+                                            <circle cx="7.5" cy="5.5" r="0.5" fill="currentColor" opacity="0.5"/>
+                                            <circle cx="10" cy="5.5" r="0.5" fill="currentColor" opacity="0.5"/>
                                         </svg>
                                     </div>
                                     <div class="model-option-info">
                                         <span class="model-option-name">LAPLACIAN Coder</span>
-                                        <span class="model-option-desc">💻 Code Expert</span>
+                                        <span class="model-option-desc">💻 Code Architect</span>
+                                    </div>
+                                    <span class="model-active-indicator"></span>
+                                </div>
+                                <div class="model-option" data-model="max">
+                                    <div class="model-option-icon max-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <!-- Futuristic Quantum Core / Supernova -->
+                                            <polygon points="12 2 14.5 9 22 9 16 13.5 18 21 12 16.5 6 21 8 13.5 2 9 9.5 9" class="icon-star" opacity="0.4"/>
+                                            <circle cx="12" cy="12" r="5" class="icon-outer"/>
+                                            <circle cx="12" cy="12" r="3" class="icon-core"/>
+                                            <circle cx="12" cy="12" r="1" fill="currentColor"/>
+                                            <line x1="12" y1="7" x2="12" y2="9"/>
+                                            <line x1="12" y1="15" x2="12" y2="17"/>
+                                            <line x1="7" y1="12" x2="9" y2="12"/>
+                                            <line x1="15" y1="12" x2="17" y2="12"/>
+                                            <line x1="8.5" y1="8.5" x2="9.9" y2="9.9"/>
+                                            <line x1="14.1" y1="14.1" x2="15.5" y2="15.5"/>
+                                            <line x1="8.5" y1="15.5" x2="9.9" y2="14.1"/>
+                                            <line x1="14.1" y1="9.9" x2="15.5" y2="8.5"/>
+                                        </svg>
+                                    </div>
+                                    <div class="model-option-info">
+                                        <span class="model-option-name">LAPLACIAN Max</span>
+                                        <span class="model-option-desc">⚡ Quantum Engine </span>
                                     </div>
                                     <span class="model-active-indicator"></span>
                                 </div>

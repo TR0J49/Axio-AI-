@@ -8,7 +8,8 @@ from app.services.ai_service import (
     generate_ai_response,
     generate_gpt_response,
     generate_lite_response,
-    generate_coder_response
+    generate_coder_response,
+    generate_max_response
 )
 
 from app.services.chat_service import (
@@ -61,4 +62,11 @@ from app.services.productivity_service import (
     create_reminder,
     delete_reminder,
     get_stats
+)
+
+from app.services.apigee_service import (
+    extract_proxy_details,
+    validate_proxy_details,
+    generate_apigee_bundle,
+    process_apigee_request
 )
