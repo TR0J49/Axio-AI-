@@ -20,7 +20,7 @@
 .glass-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--glass-shadow), var(--shadow-glow-primary);
-    border-color: rgba(102, 126, 234, 0.3);
+    border-color: rgba(75, 85, 99, 0.3);
 }
 
 /* ================================
@@ -38,7 +38,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-base);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(75, 85, 99, 0.3);
 }
 
 .btn-modern::before {
@@ -61,7 +61,7 @@
 
 .btn-modern:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.4);
 }
 
 .btn-modern:active {
@@ -81,7 +81,7 @@
     border-radius: 50%;
     background: var(--primary-gradient);
     border: none;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 24px rgba(75, 85, 99, 0.4);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -98,7 +98,7 @@
 
 .fab:hover {
     transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+    box-shadow: 0 12px 32px rgba(75, 85, 99, 0.6);
 }
 
 .fab:active {
@@ -398,21 +398,21 @@
 }
 
 .badge-primary {
-    background: rgba(102, 126, 234, 0.2);
+    background: rgba(75, 85, 99, 0.2);
     color: var(--primary);
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    border: 1px solid rgba(75, 85, 99, 0.3);
 }
 
 .badge-success {
-    background: rgba(0, 242, 254, 0.2);
+    background: rgba(16, 185, 129, 0.2);
     color: var(--success);
-    border: 1px solid rgba(0, 242, 254, 0.3);
+    border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .badge-accent {
-    background: rgba(245, 87, 108, 0.2);
+    background: rgba(55, 65, 81, 0.2);
     color: var(--accent);
-    border: 1px solid rgba(245, 87, 108, 0.3);
+    border: 1px solid rgba(55, 65, 81, 0.3);
 }
 
 .badge-glow {
@@ -490,16 +490,16 @@
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
+    background: #f3f4f6;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--primary), var(--secondary));
+    background: #9ca3af;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, var(--primary-dark), var(--secondary));
+    background: #6b7280;
 }
 
 /* ================================
@@ -688,7 +688,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
     z-index: 10002;
     display: flex;
@@ -709,13 +709,13 @@
     height: 85vh;
     max-width: 1400px;
     background: linear-gradient(135deg, #1a1b2e 0%, #0d0e1a 100%);
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    border: 1px solid rgba(75, 85, 99, 0.3);
     border-radius: 16px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5),
-        0 0 60px rgba(102, 126, 234, 0.1);
+        0 0 60px rgba(75, 85, 99, 0.1);
     transform: scale(0.9);
     transition: transform 0.3s ease;
 }
@@ -777,8 +777,8 @@
     justify-content: center;
     width: 36px;
     height: 36px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     color: var(--text-secondary);
     cursor: pointer;
@@ -797,14 +797,14 @@
 }
 
 .preview-action-btn.close {
-    background: rgba(245, 87, 108, 0.1);
-    border-color: rgba(245, 87, 108, 0.3);
+    background: rgba(55, 65, 81, 0.1);
+    border-color: rgba(55, 65, 81, 0.3);
     color: #f5576c;
 }
 
 .preview-action-btn.close:hover {
-    background: rgba(245, 87, 108, 0.2);
-    border-color: rgba(245, 87, 108, 0.5);
+    background: rgba(55, 65, 81, 0.2);
+    border-color: rgba(55, 65, 81, 0.5);
 }
 
 .preview-modal-body {
@@ -841,7 +841,7 @@
     justify-content: space-between;
     padding: 0.75rem 1.5rem;
     background: rgba(0, 0, 0, 0.2);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .preview-size-controls {
@@ -856,8 +856,8 @@
     justify-content: center;
     width: 36px;
     height: 36px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     color: var(--text-muted);
     cursor: pointer;
@@ -870,14 +870,14 @@
 }
 
 .size-btn:hover {
-    background: rgba(102, 126, 234, 0.15);
-    border-color: rgba(102, 126, 234, 0.3);
+    background: rgba(75, 85, 99, 0.15);
+    border-color: rgba(75, 85, 99, 0.3);
     color: var(--text-secondary);
 }
 
 .size-btn.active {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
-    border-color: rgba(102, 126, 234, 0.5);
+    background: linear-gradient(135deg, rgba(75, 85, 99, 0.3), rgba(107, 114, 128, 0.3));
+    border-color: rgba(75, 85, 99, 0.5);
     color: var(--text-primary);
 }
 
@@ -991,12 +991,12 @@
 .gen-control-btn.pause-btn {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 15px rgba(75, 85, 99, 0.4);
 }
 
 .gen-control-btn.pause-btn:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.5);
 }
 
 .gen-control-btn.pause-btn:active {
@@ -1027,12 +1027,12 @@
 .gen-control-btn.stop-btn {
     background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+    box-shadow: 0 4px 15px rgba(55, 65, 81, 0.4);
 }
 
 .gen-control-btn.stop-btn:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
+    box-shadow: 0 6px 20px rgba(55, 65, 81, 0.5);
 }
 
 .gen-control-btn.stop-btn:active {
@@ -1046,10 +1046,10 @@
 
 @keyframes genPulse {
     0%, 100% {
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 4px 15px rgba(75, 85, 99, 0.4);
     }
     50% {
-        box-shadow: 0 4px 25px rgba(102, 126, 234, 0.6), 0 0 30px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 25px rgba(75, 85, 99, 0.6), 0 0 30px rgba(75, 85, 99, 0.3);
     }
 }
 
@@ -1076,8 +1076,8 @@
     left: 50%;
     transform: translateX(-50%) translateY(4px);
     padding: 0.4rem 0.75rem;
-    background: rgba(26, 27, 46, 0.95);
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    background: rgba(249, 250, 251, 0.95);
+    border: 1px solid rgba(75, 85, 99, 0.3);
     border-radius: 6px;
     color: #e0e0e0;
     font-size: 0.7rem;
@@ -1123,13 +1123,13 @@
    ================================ */
 
 .diagram-block-wrapper {
-    background: linear-gradient(135deg, rgba(26, 27, 46, 0.95), rgba(13, 14, 26, 0.95));
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, rgba(249, 250, 251, 0.95), rgba(13, 14, 26, 0.95));
+    border: 1px solid rgba(75, 85, 99, 0.3);
     border-radius: var(--radius-lg);
     margin: 1.5rem 0;
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        inset 0 1px 0 rgba(0, 0, 0, 0.05);
 }
 
 .diagram-header {
@@ -1137,8 +1137,8 @@
     flex-direction: column;
     gap: 0.75rem;
     padding: 1rem 1.25rem;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-    border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+    background: linear-gradient(135deg, rgba(75, 85, 99, 0.1), rgba(107, 114, 128, 0.1));
+    border-bottom: 1px solid rgba(75, 85, 99, 0.2);
 }
 
 .diagram-tabs {
@@ -1151,8 +1151,8 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: var(--radius-md);
     color: var(--text-secondary);
     font-size: 0.85rem;
@@ -1168,16 +1168,16 @@
 }
 
 .diagram-tab:hover {
-    background: rgba(102, 126, 234, 0.15);
-    border-color: rgba(102, 126, 234, 0.3);
+    background: rgba(75, 85, 99, 0.15);
+    border-color: rgba(75, 85, 99, 0.3);
     color: var(--text-primary);
 }
 
 .diagram-tab.active {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
-    border-color: rgba(102, 126, 234, 0.5);
+    background: linear-gradient(135deg, rgba(75, 85, 99, 0.3), rgba(107, 114, 128, 0.3));
+    border-color: rgba(75, 85, 99, 0.5);
     color: var(--text-primary);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 4px 12px rgba(75, 85, 99, 0.2);
 }
 
 .diagram-label-container {
@@ -1201,8 +1201,8 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.25rem 0.6rem;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25));
-    border: 1px solid rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, rgba(75, 85, 99, 0.25), rgba(107, 114, 128, 0.25));
+    border: 1px solid rgba(75, 85, 99, 0.4);
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 600;
@@ -1221,8 +1221,8 @@
     align-items: center;
     gap: 0.35rem;
     padding: 0.4rem 0.75rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     font-size: 0.75rem;
@@ -1231,8 +1231,8 @@
 }
 
 .diagram-action-btn:hover {
-    background: rgba(102, 126, 234, 0.2);
-    border-color: rgba(102, 126, 234, 0.4);
+    background: rgba(75, 85, 99, 0.2);
+    border-color: rgba(75, 85, 99, 0.4);
     color: var(--text-primary);
 }
 
@@ -1303,7 +1303,7 @@
 .diagram-loading-spinner {
     width: 48px;
     height: 48px;
-    border: 3px solid rgba(102, 126, 234, 0.2);
+    border: 3px solid rgba(75, 85, 99, 0.2);
     border-top-color: #667eea;
     border-radius: 50%;
     animation: diagramSpin 1s linear infinite;
@@ -1346,7 +1346,7 @@
     margin-bottom: 0.5rem;
     font-family: 'JetBrains Mono', monospace;
     padding: 0.5rem;
-    background: rgba(245, 87, 108, 0.1);
+    background: rgba(55, 65, 81, 0.1);
     border-radius: var(--radius-sm);
 }
 
@@ -1388,14 +1388,14 @@
     width: 95vw;
     height: 95vh;
     max-width: 1600px;
-    background: linear-gradient(135deg, rgba(26, 27, 46, 0.98), rgba(13, 14, 26, 0.98));
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, rgba(249, 250, 251, 0.98), rgba(13, 14, 26, 0.98));
+    border: 1px solid rgba(75, 85, 99, 0.3);
     border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5),
-        0 0 60px rgba(102, 126, 234, 0.15);
+        0 0 60px rgba(75, 85, 99, 0.15);
 }
 
 .diagram-fullscreen-header {
@@ -1403,8 +1403,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.5rem;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
-    border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+    background: linear-gradient(135deg, rgba(75, 85, 99, 0.15), rgba(107, 114, 128, 0.15));
+    border-bottom: 1px solid rgba(75, 85, 99, 0.2);
 }
 
 .diagram-fullscreen-header h3 {
@@ -1425,8 +1425,8 @@
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: var(--radius-md);
     color: var(--text-secondary);
     font-size: 1.1rem;
@@ -1435,21 +1435,21 @@
 }
 
 .diagram-fullscreen-btn:hover {
-    background: rgba(102, 126, 234, 0.2);
-    border-color: rgba(102, 126, 234, 0.4);
+    background: rgba(75, 85, 99, 0.2);
+    border-color: rgba(75, 85, 99, 0.4);
     color: var(--text-primary);
     transform: scale(1.05);
 }
 
 .diagram-fullscreen-btn.close {
-    background: rgba(245, 87, 108, 0.1);
-    border-color: rgba(245, 87, 108, 0.3);
+    background: rgba(55, 65, 81, 0.1);
+    border-color: rgba(55, 65, 81, 0.3);
     color: #f5576c;
 }
 
 .diagram-fullscreen-btn.close:hover {
-    background: rgba(245, 87, 108, 0.2);
-    border-color: rgba(245, 87, 108, 0.5);
+    background: rgba(55, 65, 81, 0.2);
+    border-color: rgba(55, 65, 81, 0.5);
 }
 
 .diagram-fullscreen-content {
@@ -1503,8 +1503,8 @@
 }
 
 .mermaid-diagram .cluster rect {
-    fill: rgba(102, 126, 234, 0.1) !important;
-    stroke: rgba(102, 126, 234, 0.5) !important;
+    fill: rgba(75, 85, 99, 0.1) !important;
+    stroke: rgba(75, 85, 99, 0.5) !important;
 }
 
 .mermaid-diagram .cluster text {
@@ -1518,7 +1518,7 @@
 }
 
 .mermaid-diagram .actor-line {
-    stroke: rgba(102, 126, 234, 0.5) !important;
+    stroke: rgba(75, 85, 99, 0.5) !important;
 }
 
 .mermaid-diagram .messageLine0,
@@ -1532,7 +1532,7 @@
 
 .mermaid-diagram .activation0,
 .mermaid-diagram .activation1 {
-    fill: rgba(102, 126, 234, 0.3) !important;
+    fill: rgba(75, 85, 99, 0.3) !important;
     stroke: #667eea !important;
 }
 
@@ -1542,7 +1542,7 @@
 }
 
 .mermaid-diagram .classGroup line {
-    stroke: rgba(102, 126, 234, 0.5) !important;
+    stroke: rgba(75, 85, 99, 0.5) !important;
 }
 
 /* State Diagram Styles */
@@ -1584,12 +1584,12 @@
 
 /* Gantt Chart Styles */
 .mermaid-diagram .grid .tick line {
-    stroke: rgba(102, 126, 234, 0.2) !important;
+    stroke: rgba(75, 85, 99, 0.2) !important;
 }
 
 .mermaid-diagram .section0,
 .mermaid-diagram .section1 {
-    fill: rgba(102, 126, 234, 0.1) !important;
+    fill: rgba(75, 85, 99, 0.1) !important;
 }
 
 .mermaid-diagram .task {

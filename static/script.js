@@ -626,6 +626,12 @@ class LaplacianAssistant {
             status.textContent = 'OFF';
             input.placeholder = 'Ask me anything...';
 
+            // Remove the apigee welcome card if it exists
+            const welcomeMsg = document.querySelector('.apigee-mode-message');
+            if (welcomeMsg) {
+                welcomeMsg.remove();
+            }
+
             // Show toast notification
             if (typeof toastManager !== 'undefined') {
                 toastManager.info('Apigee Mode disabled', 2000);
