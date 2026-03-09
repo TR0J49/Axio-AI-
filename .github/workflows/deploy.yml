@@ -1,0 +1,53 @@
+name: Deploy Laplacian
+
+on:
+  push:
+    branches: ["prod"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy and restart Laplacian App
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            set -e
+
+            APP_DIR="/home/azureuser/projects/laplacian"
+            VENV="$APP_DIR/venv"
+            PM2_NAME="Laplacian"
+
+            echo ">>> Switching to app dir"
+            cd $APP_DIR
+
+            echo ">>> Pulling latest code"
+            git fetch origin
+            git checkout prod
+            git pull origin prod
+
+            echo ">>> Creating venv if missing"
+            if [ ! -d "$VENV" ]; then
+              python3 -m venv $VENV
+            fi
+
+            echo ">>> Activating venv"
+            source $VENV/bin/activate
+
+            echo ">>> Installing dependencies"
+            pip install -r requirements.txt
+
+            echo ">>> Restarting PM2 process"
+            pm2 restart "$PM2_NAME" || pm2 start python --name "$PM2_NAME" -- run.py
+
+            echo ">>> Saving PM2 startup"
+            pm2 save
+
+            echo ">>> Deployment complete!"
