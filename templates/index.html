@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laplacian - AI Code Assistant by Perfionix AI</title>
+    <title>Laplacian - AI Code Assistant</title>
     <meta name="description"
-        content="Laplacian by Perfionix AI - Your intelligent coding assistant with syntax highlighting, code formatting, and smart conversations">
+        content="Laplacian - Your intelligent coding assistant with syntax highlighting, code formatting, and smart conversations">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='lap favivon.png') }}">
@@ -131,7 +131,7 @@
                         style="width: 40px; height: 40px; object-fit: contain; border-radius: 5px;">
                     <div class="logo-text">
                         <h1>LAPLACIAN</h1>
-                        <p class="tagline">Perfionix AI</p>
+                        <p class="tagline">AI</p>
                     </div>
                 </div>
             </div>
@@ -448,6 +448,7 @@
                                 <span>🔍</span>
                             </button>
 
+
                             <!-- Generation Control Buttons (visible during generation) -->
                             <div class="generation-controls" id="generation-controls">
                                 <button class="gen-control-btn pause-btn" id="pause-generation"
@@ -474,7 +475,8 @@
                                 <span>➤</span>
                             </button>
                         </div>
-                        <div class="input-hint">Press Enter to send, Shift+Enter for new line | 🔍 for web search</div>
+                        <div class="input-hint">Press Enter to send, Shift+Enter for new line | 🔍 for web search | 🎙️
+                            for voice</div>
                     </div>
                 </div>
             </div>
@@ -866,6 +868,7 @@
                                     <tbody id="table-body"></tbody>
                                 </table>
                             </div>
+                            <div class="pagination-controls" id="pagination-controls" style="display: none;"></div>
                         </div>
                     </div>
                 </div>

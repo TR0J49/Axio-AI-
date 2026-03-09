@@ -1,17 +1,24 @@
 """
-AI Service - Handles AI response generation
+AI Service - Handles AI response generation via Azure OpenAI
 """
-import requests
 import json
 from datetime import datetime
 from flask import session
+from openai import AzureOpenAI
 
 from app.config.settings import (
-    GPT_SERVER_URL, GPT_MODEL,
-    LITE_SERVER_URL, LITE_MODEL,
-    CODER_MODEL, MAX_MODEL, DEFAULT_AI_MODEL
+    AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY,
+    AZURE_OPENAI_API_VERSION, AZURE_OPENAI_DEPLOYMENT,
+    DEFAULT_AI_MODEL
 )
 from app.config.constants import AI_MODELS
+
+# Initialize Azure OpenAI client
+client = AzureOpenAI(
+    azure_endpoint=AZURE_OPENAI_ENDPOINT,
+    api_key=AZURE_OPENAI_API_KEY,
+    api_version=AZURE_OPENAI_API_VERSION,
+)
 
 
 def get_system_prompt():
@@ -87,229 +94,54 @@ def set_current_model(model):
     return False
 
 
-def generate_gpt_response(conversation):
-    """Generate AI response using GPT/Ollama"""
-    headers = {"Content-Type": "application/json"}
-    payload = {
-        "model": GPT_MODEL,
-        "messages": conversation,
-        "stream": False,
-        "options": {
-            "num_predict": 4096,
-            "temperature": 0.7,
-            "top_p": 0.9,
-            "repeat_penalty": 1.1
-        }
-    }
-
+def generate_azure_response(conversation, model_label="Core"):
+    """Generate AI response using Azure OpenAI"""
     try:
-        print(f"[Laplacian Core] Using model: {GPT_MODEL}")
-        print(f"[Laplacian Core] Sending request to: {GPT_SERVER_URL}")
+        print(f"[Laplacian {model_label}] Using Azure OpenAI deployment: {AZURE_OPENAI_DEPLOYMENT}")
+        print(f"[Laplacian {model_label}] Sending request to Azure OpenAI...")
 
-        response = requests.post(GPT_SERVER_URL, headers=headers, json=payload, timeout=300)
-        response.raise_for_status()
-        data = response.json()
+        response = client.chat.completions.create(
+            model=AZURE_OPENAI_DEPLOYMENT,
+            messages=conversation,
+            max_completion_tokens=13107,
+            temperature=1.0,
+            top_p=1.0,
+            frequency_penalty=0.0,
+            presence_penalty=0.0,
+        )
 
-        if "message" in data and "content" in data["message"]:
-            content = data["message"]["content"]
-            print(f"[Laplacian Core] Response received: {len(content)} characters")
-            return content
+        content = response.choices[0].message.content
+        print(f"[Laplacian {model_label}] Response received: {len(content)} characters")
+        return content
 
-        print(f"[Laplacian Core] Unexpected response format: {data}")
-        return "Sorry, I couldn't process that request."
-
-    except requests.exceptions.Timeout:
-        print(f"[Laplacian Core] Request timed out")
-        return "Request timed out. The model is taking too long to respond. Please try again."
-    except requests.exceptions.ConnectionError as e:
-        print(f"[Laplacian Core] Connection error: {str(e)}")
-        return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {GPT_MODEL} model pulled."
-    except requests.exceptions.HTTPError as e:
-        print(f"[Laplacian Core] HTTP error: {str(e)}")
-        if "404" in str(e):
-            return f"Model '{GPT_MODEL}' not found. Please run: ollama pull {GPT_MODEL}"
-        return f"HTTP error occurred: {str(e)}"
-    except requests.exceptions.RequestException as e:
-        print(f"[Laplacian Core] Request error: {str(e)}")
-        return f"Connection error: Unable to reach AI server. Please ensure Ollama is running."
-    except json.JSONDecodeError as e:
-        print(f"[Laplacian Core] JSON decode error: {str(e)}")
-        return "Error parsing response from the model. Please try again."
     except Exception as e:
-        print(f"[Laplacian Core] Unexpected error: {str(e)}")
-        return f"An unexpected error occurred: {str(e)}"
+        error_msg = str(e)
+        print(f"[Laplacian {model_label}] Error: {error_msg}")
 
-
-def generate_lite_response(conversation):
-    """Generate AI response using Ollama with Lite model (phi3:mini)"""
-    headers = {"Content-Type": "application/json"}
-    payload = {
-        "model": LITE_MODEL,
-        "messages": conversation,
-        "stream": False,
-        "options": {
-            "num_predict": 4096,
-            "temperature": 0.7,
-            "top_p": 0.9,
-            "repeat_penalty": 1.1
-        }
-    }
-
-    try:
-        print(f"[Laplacian Lite] Using model: {LITE_MODEL}")
-        print(f"[Laplacian Lite] Sending request to: {LITE_SERVER_URL}")
-
-        response = requests.post(LITE_SERVER_URL, headers=headers, json=payload, timeout=300)
-        response.raise_for_status()
-        data = response.json()
-
-        if "message" in data and "content" in data["message"]:
-            content = data["message"]["content"]
-            print(f"[Laplacian Lite] Response received: {len(content)} characters")
-            return content
-
-        print(f"[Laplacian Lite] Unexpected response format: {data}")
-        return "Sorry, I couldn't process that request with Laplacian Lite."
-
-    except requests.exceptions.Timeout:
-        print(f"[Laplacian Lite] Request timed out")
-        return "Request timed out. The model is taking too long to respond. Please try again."
-    except requests.exceptions.ConnectionError as e:
-        print(f"[Laplacian Lite] Connection error: {str(e)}")
-        return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {LITE_MODEL} model pulled."
-    except requests.exceptions.HTTPError as e:
-        print(f"[Laplacian Lite] HTTP error: {str(e)}")
-        if "404" in str(e):
-            return f"Model '{LITE_MODEL}' not found. Please run: ollama pull {LITE_MODEL}"
-        return f"HTTP error occurred: {str(e)}"
-    except requests.exceptions.RequestException as e:
-        print(f"[Laplacian Lite] Request error: {str(e)}")
-        return f"Connection error: Unable to reach Ollama server for Laplacian Lite. Please ensure Ollama is running."
-    except json.JSONDecodeError as e:
-        print(f"[Laplacian Lite] JSON decode error: {str(e)}")
-        return "Error parsing response from the model. Please try again."
-    except Exception as e:
-        print(f"[Laplacian Lite] Unexpected error: {str(e)}")
-        return f"An unexpected error occurred with Laplacian Lite: {str(e)}"
-
-
-def generate_coder_response(conversation):
-    """Generate AI response using Ollama with Qwen3 Coder model for coding tasks"""
-    headers = {"Content-Type": "application/json"}
-    payload = {
-        "model": CODER_MODEL,
-        "messages": conversation,
-        "stream": False,
-        "options": {
-            "num_predict": 4096,
-            "temperature": 0.7,
-            "top_p": 0.9,
-            "repeat_penalty": 1.1,
-            "num_ctx": 4096
-        }
-    }
-
-    try:
-        print(f"[Laplacian Coder] Using model: {CODER_MODEL}")
-        print(f"[Laplacian Coder] Sending request to: {LITE_SERVER_URL}")
-
-        response = requests.post(LITE_SERVER_URL, headers=headers, json=payload, timeout=300)
-        response.raise_for_status()
-        data = response.json()
-
-        if "message" in data and "content" in data["message"]:
-            content = data["message"]["content"]
-            print(f"[Laplacian Coder] Response received: {len(content)} characters")
-            return content
-
-        print(f"[Laplacian Coder] Unexpected response format: {data}")
-        return "Sorry, I couldn't process that request with Laplacian Coder."
-
-    except requests.exceptions.Timeout:
-        print(f"[Laplacian Coder] Request timed out")
-        return "Request timed out. The model is taking too long to respond. Please try again."
-    except requests.exceptions.ConnectionError as e:
-        print(f"[Laplacian Coder] Connection error: {str(e)}")
-        return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {CODER_MODEL} model pulled."
-    except requests.exceptions.HTTPError as e:
-        print(f"[Laplacian Coder] HTTP error: {str(e)}")
-        if "404" in str(e):
-            return f"Model '{CODER_MODEL}' not found. Please run: ollama pull {CODER_MODEL}"
-        return f"HTTP error occurred: {str(e)}"
-    except requests.exceptions.RequestException as e:
-        print(f"[Laplacian Coder] Request error: {str(e)}")
-        return f"Connection error: Unable to reach Ollama server for Laplacian Coder. Please ensure Ollama is running."
-    except json.JSONDecodeError as e:
-        print(f"[Laplacian Coder] JSON decode error: {str(e)}")
-        return "Error parsing response from the model. Please try again."
-    except Exception as e:
-        print(f"[Laplacian Coder] Unexpected error: {str(e)}")
-        return f"An unexpected error occurred with Laplacian Coder: {str(e)}"
-
-
-def generate_max_response(conversation):
-    """Generate AI response using DeepSeek V3.1 model for maximum capability"""
-    headers = {"Content-Type": "application/json"}
-    payload = {
-        "model": MAX_MODEL,
-        "messages": conversation,
-        "stream": False,
-        "options": {
-            "num_predict": 4096,
-            "temperature": 0.7,
-            "top_p": 0.9,
-            "repeat_penalty": 1.1,
-            "num_ctx": 4096
-        }
-    }
-
-    try:
-        print(f"[Laplacian Max] Using model: {MAX_MODEL}")
-        print(f"[Laplacian Max] Sending request to: {LITE_SERVER_URL}")
-
-        response = requests.post(LITE_SERVER_URL, headers=headers, json=payload, timeout=600)
-        response.raise_for_status()
-        data = response.json()
-
-        if "message" in data and "content" in data["message"]:
-            content = data["message"]["content"]
-            print(f"[Laplacian Max] Response received: {len(content)} characters")
-            return content
-
-        print(f"[Laplacian Max] Unexpected response format: {data}")
-        return "Sorry, I couldn't process that request with Laplacian Max."
-
-    except requests.exceptions.Timeout:
-        print(f"[Laplacian Max] Request timed out")
-        return "Request timed out. The model is taking too long to respond. Please try again."
-    except requests.exceptions.ConnectionError as e:
-        print(f"[Laplacian Max] Connection error: {str(e)}")
-        return f"Connection error: Unable to reach Ollama server. Please ensure Ollama is running with {MAX_MODEL} model pulled."
-    except requests.exceptions.HTTPError as e:
-        print(f"[Laplacian Max] HTTP error: {str(e)}")
-        if "404" in str(e):
-            return f"Model '{MAX_MODEL}' not found. Please run: ollama pull {MAX_MODEL}"
-        return f"HTTP error occurred: {str(e)}"
-    except requests.exceptions.RequestException as e:
-        print(f"[Laplacian Max] Request error: {str(e)}")
-        return f"Connection error: Unable to reach Ollama server for Laplacian Max. Please ensure Ollama is running."
-    except json.JSONDecodeError as e:
-        print(f"[Laplacian Max] JSON decode error: {str(e)}")
-        return "Error parsing response from the model. Please try again."
-    except Exception as e:
-        print(f"[Laplacian Max] Unexpected error: {str(e)}")
-        return f"An unexpected error occurred with Laplacian Max: {str(e)}"
+        if "401" in error_msg or "Unauthorized" in error_msg:
+            return "Authentication error: Invalid Azure OpenAI API key. Please check your AZURE_OPENAI_API_KEY in .env"
+        elif "404" in error_msg or "DeploymentNotFound" in error_msg:
+            return f"Deployment '{AZURE_OPENAI_DEPLOYMENT}' not found. Please verify your AZURE_OPENAI_DEPLOYMENT in .env"
+        elif "429" in error_msg:
+            return "Rate limit exceeded. Please wait a moment and try again."
+        elif "timeout" in error_msg.lower():
+            return "Request timed out. The model is taking too long to respond. Please try again."
+        else:
+            return f"Azure OpenAI error: {error_msg}"
 
 
 def generate_ai_response(conversation, model=None):
     """Generate AI response from conversation history using selected model"""
     current_model = model or get_current_model()
 
-    if current_model == 'gemini':
-        return generate_lite_response(conversation)
-    elif current_model == 'coder':
-        return generate_coder_response(conversation)
-    elif current_model == 'max':
-        return generate_max_response(conversation)
-    else:
-        return generate_gpt_response(conversation)
+    # Map model IDs to labels for logging
+    label_map = {
+        'gpt': 'Core',
+        'gemini': 'Lite',
+        'coder': 'Coder',
+        'max': 'Max'
+    }
+    label = label_map.get(current_model, 'Core')
+
+    # All models use the same Azure OpenAI backend
+    return generate_azure_response(conversation, model_label=label)

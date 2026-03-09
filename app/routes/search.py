@@ -4,7 +4,6 @@ Search routes - Web search and speech endpoints
 from flask import Blueprint, request, jsonify
 
 from app.services.search_service import web_search
-from app.services.speech_service import generate_speech
 from app.services.ai_service import generate_ai_response
 
 search_bp = Blueprint('search', __name__)
@@ -61,19 +60,3 @@ def search():
         'query': query
     })
 
-
-@search_bp.route('/speech', methods=['POST'])
-def text_to_speech():
-    """Convert text to speech"""
-    data = request.json
-    text = data.get('text', '')
-
-    if not text:
-        return jsonify({'error': 'No text provided'}), 400
-
-    audio_bytes = generate_speech(text)
-
-    if audio_bytes:
-        return audio_bytes, 200, {'Content-Type': 'audio/mpeg'}
-    else:
-        return jsonify({'error': 'Speech generation failed'}), 500

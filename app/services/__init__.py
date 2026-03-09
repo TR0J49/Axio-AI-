@@ -6,10 +6,7 @@ from app.services.ai_service import (
     get_current_model,
     set_current_model,
     generate_ai_response,
-    generate_gpt_response,
-    generate_lite_response,
-    generate_coder_response,
-    generate_max_response
+    generate_azure_response
 )
 
 from app.services.chat_service import (
@@ -26,7 +23,6 @@ from app.services.search_service import (
     web_search
 )
 
-from app.services.speech_service import generate_speech
 
 from app.services.code_service import execute_code
 

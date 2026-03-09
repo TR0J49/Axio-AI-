@@ -1,7 +1,7 @@
 """
 Constants for Laplacian AI
 """
-from app.config.settings import LITE_MODEL, CODER_MODEL, MAX_MODEL, LITE_AVAILABLE, CODER_AVAILABLE, MAX_AVAILABLE
+from app.config.settings import AZURE_OPENAI_DEPLOYMENT, AZURE_AVAILABLE
 
 # Allowed file extensions for DocIQ
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt'}
@@ -9,27 +9,27 @@ ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt'}
 # Allowed file extensions for VizIQ
 VIZIQ_ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'xls', 'json'}
 
-# AI Models Configuration
+# AI Models Configuration (all powered by Azure OpenAI gpt-4.1)
 AI_MODELS = {
     'gpt': {
         'name': 'LAPLACIAN Core',
-        'description': 'Local GPT model via Ollama',
-        'available': True
+        'description': f'Azure OpenAI ({AZURE_OPENAI_DEPLOYMENT})',
+        'available': AZURE_AVAILABLE
     },
     'gemini': {
         'name': 'LAPLACIAN Lite',
-        'description': f'Perfionix AI ({LITE_MODEL})',
-        'available': LITE_AVAILABLE
+        'description': f'Azure OpenAI ({AZURE_OPENAI_DEPLOYMENT})',
+        'available': AZURE_AVAILABLE
     },
     'coder': {
         'name': 'LAPLACIAN Coder',
-        'description': f'Code Expert ({CODER_MODEL})',
-        'available': CODER_AVAILABLE
+        'description': f'Code Expert ({AZURE_OPENAI_DEPLOYMENT})',
+        'available': AZURE_AVAILABLE
     },
     'max': {
         'name': 'LAPLACIAN Max',
-        'description': f'Ultimate AI ({MAX_MODEL})',
-        'available': MAX_AVAILABLE
+        'description': f'Ultimate AI ({AZURE_OPENAI_DEPLOYMENT})',
+        'available': AZURE_AVAILABLE
     }
 }
 

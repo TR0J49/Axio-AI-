@@ -29,6 +29,12 @@ class LaplacianAssistant {
         // Apigee mode state
         this.apigeeMode = false;
 
+        // Voice input/output state
+        this.isListening = false;
+        this.voiceMode = false;  // persistent voice mode state
+        this.recognition = null;
+        this.ttsAudio = null;
+
         this.init();
     }
 
@@ -45,6 +51,7 @@ class LaplacianAssistant {
         this.setupDocIQ();
         this.setupUploadSectionToggle();
         this.setupVizIQ();
+        this.setupVoiceInput();
         this.setupClock();
         this.loadData();
         this.loadModels();
@@ -267,9 +274,10 @@ class LaplacianAssistant {
         sendBtn.addEventListener('click', () => this.sendMessage());
         searchBtn.addEventListener('click', () => this.webSearch());
 
-        // Voice/Mic button - Coming Soon popup
-        if (voiceBtn) {
-            voiceBtn.addEventListener('click', () => this.showComingSoonPopup('Voice Input'));
+        // Voice input buttons
+        const mainVoiceBtn = document.getElementById('voice-toggle');
+        if (mainVoiceBtn) {
+            mainVoiceBtn.addEventListener('click', () => this.toggleVoiceInput());
         }
 
         // Generation control event listeners
@@ -937,9 +945,23 @@ class LaplacianAssistant {
             } else {
                 this.addMessageToUI('Sorry, I encountered an error.', 'assistant');
             }
+
+            // If voice mode is on, restart listening after AI responds
+            if (this.voiceMode) {
+                setTimeout(() => {
+                    if (this.voiceMode) this.startListening();
+                }, 1200);
+            }
         } catch (error) {
             this.removeTypingIndicator();
             this.addMessageToUI('Connection error. Please make sure the server is running.', 'assistant');
+
+            // Restart voice in error case too
+            if (this.voiceMode) {
+                setTimeout(() => {
+                    if (this.voiceMode) this.startListening();
+                }, 1500);
+            }
         }
     }
 
@@ -3685,7 +3707,7 @@ class LaplacianAssistant {
         this.renderInsights(data.insights);
 
         // Render Data Preview
-        this.renderDataPreview(data.columns, data.preview);
+        this.renderDataPreview(data.columns, data.preview, 1);
     }
 
     renderKPIs(kpis) {
@@ -3913,17 +3935,67 @@ class LaplacianAssistant {
         });
     }
 
-    renderDataPreview(columns, data) {
+    renderDataPreview(columns, data, page = 1) {
         const thead = document.getElementById('table-header');
         const tbody = document.getElementById('table-body');
+        const pagination = document.getElementById('pagination-controls');
 
         // Render header
         thead.innerHTML = `<tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>`;
 
-        // Render body (limit to 50 rows)
-        tbody.innerHTML = data.slice(0, 50).map(row =>
+        // Pagination setup
+        const rowsPerPage = 10;
+        const totalRows = data.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+        // Ensure valid page
+        page = Math.max(1, Math.min(page, Math.max(1, totalPages)));
+
+        const startIdx = (page - 1) * rowsPerPage;
+        const endIdx = startIdx + rowsPerPage;
+        const pageData = data.slice(startIdx, endIdx);
+
+        // Render body
+        tbody.innerHTML = pageData.map(row =>
             `<tr>${columns.map(col => `<td>${row[col] !== null && row[col] !== undefined ? row[col] : '-'}</td>`).join('')}</tr>`
         ).join('');
+
+        // Render pagination controls
+        if (totalPages > 1) {
+            pagination.style.display = 'flex';
+            let buttonsHtml = '';
+
+            // Previous button
+            buttonsHtml += `<button class="page-btn ${page === 1 ? 'disabled' : ''}" data-page="${page - 1}">«</button>`;
+
+            // Calculate page range to show (max 5 buttons)
+            let startPage = Math.max(1, page - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                buttonsHtml += `<button class="page-btn ${i === page ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            }
+
+            // Next button
+            buttonsHtml += `<button class="page-btn ${page === totalPages ? 'disabled' : ''}" data-page="${page + 1}">»</button>`;
+
+            pagination.innerHTML = buttonsHtml;
+
+            // Add event listeners to buttons
+            pagination.querySelectorAll('.page-btn').forEach(btn => {
+                if (!btn.classList.contains('disabled')) {
+                    btn.addEventListener('click', (e) => {
+                        const targetPage = parseInt(e.target.dataset.page);
+                        this.renderDataPreview(columns, data, targetPage);
+                    });
+                }
+            });
+        } else {
+            pagination.style.display = 'none';
+        }
     }
 
     async clearVizIQ() {
@@ -4063,6 +4135,195 @@ class LaplacianAssistant {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // ================================
+    // VOICE INPUT/OUTPUT
+    // ================================
+
+    setupVoiceInput() {
+        // Check for Web Speech API support
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            console.warn('[Voice] Web Speech API not supported in this browser');
+            const voiceBtn = document.getElementById('voice-toggle');
+            if (voiceBtn) {
+                voiceBtn.title = 'Voice input not supported in this browser';
+                voiceBtn.style.opacity = '0.4';
+                voiceBtn.style.cursor = 'not-allowed';
+            }
+            return;
+        }
+
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = false;
+        this.recognition.interimResults = true;
+        this.recognition.lang = 'en-IN';
+
+        this.recognition.onstart = () => {
+            this.isListening = true;
+            document.querySelectorAll('#voice-toggle').forEach(btn => btn.classList.add('listening'));
+            if (typeof toastManager !== 'undefined') {
+                toastManager.info('🎙️ Listening...', 2000);
+            }
+        };
+
+        this.recognition.onresult = (event) => {
+            const input = document.getElementById('chat-input');
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            if (finalTranscript) {
+                input.value = finalTranscript;
+                input.style.height = 'auto';
+                input.style.height = input.scrollHeight + 'px';
+            } else if (interimTranscript) {
+                input.value = interimTranscript;
+                input.style.height = 'auto';
+                input.style.height = input.scrollHeight + 'px';
+            }
+        };
+
+        this.recognition.onend = () => {
+            this.isListening = false;
+            document.querySelectorAll('#voice-toggle').forEach(btn => btn.classList.remove('listening'));
+
+            // Auto-send if there's text
+            const input = document.getElementById('chat-input');
+            if (input.value.trim()) {
+                if (typeof toastManager !== 'undefined') {
+                    toastManager.success('🎙️ Sending voice message...', 1500);
+                }
+                setTimeout(() => this.sendMessage(), 500);
+            } else if (this.voiceMode) {
+                // Voice Mode: no text captured (silence), restart listening automatically
+                setTimeout(() => {
+                    if (this.voiceMode) this.startListening();
+                }, 600);
+            }
+        };
+
+        this.recognition.onerror = (event) => {
+            this.isListening = false;
+            document.querySelectorAll('#voice-toggle').forEach(btn => btn.classList.remove('listening'));
+
+            if (event.error === 'no-speech') {
+                // Silence timeout — normal in voice mode, just restart
+                if (this.voiceMode) {
+                    setTimeout(() => {
+                        if (this.voiceMode) this.startListening();
+                    }, 500);
+                }
+                // No toast — this is expected behaviour
+                return;
+            }
+
+            if (event.error === 'not-allowed') {
+                this.voiceMode = false;
+                document.querySelectorAll('#voice-toggle').forEach(btn => btn.classList.remove('voice-mode-active'));
+                if (typeof toastManager !== 'undefined') {
+                    toastManager.error('Microphone access denied. Please allow microphone access.', 3000);
+                }
+            } else if (event.error !== 'aborted') {
+                // In voice mode, try to recover from transient errors silently
+                if (this.voiceMode) {
+                    setTimeout(() => {
+                        if (this.voiceMode) this.startListening();
+                    }, 800);
+                } else {
+                    if (typeof toastManager !== 'undefined') {
+                        toastManager.warning(`Voice input error: ${event.error}`, 3000);
+                    }
+                }
+            }
+        };
+    }
+
+    toggleVoiceInput() {
+        if (!this.recognition) {
+            if (typeof toastManager !== 'undefined') {
+                toastManager.warning('Voice input is not supported in this browser. Use Chrome or Edge.', 3000);
+            }
+            return;
+        }
+
+        if (this.voiceMode) {
+            // Turn off voice mode
+            this.voiceMode = false;
+            this.stopListening();
+            document.querySelectorAll('#voice-toggle').forEach(btn => {
+                btn.classList.remove('voice-mode-active');
+                btn.title = 'Voice Mode';
+            });
+            if (typeof toastManager !== 'undefined') {
+                toastManager.info('🔇 Voice Mode off', 2000);
+            }
+        } else {
+            // Turn on voice mode
+            this.voiceMode = true;
+            document.querySelectorAll('#voice-toggle').forEach(btn => {
+                btn.classList.add('voice-mode-active');
+                btn.title = 'Voice Mode active — click to turn off';
+            });
+            if (typeof toastManager !== 'undefined') {
+                toastManager.success('🎙️ Voice Mode on — speak freely!', 2500);
+            }
+            this.startListening();
+        }
+    }
+
+    async startListening() {
+        if (this.recognition && !this.isListening) {
+            try {
+                // Request mic with noise cancellation constraints first.
+                // This primes the browser to use noiseSuppression + echoCancellation
+                // before Web Speech API captures audio.
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            noiseSuppression: true,
+                            echoCancellation: true,
+                            autoGainControl: true,
+                            sampleRate: 48000
+                        }
+                    });
+                    // Release the stream immediately; SpeechRecognition manages its own capture
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                this.recognition.start();
+            } catch (e) {
+                if (e.name === 'NotAllowedError') {
+                    if (typeof toastManager !== 'undefined') {
+                        toastManager.error('Microphone access denied. Please allow microphone access.', 3000);
+                    }
+                } else {
+                    console.error('[Voice] Failed to start recognition:', e);
+                }
+            }
+        }
+    }
+
+    stopListening() {
+        if (this.recognition && this.isListening) {
+            this.recognition.stop();
+        }
+        // If voice mode, also disable it when explicitly stopped
+        if (this.voiceMode) {
+            this.voiceMode = false;
+            document.querySelectorAll('#voice-toggle').forEach(btn => {
+                btn.classList.remove('voice-mode-active');
+                btn.title = 'Voice Mode';
+            });
+        }
     }
 }
 

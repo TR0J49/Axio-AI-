@@ -13,7 +13,6 @@ def register_blueprints(app: Flask):
     from app.routes.dociq import dociq_bp
     from app.routes.viziq import viziq_bp
     from app.routes.apigee import apigee_bp
-
     # Register blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(models_bp, url_prefix='/api')

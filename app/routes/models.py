@@ -1,59 +1,26 @@
 """
 Model routes - AI model selection and management
 """
-import requests
 from flask import Blueprint, request, jsonify
 
 from app.config.constants import AI_MODELS
-from app.config.settings import LITE_SERVER_URL, LITE_MODEL, CODER_MODEL, MAX_MODEL
 from app.services.ai_service import get_current_model, set_current_model
 
 models_bp = Blueprint('models', __name__)
 
 
-def check_model_available(model_name):
-    """Dynamically check if an Ollama model is available by checking model list"""
-    try:
-        # Use /api/tags to list models - much faster than generation test
-        base_url = LITE_SERVER_URL.replace('/api/chat', '')
-        response = requests.get(f"{base_url}/api/tags", timeout=10)
-
-        if response.status_code == 200:
-            models_data = response.json()
-            available_models = [m['name'] for m in models_data.get('models', [])]
-            return model_name in available_models
-        return False
-    except Exception:
-        return False
-
-
 @models_bp.route('/models', methods=['GET'])
 def get_models():
-    """Get available AI models with dynamic availability check"""
+    """Get available AI models"""
     current_model = get_current_model()
     models_info = []
 
-    # Dynamic availability check for models that were marked unavailable
-    dynamic_availability = {
-        'gpt': True,  # Always assume GPT is available
-        'gemini': AI_MODELS['gemini']['available'] or check_model_available(LITE_MODEL),
-        'coder': AI_MODELS['coder']['available'] or check_model_available(CODER_MODEL),
-        'max': AI_MODELS['max']['available'] or check_model_available(MAX_MODEL)
-    }
-
     for model_id, model_data in AI_MODELS.items():
-        # Use dynamic check if static check said unavailable
-        is_available = dynamic_availability.get(model_id, model_data['available'])
-
-        # Update the cached value if now available
-        if is_available and not model_data['available']:
-            AI_MODELS[model_id]['available'] = True
-
         models_info.append({
             'id': model_id,
             'name': model_data['name'],
             'description': model_data['description'],
-            'available': is_available,
+            'available': model_data['available'],
             'active': model_id == current_model
         })
 

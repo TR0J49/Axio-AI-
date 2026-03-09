@@ -4,10 +4,20 @@ Apigee Service - Handles Apigee proxy bundle generation
 import io
 import json
 import zipfile
-import requests
 from flask import session
+from openai import AzureOpenAI
 
-from app.config.settings import GPT_SERVER_URL, GPT_MODEL
+from app.config.settings import (
+    AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY,
+    AZURE_OPENAI_API_VERSION, AZURE_OPENAI_DEPLOYMENT
+)
+
+# Initialize Azure OpenAI client for Apigee service
+_apigee_client = AzureOpenAI(
+    azure_endpoint=AZURE_OPENAI_ENDPOINT,
+    api_key=AZURE_OPENAI_API_KEY,
+    api_version=AZURE_OPENAI_API_VERSION,
+)
 
 
 def get_extraction_prompt():
@@ -35,72 +45,61 @@ Always respond with ONLY the JSON object, nothing else."""
 
 
 def extract_proxy_details(message):
-    """Extract proxy details from natural language using AI"""
-    headers = {"Content-Type": "application/json"}
-
+    """Extract proxy details from natural language using Azure OpenAI"""
     conversation = [
         {"role": "system", "content": get_extraction_prompt()},
         {"role": "user", "content": message}
     ]
 
-    payload = {
-        "model": GPT_MODEL,
-        "messages": conversation,
-        "stream": False,
-        "options": {
-            "num_predict": 512,
-            "temperature": 0.1,
-            "top_p": 0.9
-        }
-    }
-
     try:
         print(f"[Apigee] Extracting proxy details from: {message[:50]}...")
-        response = requests.post(GPT_SERVER_URL, headers=headers, json=payload, timeout=60)
-        response.raise_for_status()
-        data = response.json()
 
-        if "message" in data and "content" in data["message"]:
-            content = data["message"]["content"].strip()
-            print(f"[Apigee] AI response: {content}")
+        response = _apigee_client.chat.completions.create(
+            model=AZURE_OPENAI_DEPLOYMENT,
+            messages=conversation,
+            max_completion_tokens=512,
+            temperature=0.1,
+            top_p=0.9,
+        )
 
-            # Try to parse JSON from the response
-            # Handle cases where AI might wrap in markdown code blocks
-            if content.startswith("```"):
-                # Extract JSON from code block
-                lines = content.split("\n")
-                json_lines = []
-                in_block = False
-                for line in lines:
-                    if line.startswith("```"):
-                        in_block = not in_block
-                        continue
-                    if in_block or (not line.startswith("```") and "{" in content):
-                        json_lines.append(line)
-                content = "\n".join(json_lines)
+        content = response.choices[0].message.content.strip()
+        print(f"[Apigee] AI response: {content}")
 
-            # Find JSON object in the content
-            start_idx = content.find("{")
-            end_idx = content.rfind("}") + 1
-            if start_idx != -1 and end_idx > start_idx:
-                json_str = content[start_idx:end_idx]
-                extracted = json.loads(json_str)
-                print(f"[Apigee] Extracted details: {extracted}")
-                return extracted, None
+        # Try to parse JSON from the response
+        # Handle cases where AI might wrap in markdown code blocks
+        if content.startswith("```"):
+            # Extract JSON from code block
+            lines = content.split("\n")
+            json_lines = []
+            in_block = False
+            for line in lines:
+                if line.startswith("```"):
+                    in_block = not in_block
+                    continue
+                if in_block or (not line.startswith("```") and "{" in content):
+                    json_lines.append(line)
+            content = "\n".join(json_lines)
 
-            return None, "Could not parse AI response as JSON"
+        # Find JSON object in the content
+        start_idx = content.find("{")
+        end_idx = content.rfind("}") + 1
+        if start_idx != -1 and end_idx > start_idx:
+            json_str = content[start_idx:end_idx]
+            extracted = json.loads(json_str)
+            print(f"[Apigee] Extracted details: {extracted}")
+            return extracted, None
+
+        return None, "Could not parse AI response as JSON"
 
     except json.JSONDecodeError as e:
         print(f"[Apigee] JSON parse error: {e}")
         return None, f"Failed to parse proxy details: {str(e)}"
-    except requests.exceptions.RequestException as e:
-        print(f"[Apigee] Request error: {e}")
-        return None, f"AI service error: {str(e)}"
     except Exception as e:
-        print(f"[Apigee] Unexpected error: {e}")
-        return None, f"Unexpected error: {str(e)}"
+        print(f"[Apigee] Error: {e}")
+        return None, f"AI service error: {str(e)}"
 
     return None, "Failed to extract proxy details from the message"
+
 
 
 def validate_proxy_details(details):

@@ -4,7 +4,6 @@ Configuration settings for Laplacian AI
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
-import requests
 
 # Load environment variables
 load_dotenv()
@@ -16,23 +15,14 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 # Create uploads folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# GPT/Ollama Configuration
-GPT_SERVER_URL = os.getenv('GPT_SERVER_URL', 'http://localhost:11434/api/chat')
-GPT_MODEL = os.getenv('GPT_MODEL', 'gpt-oss:20b-cloud')
+# Azure OpenAI Configuration
+AZURE_OPENAI_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT', '')
+AZURE_OPENAI_API_KEY = os.getenv('AZURE_OPENAI_API_KEY', '')
+AZURE_OPENAI_API_VERSION = os.getenv('AZURE_OPENAI_API_VERSION', '2024-12-01-preview')
+AZURE_OPENAI_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT', 'gpt-4.1')
 
-# Laplacian Lite Configuration (Ollama with phi3:mini)
-LITE_MODEL = os.getenv('LITE_MODEL', 'phi3:mini')
-LITE_SERVER_URL = os.getenv('GPT_SERVER_URL', 'http://localhost:11434/api/chat')
-
-# Laplacian Coder Configuration
-CODER_MODEL = os.getenv('CODER_MODEL', 'qwen3-coder:480b-cloud')
-
-# Laplacian Max Configuration (DeepSeek V3.1)
-MAX_MODEL = os.getenv('MAX_MODEL', 'deepseek-v3.1:671b-cloud')
-
-# DocIQ Model Configuration
-DOCIQ_MODEL = os.getenv('DOCIQ_MODEL', 'gpt-oss:20b-cloud')
-DOCIQ_USE_LITE = False
+# DocIQ Model Configuration (uses same Azure OpenAI)
+DOCIQ_MODEL = AZURE_OPENAI_DEPLOYMENT
 
 # Other APIs
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
@@ -42,55 +32,15 @@ VOICE_ID = os.getenv('VOICE_ID', '21m00Tcm4TlvDq8ikWAM')
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', '')
 GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID', '')
 
-
-def _check_model_available(server_url, model_name):
-    """Check if an Ollama model is available by checking model list (faster than generation test)"""
-    try:
-        print(f"[Laplacian AI] Checking if model exists: {model_name}...")
-        # Use /api/tags to list models - much faster than generation test
-        base_url = server_url.replace('/api/chat', '')
-        response = requests.get(f"{base_url}/api/tags", timeout=10)
-
-        if response.status_code == 200:
-            models_data = response.json()
-            available_models = [m['name'] for m in models_data.get('models', [])]
-            is_available = model_name in available_models
-            if is_available:
-                print(f"[Laplacian AI] Model {model_name} found in Ollama")
-            else:
-                print(f"[Laplacian AI] Model {model_name} not found. Available: {available_models}")
-            return is_available
-        return False
-    except requests.exceptions.Timeout:
-        print(f"[Laplacian AI] Timeout checking {model_name}")
-        return False
-    except Exception as e:
-        print(f"[Laplacian AI] Error checking {model_name}: {e}")
-        return False
-
-
-# Check model availability at startup
-print("[Laplacian AI] Checking model availability...")
-LITE_AVAILABLE = _check_model_available(LITE_SERVER_URL, LITE_MODEL)
-if LITE_AVAILABLE:
-    print(f"[OK] Laplacian Lite model ({LITE_MODEL}) initialized and verified")
+# Check Azure OpenAI availability at startup
+AZURE_AVAILABLE = bool(AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY)
+if AZURE_AVAILABLE:
+    print(f"[OK] Azure OpenAI configured (deployment: {AZURE_OPENAI_DEPLOYMENT})")
 else:
-    print(f"[WARNING] Laplacian Lite model ({LITE_MODEL}) not available")
-
-CODER_AVAILABLE = _check_model_available(LITE_SERVER_URL, CODER_MODEL)
-if CODER_AVAILABLE:
-    print(f"[OK] Laplacian Coder model ({CODER_MODEL}) initialized and verified")
-else:
-    print(f"[WARNING] Laplacian Coder model ({CODER_MODEL}) not available")
-
-MAX_AVAILABLE = _check_model_available(LITE_SERVER_URL, MAX_MODEL)
-if MAX_AVAILABLE:
-    print(f"[OK] Laplacian Max model ({MAX_MODEL}) initialized and verified")
-else:
-    print(f"[WARNING] Laplacian Max model ({MAX_MODEL}) not available")
+    print("[WARNING] Azure OpenAI not configured. Set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in .env")
 
 # Default AI Model
-DEFAULT_AI_MODEL = os.getenv('DEFAULT_AI_MODEL', 'gemini' if LITE_AVAILABLE else 'gpt')
+DEFAULT_AI_MODEL = os.getenv('DEFAULT_AI_MODEL', 'gpt')
 
 # MongoDB flag - initialized in database.py, exposed here for service imports
 # This will be updated after database initialization
@@ -113,12 +63,11 @@ class Config:
     UPLOAD_FOLDER = UPLOAD_FOLDER
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
 
-    # Model settings
-    GPT_SERVER_URL = GPT_SERVER_URL
-    GPT_MODEL = GPT_MODEL
-    LITE_MODEL = LITE_MODEL
-    LITE_SERVER_URL = LITE_SERVER_URL
-    CODER_MODEL = CODER_MODEL
+    # Azure OpenAI settings
+    AZURE_OPENAI_ENDPOINT = AZURE_OPENAI_ENDPOINT
+    AZURE_OPENAI_API_KEY = AZURE_OPENAI_API_KEY
+    AZURE_OPENAI_API_VERSION = AZURE_OPENAI_API_VERSION
+    AZURE_OPENAI_DEPLOYMENT = AZURE_OPENAI_DEPLOYMENT
     DOCIQ_MODEL = DOCIQ_MODEL
 
     # API Keys

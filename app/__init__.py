@@ -39,13 +39,12 @@ def create_app(config_name='development'):
 
 def _print_startup_info(app):
     """Print startup information"""
-    from app.config.settings import LITE_AVAILABLE, CODER_AVAILABLE
+    from app.config.settings import AZURE_AVAILABLE, AZURE_OPENAI_DEPLOYMENT
 
     print("\n" + "="*50)
     print("LAPLACIAN AI - Backend Server")
     print("="*50)
-    print(f"GPT Model: {app.config.get('GPT_MODEL', 'N/A')}")
-    print(f"Lite Model: {app.config.get('LITE_MODEL', 'N/A')} ({'Available' if LITE_AVAILABLE else 'Not Available'})")
-    print(f"Coder Model: {app.config.get('CODER_MODEL', 'N/A')} ({'Available' if CODER_AVAILABLE else 'Not Available'})")
+    print(f"AI Backend: Azure OpenAI ({AZURE_OPENAI_DEPLOYMENT})")
+    print(f"Azure OpenAI: {'Connected' if AZURE_AVAILABLE else 'Not Configured'}")
     print(f"MongoDB: {'Connected' if app.db and app.db.is_connected() else 'Using in-memory fallback'}")
     print("="*50 + "\n")

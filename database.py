@@ -173,8 +173,13 @@ class Database:
         if not self.is_connected():
             return []
 
-        tasks = self.db.tasks.find().sort("created_at", -1)
-        return [self._serialize_doc(task) for task in tasks]
+        try:
+            tasks = self.db.tasks.find().sort("created_at", -1)
+            return [self._serialize_doc(task) for task in tasks]
+        except Exception as e:
+            print(f"[ERROR] get_all_tasks MongoDB error: {e}")
+            self.connected = False
+            return []
 
     def update_task(self, task_id, updates):
         """Update a task"""
@@ -224,8 +229,13 @@ class Database:
         if not self.is_connected():
             return []
 
-        notes = self.db.notes.find().sort("created_at", -1)
-        return [self._serialize_doc(note) for note in notes]
+        try:
+            notes = self.db.notes.find().sort("created_at", -1)
+            return [self._serialize_doc(note) for note in notes]
+        except Exception as e:
+            print(f"[ERROR] get_all_notes MongoDB error: {e}")
+            self.connected = False
+            return []
 
     def update_note(self, note_id, updates):
         """Update a note"""
@@ -274,8 +284,13 @@ class Database:
         if not self.is_connected():
             return []
 
-        reminders = self.db.reminders.find().sort("datetime", 1)
-        return [self._serialize_doc(reminder) for reminder in reminders]
+        try:
+            reminders = self.db.reminders.find().sort("datetime", 1)
+            return [self._serialize_doc(reminder) for reminder in reminders]
+        except Exception as e:
+            print(f"[ERROR] get_all_reminders MongoDB error: {e}")
+            self.connected = False
+            return []
 
     def delete_reminder(self, reminder_id):
         """Delete a reminder"""
@@ -317,9 +332,14 @@ class Database:
         if not self.is_connected():
             return []
 
-        query = {"session_id": session_id} if session_id else {}
-        documents = self.db.dociq_documents.find(query).sort("uploaded_at", -1)
-        return [self._serialize_doc(doc) for doc in documents]
+        try:
+            query = {"session_id": session_id} if session_id else {}
+            documents = self.db.dociq_documents.find(query).sort("uploaded_at", -1)
+            return [self._serialize_doc(doc) for doc in documents]
+        except Exception as e:
+            print(f"[ERROR] get_dociq_documents MongoDB error: {e}")
+            self.connected = False
+            return []
 
     def delete_dociq_document(self, doc_id):
         """Delete a DocIQ document"""
@@ -438,18 +458,31 @@ class Database:
                 "total_chat_messages": 0
             }
 
-        total_tasks = self.db.tasks.count_documents({})
-        completed_tasks = self.db.tasks.count_documents({"completed": True})
+        try:
+            total_tasks = self.db.tasks.count_documents({})
+            completed_tasks = self.db.tasks.count_documents({"completed": True})
 
-        return {
-            "total_notes": self.db.notes.count_documents({}),
-            "total_tasks": total_tasks,
-            "completed_tasks": completed_tasks,
-            "pending_tasks": total_tasks - completed_tasks,
-            "total_reminders": self.db.reminders.count_documents({}),
-            "total_documents": self.db.dociq_documents.count_documents({}),
-            "total_chat_messages": self.db.chat_messages.count_documents({})
-        }
+            return {
+                "total_notes": self.db.notes.count_documents({}),
+                "total_tasks": total_tasks,
+                "completed_tasks": completed_tasks,
+                "pending_tasks": total_tasks - completed_tasks,
+                "total_reminders": self.db.reminders.count_documents({}),
+                "total_documents": self.db.dociq_documents.count_documents({}),
+                "total_chat_messages": self.db.chat_messages.count_documents({})
+            }
+        except Exception as e:
+            print(f"[ERROR] get_stats MongoDB error: {e}")
+            self.connected = False
+            return {
+                "total_notes": 0,
+                "total_tasks": 0,
+                "completed_tasks": 0,
+                "pending_tasks": 0,
+                "total_reminders": 0,
+                "total_documents": 0,
+                "total_chat_messages": 0
+            }
 
     # ========================
     # Utility Methods
