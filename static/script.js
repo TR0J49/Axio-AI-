@@ -1031,13 +1031,10 @@ class LaplacianAssistant {
             messageDiv.dataset.index = index;
         }
 
-        const avatar = document.createElement('div');
-        avatar.className = role === 'user' ? 'message-avatar' : 'message-avatar ai-avatar';
-
-        if (role === 'user') {
-            avatar.textContent = '👤';
-        } else {
-            // Create advanced AI icon
+        let avatar = null;
+        if (role === 'assistant') {
+            avatar = document.createElement('div');
+            avatar.className = 'message-avatar ai-avatar';
             avatar.innerHTML = `
                 <div class="ai-icon">
                     <div class="ai-core"></div>
@@ -1105,7 +1102,7 @@ class LaplacianAssistant {
 
         content.appendChild(textDiv);
         content.appendChild(time);
-        messageDiv.appendChild(avatar);
+        if (avatar) messageDiv.appendChild(avatar);
         messageDiv.appendChild(content);
 
         messagesContainer.appendChild(messageDiv);
@@ -3667,12 +3664,10 @@ class LaplacianAssistant {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${role}`;
 
-        const avatar = document.createElement('div');
-        avatar.className = role === 'user' ? 'message-avatar' : 'message-avatar ai-avatar';
-
-        if (role === 'user') {
-            avatar.textContent = '👤';
-        } else {
+        let avatar = null;
+        if (role === 'assistant') {
+            avatar = document.createElement('div');
+            avatar.className = 'message-avatar ai-avatar';
             avatar.innerHTML = `
                 <div class="ai-icon">
                     <div class="ai-core"></div>
@@ -3718,7 +3713,7 @@ class LaplacianAssistant {
 
         content.appendChild(textDiv);
         content.appendChild(time);
-        messageDiv.appendChild(avatar);
+        if (avatar) messageDiv.appendChild(avatar);
         messageDiv.appendChild(content);
 
         messagesContainer.appendChild(messageDiv);
