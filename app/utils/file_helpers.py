@@ -1,6 +1,7 @@
 """
 File handling utilities
 """
+import re
 from app.config.constants import ALLOWED_EXTENSIONS, CODE_FILE_EXTENSIONS
 
 
@@ -17,3 +18,12 @@ def get_file_extension(filename):
 def get_code_file_extension(language):
     """Get file extension for code execution"""
     return CODE_FILE_EXTENSIONS.get(language, 'txt')
+
+
+def secure_filename(filename: str) -> str:
+    """Sanitise a filename (replaces werkzeug.utils.secure_filename)."""
+    # Keep only word chars, whitespace, hyphens and dots
+    filename = re.sub(r'[^\w\s\-.]', '', filename)
+    # Collapse whitespace to underscores
+    filename = re.sub(r'\s+', '_', filename).strip('._')
+    return filename or 'unnamed'

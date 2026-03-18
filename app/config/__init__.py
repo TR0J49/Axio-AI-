@@ -1,3 +1,7 @@
 """Configuration module"""
-from app.config.settings import config, Config, DevelopmentConfig, ProductionConfig
+from app.config.settings import (
+    AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY,
+    AZURE_OPENAI_API_VERSION, AZURE_OPENAI_DEPLOYMENT,
+    UPLOAD_FOLDER, AZURE_AVAILABLE, DEFAULT_AI_MODEL,
+)
 from app.config.constants import AI_MODELS, PISTON_LANGUAGES, ALLOWED_EXTENSIONS
