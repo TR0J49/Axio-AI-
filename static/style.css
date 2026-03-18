@@ -5029,17 +5029,33 @@ body::before {
 
     /* Model Selector Mobile */
     .model-selector-btn {
-        padding: 6px 10px;
+        padding: 6px 14px;
         font-size: 0.8rem;
+        border-radius: 20px;
+        gap: 6px;
+        min-height: 36px;
     }
 
     .model-selector-btn svg:first-child {
         display: none;
     }
 
+    .model-selector-btn .dropdown-arrow {
+        width: 12px;
+        height: 12px;
+    }
+
     .model-dropdown {
-        min-width: 200px;
-        right: -10px;
+        min-width: 220px;
+        right: 0;
+        border-radius: 16px;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .model-option {
+        padding: 12px 14px;
+        gap: 10px;
     }
 
     /* Chat Container */
@@ -5501,11 +5517,19 @@ body::before {
         }
 
         .model-selector-btn {
-            padding: 4px 8px;
+            padding: 5px 12px;
+            border-radius: 18px;
+            min-height: 32px;
         }
 
         .model-name {
             font-size: 0.75rem;
+        }
+
+        .model-dropdown {
+            min-width: 200px;
+            right: 0;
+            border-radius: 14px;
         }
 
         .chat-messages {
