@@ -1,7 +1,8 @@
 """
 Productivity routes - Notes, Tasks, Reminders, Stats endpoints
 """
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 from app.services.productivity_service import (
     get_all_notes, create_note, delete_note,
@@ -10,96 +11,118 @@ from app.services.productivity_service import (
     get_stats
 )
 
-productivity_bp = Blueprint('productivity', __name__)
+productivity_router = APIRouter(tags=["productivity"])
 
 
 # ==================== Notes ====================
 
-@productivity_bp.route('/notes', methods=['GET', 'POST', 'DELETE'])
-def notes():
-    """Manage notes"""
-    if request.method == 'GET':
-        return jsonify(get_all_notes())
+@productivity_router.get('/notes')
+async def list_notes():
+    """Get all notes"""
+    return get_all_notes()
 
-    elif request.method == 'POST':
-        data = request.json
-        title = data.get('title', 'Untitled')
-        content = data.get('content', '')
-        note = create_note(title, content)
-        if note:
-            return jsonify(note), 201
-        return jsonify({'error': 'Failed to create note'}), 500
 
-    elif request.method == 'DELETE':
-        note_id = request.json.get('id')
-        delete_note(note_id)
-        return jsonify({'status': 'success'})
+@productivity_router.post('/notes', status_code=201)
+async def create_note_endpoint(request: Request):
+    """Create a new note"""
+    data = await request.json()
+    title = data.get('title', 'Untitled')
+    content = data.get('content', '')
+    note = create_note(title, content)
+    if note:
+        return note
+    return JSONResponse({'error': 'Failed to create note'}, status_code=500)
+
+
+@productivity_router.delete('/notes')
+async def delete_note_endpoint(request: Request):
+    """Delete a note"""
+    data = await request.json()
+    note_id = data.get('id')
+    delete_note(note_id)
+    return {'status': 'success'}
 
 
 # ==================== Tasks ====================
 
-@productivity_bp.route('/tasks', methods=['GET', 'POST', 'PUT', 'DELETE'])
-def tasks():
-    """Manage tasks"""
-    if request.method == 'GET':
-        return jsonify(get_all_tasks())
+@productivity_router.get('/tasks')
+async def list_tasks():
+    """Get all tasks"""
+    return get_all_tasks()
 
-    elif request.method == 'POST':
-        data = request.json
-        title = data.get('title', '')
-        priority = data.get('priority', 'medium')
-        task = create_task(title, priority)
-        if task:
-            return jsonify(task), 201
-        return jsonify({'error': 'Failed to create task'}), 500
 
-    elif request.method == 'PUT':
-        task_id = request.json.get('id')
-        updates = {}
-        if 'completed' in request.json:
-            updates['completed'] = request.json['completed']
-        if 'title' in request.json:
-            updates['title'] = request.json['title']
-        if 'priority' in request.json:
-            updates['priority'] = request.json['priority']
+@productivity_router.post('/tasks', status_code=201)
+async def create_task_endpoint(request: Request):
+    """Create a new task"""
+    data = await request.json()
+    title = data.get('title', '')
+    priority = data.get('priority', 'medium')
+    task = create_task(title, priority)
+    if task:
+        return task
+    return JSONResponse({'error': 'Failed to create task'}, status_code=500)
 
-        task = update_task(task_id, updates)
-        if task:
-            return jsonify(task)
-        return jsonify({'error': 'Task not found'}), 404
 
-    elif request.method == 'DELETE':
-        task_id = request.json.get('id')
-        delete_task(task_id)
-        return jsonify({'status': 'success'})
+@productivity_router.put('/tasks')
+async def update_task_endpoint(request: Request):
+    """Update a task"""
+    data = await request.json()
+    task_id = data.get('id')
+    updates = {}
+    if 'completed' in data:
+        updates['completed'] = data['completed']
+    if 'title' in data:
+        updates['title'] = data['title']
+    if 'priority' in data:
+        updates['priority'] = data['priority']
+
+    task = update_task(task_id, updates)
+    if task:
+        return task
+    return JSONResponse({'error': 'Task not found'}, status_code=404)
+
+
+@productivity_router.delete('/tasks')
+async def delete_task_endpoint(request: Request):
+    """Delete a task"""
+    data = await request.json()
+    task_id = data.get('id')
+    delete_task(task_id)
+    return {'status': 'success'}
 
 
 # ==================== Reminders ====================
 
-@productivity_bp.route('/reminders', methods=['GET', 'POST', 'DELETE'])
-def reminders():
-    """Manage reminders"""
-    if request.method == 'GET':
-        return jsonify(get_all_reminders())
+@productivity_router.get('/reminders')
+async def list_reminders():
+    """Get all reminders"""
+    return get_all_reminders()
 
-    elif request.method == 'POST':
-        data = request.json
-        title = data.get('title', '')
-        reminder_datetime = data.get('datetime', '')
-        reminder = create_reminder(title, reminder_datetime)
-        if reminder:
-            return jsonify(reminder), 201
-        return jsonify({'error': 'Failed to create reminder'}), 500
 
-    elif request.method == 'DELETE':
-        reminder_id = request.json.get('id')
-        delete_reminder(reminder_id)
-        return jsonify({'status': 'success'})
+@productivity_router.post('/reminders', status_code=201)
+async def create_reminder_endpoint(request: Request):
+    """Create a new reminder"""
+    data = await request.json()
+    title = data.get('title', '')
+    reminder_datetime = data.get('datetime', '')
+    reminder = create_reminder(title, reminder_datetime)
+    if reminder:
+        return reminder
+    return JSONResponse({'error': 'Failed to create reminder'}, status_code=500)
+
+
+@productivity_router.delete('/reminders')
+async def delete_reminder_endpoint(request: Request):
+    """Delete a reminder"""
+    data = await request.json()
+    reminder_id = data.get('id')
+    delete_reminder(reminder_id)
+    return {'status': 'success'}
 
 
 # ==================== Stats ====================
 
-@productivity_bp.route('/stats', methods=['GET'])
-def stats():
+@productivity_router.get('/stats')
+async def stats():
     """Get user statistics"""
-    return jsonify(get_stats())
+    return get_stats()

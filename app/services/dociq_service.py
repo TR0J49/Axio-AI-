@@ -4,11 +4,11 @@ DocIQ Service - Document Intelligence and RAG functionality
 import os
 import uuid
 from datetime import datetime
-from flask import session
 
 from app.config.settings import USE_MONGODB, DOCIQ_MODEL
 from app.services.ai_service import generate_ai_response
 from app.utils.text_processing import extract_text_from_document, chunk_text
+from app.utils.file_helpers import secure_filename
 
 
 # Fallback in-memory storage
@@ -18,20 +18,19 @@ dociq_single_user_storage = {
 }
 
 
-def get_dociq_session_id():
+def get_dociq_session_id(session: dict):
     """Get or create DocIQ session ID"""
     if 'dociq_session_id' not in session:
         session['dociq_session_id'] = str(uuid.uuid4())
-        session.modified = True
         print(f"[DocIQ] Created new session ID: {session['dociq_session_id']}")
     return session['dociq_session_id']
 
 
-def get_dociq_documents():
+def get_dociq_documents(session: dict):
     """Get documents for current session - uses MongoDB or fallback storage"""
     from database import get_database
     db = get_database()
-    session_id = get_dociq_session_id()
+    session_id = get_dociq_session_id(session)
 
     # Try MongoDB first
     if USE_MONGODB and db.is_connected():
@@ -173,17 +172,19 @@ Current date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"""
     return generate_ai_response(conversation)
 
 
-def process_document_upload(file, upload_folder):
+def process_document_upload(file_bytes: bytes, original_filename: str, upload_folder: str, session: dict):
     """Process uploaded document and return document info"""
-    from werkzeug.utils import secure_filename
     from database import get_database
     db = get_database()
 
-    filename = secure_filename(file.filename)
+    filename = secure_filename(original_filename)
     file_extension = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
     unique_filename = f"{uuid.uuid4()}_{filename}"
     file_path = os.path.join(upload_folder, unique_filename)
-    file.save(file_path)
+
+    # Write file to disk
+    with open(file_path, 'wb') as f:
+        f.write(file_bytes)
 
     # Get file size
     file_size = os.path.getsize(file_path)
@@ -200,13 +201,13 @@ def process_document_upload(file, upload_folder):
     chunks = chunk_text(text)
 
     # Store document info
-    session_id = get_dociq_session_id()
+    session_id = get_dociq_session_id(session)
     doc_id = str(uuid.uuid4())
 
     doc_info = {
         'id': doc_id,
         'name': filename,
-        'original_name': file.filename,
+        'original_name': original_filename,
         'extension': file_extension,
         'size': file_size,
         'path': file_path,
@@ -223,7 +224,7 @@ def process_document_upload(file, upload_folder):
         print(f"[DocIQ Upload] Document saved to MongoDB: {filename}")
     else:
         # Fallback to in-memory
-        session_data = get_dociq_documents()
+        session_data = get_dociq_documents(session)
         session_data['documents'].append(doc_info)
 
     print(f"[DocIQ Upload] Successfully added document: {filename}")
@@ -232,11 +233,11 @@ def process_document_upload(file, upload_folder):
     return doc_info, None
 
 
-def delete_document(doc_id):
+def delete_document(session: dict, doc_id):
     """Delete a specific document"""
     from database import get_database
     db = get_database()
-    session_data = get_dociq_documents()
+    session_data = get_dociq_documents(session)
 
     for i, doc in enumerate(session_data['documents']):
         doc_doc_id = doc.get('doc_id') or doc.get('id')
@@ -261,12 +262,12 @@ def delete_document(doc_id):
     return False
 
 
-def clear_all_documents():
+def clear_all_documents(session: dict):
     """Clear all documents and conversation"""
     from database import get_database
     db = get_database()
-    session_id = get_dociq_session_id()
-    session_data = get_dociq_documents()
+    session_id = get_dociq_session_id(session)
+    session_data = get_dociq_documents(session)
 
     # Delete all files from disk
     for doc in session_data['documents']:
@@ -287,12 +288,12 @@ def clear_all_documents():
         session_data['conversation'] = []
 
 
-def save_chat_message(role, content):
+def save_chat_message(session: dict, role, content):
     """Save a chat message to the conversation"""
     from database import get_database
     db = get_database()
-    session_id = get_dociq_session_id()
-    session_data = get_dociq_documents()
+    session_id = get_dociq_session_id(session)
+    session_data = get_dociq_documents(session)
 
     # Add to conversation history
     session_data['conversation'].append({
@@ -305,9 +306,9 @@ def save_chat_message(role, content):
         db.save_dociq_conversation(session_id, role, content)
 
 
-def generate_summary():
+def generate_summary(session: dict):
     """Generate structured summary of uploaded documents"""
-    session_data = get_dociq_documents()
+    session_data = get_dociq_documents(session)
 
     if not session_data['documents']:
         return None, "No documents uploaded"

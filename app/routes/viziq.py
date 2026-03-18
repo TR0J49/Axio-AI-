@@ -3,21 +3,23 @@ VizIQ routes - Data Intelligence and Visualization endpoints
 """
 import os
 import uuid
-from flask import Blueprint, request, jsonify, current_app
-from werkzeug.utils import secure_filename
+from fastapi import APIRouter, Depends, Request, UploadFile, File
+from fastapi.responses import JSONResponse
 
-from app.config.settings import USE_MONGODB
+from app.config.settings import USE_MONGODB, UPLOAD_FOLDER
 from app.utils.session import get_session_id
+from app.utils.file_helpers import secure_filename
 from app.utils.data_processing import (
     parse_csv_data, parse_excel_data, parse_json_data,
     detect_column_types, calculate_statistics
 )
 from app.services.viziq_service import (
     generate_kpis, generate_chart_configs, generate_insights,
-    generate_dashboard_name, generate_full_analysis
+    generate_dashboard_name
 )
+from app.middleware.session import get_session
 
-viziq_bp = Blueprint('viziq', __name__)
+viziq_router = APIRouter(tags=["viziq"])
 
 # In-memory storage for VizIQ data
 viziq_storage = {
@@ -29,29 +31,26 @@ viziq_storage = {
 }
 
 
-@viziq_bp.route('/upload', methods=['POST'])
-def viziq_upload():
+@viziq_router.post('/upload')
+async def viziq_upload(file: UploadFile = File(...), session: dict = Depends(get_session)):
     """Upload and process data file for VizIQ"""
     global viziq_storage
 
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
-
-    file = request.files['file']
-
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
+    if not file.filename:
+        return JSONResponse({'error': 'No file selected'}, status_code=400)
 
     filename = secure_filename(file.filename)
     file_extension = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
 
     if file_extension not in ['csv', 'xlsx', 'xls', 'json']:
-        return jsonify({'error': 'Unsupported file type. Use CSV, XLSX, or JSON.'}), 400
+        return JSONResponse({'error': 'Unsupported file type. Use CSV, XLSX, or JSON.'}, status_code=400)
 
     try:
         # Save file temporarily
-        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"viziq_{uuid.uuid4()}_{filename}")
-        file.save(file_path)
+        file_path = os.path.join(UPLOAD_FOLDER, f"viziq_{uuid.uuid4()}_{filename}")
+        file_bytes = await file.read()
+        with open(file_path, 'wb') as f:
+            f.write(file_bytes)
 
         # Parse file based on type
         if file_extension == 'csv':
@@ -59,17 +58,17 @@ def viziq_upload():
         elif file_extension in ['xlsx', 'xls']:
             data, columns = parse_excel_data(file_path)
             if data is None:
-                return jsonify({'error': columns}), 500
+                return JSONResponse({'error': columns}, status_code=500)
         elif file_extension == 'json':
             data, columns = parse_json_data(file_path)
         else:
-            return jsonify({'error': 'Unsupported file type'}), 400
+            return JSONResponse({'error': 'Unsupported file type'}, status_code=400)
 
         # Clean up temp file
         os.remove(file_path)
 
         if not data:
-            return jsonify({'error': 'No data found in file'}), 400
+            return JSONResponse({'error': 'No data found in file'}, status_code=400)
 
         # Detect column types
         dtypes = detect_column_types(data, columns)
@@ -106,7 +105,7 @@ def viziq_upload():
             from database import get_database
             db = get_database()
             if db.is_connected():
-                session_id = get_session_id()
+                session_id = get_session_id(session)
                 viziq_data_info = {
                     'filename': filename,
                     'columns': columns,
@@ -122,7 +121,7 @@ def viziq_upload():
                 db.save_viziq_data(session_id, viziq_data_info)
                 print(f"[VizIQ] Data saved to MongoDB: {filename}")
 
-        return jsonify({
+        return {
             'success': True,
             'dashboard_name': dashboard_name,
             'description': f'AI-generated analytics from {filename}',
@@ -134,17 +133,17 @@ def viziq_upload():
             'charts': charts,
             'insights': insights,
             'preview': preview_data
-        })
+        }
 
     except Exception as e:
         print(f"VizIQ upload error: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Failed to process file: {str(e)}'}), 500
+        return JSONResponse({'error': f'Failed to process file: {str(e)}'}, status_code=500)
 
 
-@viziq_bp.route('/clear', methods=['POST'])
-def viziq_clear():
+@viziq_router.post('/clear')
+async def viziq_clear(session: dict = Depends(get_session)):
     """Clear VizIQ data"""
     global viziq_storage
 
@@ -153,7 +152,7 @@ def viziq_clear():
         from database import get_database
         db = get_database()
         if db.is_connected():
-            session_id = get_session_id()
+            session_id = get_session_id(session)
             db.clear_viziq_data(session_id)
 
     # Clear in-memory storage
@@ -164,31 +163,31 @@ def viziq_clear():
         'filename': '',
         'analysis': None
     }
-    return jsonify({'success': True})
+    return {'success': True}
 
 
-@viziq_bp.route('/data', methods=['GET'])
-def viziq_get_data():
+@viziq_router.get('/data')
+async def viziq_get_data(session: dict = Depends(get_session)):
     """Get current VizIQ data"""
     # Try to get from in-memory first
     if viziq_storage['data'] is not None:
-        return jsonify({
+        return {
             'filename': viziq_storage['filename'],
             'columns': viziq_storage['columns'],
             'dtypes': viziq_storage['dtypes'],
             'rows': len(viziq_storage['data']),
             'preview': viziq_storage['data'][:50]
-        })
+        }
 
     # Try to get from MongoDB
     if USE_MONGODB:
         from database import get_database
         db = get_database()
         if db.is_connected():
-            session_id = get_session_id()
+            session_id = get_session_id(session)
             viziq_data = db.get_viziq_data(session_id)
             if viziq_data:
-                return jsonify({
+                return {
                     'filename': viziq_data.get('filename'),
                     'columns': viziq_data.get('columns', []),
                     'dtypes': viziq_data.get('dtypes', {}),
@@ -198,6 +197,6 @@ def viziq_get_data():
                     'charts': viziq_data.get('charts', []),
                     'insights': viziq_data.get('insights', []),
                     'dashboard_name': viziq_data.get('dashboard_name')
-                })
+                }
 
-    return jsonify({'error': 'No data loaded'}), 404
+    return JSONResponse({'error': 'No data loaded'}, status_code=404)

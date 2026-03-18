@@ -2,7 +2,6 @@
 Configuration settings for Laplacian AI
 """
 import os
-from datetime import timedelta
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -43,60 +42,13 @@ else:
 DEFAULT_AI_MODEL = os.getenv('DEFAULT_AI_MODEL', 'gpt')
 
 # MongoDB flag - initialized in database.py, exposed here for service imports
-# This will be updated after database initialization
 USE_MONGODB = False
+
 
 def set_mongodb_status(status):
     """Set MongoDB connection status"""
     global USE_MONGODB
     USE_MONGODB = status
 
-
-class Config:
-    """Base configuration"""
-    SECRET_KEY = os.getenv('FLASK_SECRET_KEY', 'default-secret-key-change-in-production')
-    SESSION_TYPE = 'filesystem'
-    SESSION_PERMANENT = True
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
-
-    # File uploads
-    UPLOAD_FOLDER = UPLOAD_FOLDER
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
-
-    # Azure OpenAI settings
-    AZURE_OPENAI_ENDPOINT = AZURE_OPENAI_ENDPOINT
-    AZURE_OPENAI_API_KEY = AZURE_OPENAI_API_KEY
-    AZURE_OPENAI_API_VERSION = AZURE_OPENAI_API_VERSION
-    AZURE_OPENAI_DEPLOYMENT = AZURE_OPENAI_DEPLOYMENT
-    DOCIQ_MODEL = DOCIQ_MODEL
-
-    # API Keys
-    ELEVENLABS_API_KEY = ELEVENLABS_API_KEY
-    VOICE_ID = VOICE_ID
-    GOOGLE_API_KEY = GOOGLE_API_KEY
-    GOOGLE_CSE_ID = GOOGLE_CSE_ID
-
-
-class DevelopmentConfig(Config):
-    """Development configuration"""
-    DEBUG = True
-
-
-class ProductionConfig(Config):
-    """Production configuration"""
-    DEBUG = False
-
-
-class TestingConfig(Config):
-    """Testing configuration"""
-    TESTING = True
-    DEBUG = True
-
-
-# Configuration dictionary
-config = {
-    'development': DevelopmentConfig,
-    'production': ProductionConfig,
-    'testing': TestingConfig,
-    'default': DevelopmentConfig
-}
+# Max upload size (16 MB)
+MAX_UPLOAD_SIZE = 16 * 1024 * 1024

@@ -53,6 +53,7 @@ class LaplacianAssistant {
         this.setupVizIQ();
         this.setupVoiceInput();
         this.setupClock();
+        this.setupChatHistory();
         this.loadData();
         this.loadModels();
     }
@@ -946,6 +947,12 @@ class LaplacianAssistant {
                 this.addMessageToUI('Sorry, I encountered an error.', 'assistant');
             }
 
+            // Refresh chat history sidebar if open
+            const historyList = document.getElementById('chat-history-list');
+            if (historyList && historyList.style.display !== 'none') {
+                this.loadChatHistory();
+            }
+
             // If voice mode is on, restart listening after AI responds
             if (this.voiceMode) {
                 setTimeout(() => {
@@ -1050,12 +1057,28 @@ class LaplacianAssistant {
 
         // For assistant messages, parse markdown and highlight code
         if (role === 'assistant') {
+            // Store raw text on the element for clean copy
+            textDiv.dataset.rawText = text;
+
             if (typeEffect) {
                 // Add typing effect for assistant messages
                 this.typeWriterEffect(textDiv, text, messagesContainer);
             } else {
                 this.renderMarkdown(textDiv, text);
             }
+
+            // Add copy button for the full response
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'message-actions';
+
+            const copyMsgBtn = document.createElement('button');
+            copyMsgBtn.className = 'message-action-btn copy-msg-btn';
+            copyMsgBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+            copyMsgBtn.title = 'Copy response as plain text';
+            copyMsgBtn.onclick = () => this.copyMessageText(copyMsgBtn, textDiv);
+            actionsDiv.appendChild(copyMsgBtn);
+
+            content.appendChild(actionsDiv);
         } else {
             // For user messages, just escape HTML
             textDiv.textContent = text;
@@ -1241,6 +1264,25 @@ class LaplacianAssistant {
             console.error('Error submitting edit:', error);
             alert('Failed to submit edit. Please try again.');
             this.cancelEdit(messageDiv, newText);
+        }
+    }
+
+    copyMessageText(button, textDiv) {
+        // Copy the AI response as clean plain text (no HTML formatting artifacts)
+        // Use the raw markdown stored on the element, which pastes cleanly everywhere
+        const rawText = textDiv.dataset.rawText || textDiv.innerText || textDiv.textContent;
+        const originalText = button.innerHTML;
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(rawText).then(() => {
+                this.showCopySuccess(button, originalText);
+                toastManager?.success('Response copied!', 1500);
+            }).catch(err => {
+                console.error('Clipboard API failed:', err);
+                this.fallbackCopy(button, rawText, originalText);
+            });
+        } else {
+            this.fallbackCopy(button, rawText, originalText);
         }
     }
 
@@ -2017,8 +2059,8 @@ class LaplacianAssistant {
 
         const downloadBtn = document.createElement('button');
         downloadBtn.className = 'diagram-action-btn';
-        downloadBtn.innerHTML = '⬇️ Export';
-        downloadBtn.title = 'Export as SVG';
+        downloadBtn.innerHTML = '⬇️ Export PDF';
+        downloadBtn.title = 'Export as PDF';
 
         const fullscreenBtn = document.createElement('button');
         fullscreenBtn.className = 'diagram-action-btn';
@@ -2303,24 +2345,79 @@ class LaplacianAssistant {
             return;
         }
 
-        // Clone SVG and add styles
-        const clonedSvg = svg.cloneNode(true);
-        clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        toastManager?.info('Generating PDF...', 2000);
 
-        // Convert to blob and download
-        const svgData = new XMLSerializer().serializeToString(clonedSvg);
-        const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
+        // Use html2canvas to screenshot the rendered diagram container directly.
+        // This avoids all SVG-to-canvas foreignObject / CORS / taint issues.
+        this._loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'html2canvas')
+            .then(() => this._loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js', 'jspdf'))
+            .then(() => {
+                // Temporarily force white background on the container
+                const prevBg = container.style.backgroundColor;
+                container.style.backgroundColor = '#ffffff';
 
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${filename}-${Date.now()}.svg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+                // Reset any pan/zoom transforms on the SVG so we capture it cleanly
+                const prevTransform = svg.style.transform;
+                svg.style.transform = 'none';
 
-        toastManager?.success('Diagram exported!') || console.log('Diagram exported');
+                return html2canvas(container, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    allowTaint: true,
+                }).then(canvas => {
+                    // Restore original styles
+                    container.style.backgroundColor = prevBg;
+                    svg.style.transform = prevTransform;
+                    return canvas;
+                });
+            })
+            .then(canvas => {
+                const { jsPDF } = window.jspdf;
+
+                const imgW = canvas.width;
+                const imgH = canvas.height;
+                const padding = 40;
+                const pdfW = imgW / 2 + padding * 2;   // /2 because scale:2
+                const pdfH = imgH / 2 + padding * 2;
+
+                const orientation = pdfW > pdfH ? 'landscape' : 'portrait';
+                const pdf = new jsPDF({ orientation, unit: 'px', format: [pdfW, pdfH] });
+
+                const imgData = canvas.toDataURL('image/png', 1.0);
+                pdf.addImage(imgData, 'PNG', padding, padding, imgW / 2, imgH / 2);
+                pdf.save(`${filename}-${Date.now()}.pdf`);
+
+                toastManager?.success('Diagram exported as PDF!');
+            })
+            .catch(err => {
+                console.error('PDF export failed:', err);
+                toastManager?.error('PDF export failed — check console') || alert('PDF export failed');
+            });
+    }
+
+    _loadScript(src, globalCheck) {
+        // Load an external script once, return a promise
+        return new Promise((resolve, reject) => {
+            if (window[globalCheck]) { resolve(); return; }
+
+            // Check if already loading
+            const existing = document.querySelector(`script[src="${src}"]`);
+            if (existing) {
+                existing.addEventListener('load', () => resolve());
+                existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)));
+                // If it already loaded between our check and listener
+                if (window[globalCheck]) resolve();
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`Failed to load ${src}`));
+            document.head.appendChild(script);
+        });
     }
 
     showDiagramFullscreen(container, code) {
@@ -2336,7 +2433,7 @@ class LaplacianAssistant {
                         <button class="diagram-fullscreen-btn" id="fs-zoom-in" title="Zoom In">➕</button>
                         <button class="diagram-fullscreen-btn" id="fs-zoom-out" title="Zoom Out">➖</button>
                         <button class="diagram-fullscreen-btn" id="fs-reset" title="Reset View">🔄</button>
-                        <button class="diagram-fullscreen-btn" id="fs-export" title="Export SVG">⬇️</button>
+                        <button class="diagram-fullscreen-btn" id="fs-export" title="Export PDF">⬇️</button>
                         <button class="diagram-fullscreen-btn close" id="fs-close" title="Close">✕</button>
                     </div>
                 </div>
@@ -2524,6 +2621,167 @@ class LaplacianAssistant {
         }
     }
 
+    // ================================
+    // CHAT HISTORY
+    // ================================
+
+    setupChatHistory() {
+        const toggleBtn = document.getElementById('chat-history-toggle');
+        const newChatBtn = document.getElementById('new-chat-btn');
+        const list = document.getElementById('chat-history-list');
+        const chevron = document.getElementById('chat-history-chevron');
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const isOpen = list.style.display !== 'none';
+                list.style.display = isOpen ? 'none' : 'block';
+                chevron.classList.toggle('open', !isOpen);
+                if (!isOpen) this.loadChatHistory();
+            });
+        }
+
+        if (newChatBtn) {
+            newChatBtn.addEventListener('click', () => this.createNewChat());
+        }
+    }
+
+    async loadChatHistory() {
+        try {
+            const response = await fetch('/api/chat/history');
+            const data = await response.json();
+            this.renderChatHistory(data.chats || []);
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+        }
+    }
+
+    renderChatHistory(chats) {
+        const list = document.getElementById('chat-history-list');
+        if (!list) return;
+
+        if (chats.length === 0) {
+            list.innerHTML = '<div class="chat-history-empty">No chats yet</div>';
+            return;
+        }
+
+        list.innerHTML = chats.map(chat => `
+            <div class="chat-history-item ${chat.is_active ? 'active' : ''}" data-chat-id="${chat.chat_id}">
+                <svg class="chat-history-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <div class="chat-history-item-content" onclick="laplacian.switchChat('${chat.chat_id}')">
+                    <div class="chat-history-item-title">${this.escapeHtml(chat.title)}</div>
+                    <div class="chat-history-item-meta">${chat.message_count} messages &middot; ${this.formatRelativeTime(chat.updated_at)}</div>
+                </div>
+                <button class="chat-history-item-delete" onclick="event.stopPropagation(); laplacian.deleteChatHistory('${chat.chat_id}')" title="Delete chat">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    formatRelativeTime(isoString) {
+        const date = new Date(isoString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString();
+    }
+
+    async switchChat(chatId) {
+        try {
+            const response = await fetch('/api/chat/load', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId })
+            });
+
+            const data = await response.json();
+            if (data.error) {
+                console.error('Error loading chat:', data.error);
+                return;
+            }
+
+            // Clear current messages and render loaded chat
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.innerHTML = '';
+
+            // Add welcome message
+            const welcomeDiv = document.createElement('div');
+            welcomeDiv.className = 'message assistant';
+            welcomeDiv.innerHTML = `
+                <div class="message-avatar ai-avatar">
+                    <div class="ai-icon">
+                        <div class="ai-core"></div>
+                        <div class="ai-ring"></div>
+                        <div class="ai-particles">
+                            <span></span><span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="message-content">
+                    <div class="message-text"><strong>Welcome to Laplacian</strong> — your private AI workspace by Perfionix AI.<br><br>I'm here to help you:<br>• <strong>Code</strong> — write, debug, and optimize with expert assistance<br>• <strong>Analyze</strong> — transform your data into actionable insights<br>• <strong>Research</strong> — extract knowledge from documents instantly<br>• <strong>Create</strong> — generate diagrams, visualizations, and more<br><br>How can I assist you today?</div>
+                    <span class="message-time">${this.formatTime(new Date())}</span>
+                </div>
+            `;
+            messagesContainer.appendChild(welcomeDiv);
+
+            // Render loaded messages
+            if (data.messages) {
+                data.messages.forEach(msg => {
+                    this.addMessageToUI(msg.content, msg.role, msg.index, false, false);
+                });
+            }
+
+            // Refresh chat history to update active state
+            this.loadChatHistory();
+
+            // Switch to chat view if not already there
+            this.switchView('chat');
+        } catch (error) {
+            console.error('Error switching chat:', error);
+        }
+    }
+
+    async createNewChat() {
+        try {
+            await fetch('/api/chat/new', { method: 'POST' });
+            // Reset the UI
+            await this.resetChat();
+            this.loadChatHistory();
+        } catch (error) {
+            console.error('Error creating new chat:', error);
+        }
+    }
+
+    async deleteChatHistory(chatId) {
+        try {
+            const response = await fetch(`/api/chat/${chatId}`, { method: 'DELETE' });
+            const data = await response.json();
+            if (data.status === 'success') {
+                this.loadChatHistory();
+            }
+        } catch (error) {
+            console.error('Error deleting chat:', error);
+        }
+    }
+
     async resetChat() {
         try {
             await fetch('/api/chat/reset', { method: 'POST' });
@@ -2546,6 +2804,11 @@ class LaplacianAssistant {
                     </div>
                 </div>
             `;
+            // Refresh chat history sidebar
+            const historyList = document.getElementById('chat-history-list');
+            if (historyList && historyList.style.display !== 'none') {
+                this.loadChatHistory();
+            }
         } catch (error) {
             console.error('Error resetting chat:', error);
         }

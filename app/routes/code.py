@@ -2,30 +2,30 @@
 Code routes - Code execution endpoints
 """
 import time
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Request
 import requests
 
 from app.config.constants import PISTON_LANGUAGES, PISTON_API_URL, CODE_FILE_EXTENSIONS
 
-code_bp = Blueprint('code', __name__)
+code_router = APIRouter(tags=["code"])
 
 
-@code_bp.route('/execute', methods=['POST'])
-def execute_code():
+@code_router.post('/execute')
+async def execute_code(request: Request):
     """Execute code using Piston API"""
-    data = request.json
+    data = await request.json()
     language = data.get('language', '').lower()
     code = data.get('code', '')
     stdin = data.get('stdin', '')
 
     if not code:
-        return jsonify({'success': False, 'error': 'No code provided'})
+        return {'success': False, 'error': 'No code provided'}
 
     if language not in PISTON_LANGUAGES:
-        return jsonify({
+        return {
             'success': False,
             'error': f'Unsupported language: {language}. Supported: Python, JavaScript, Java, C++, C, Go, Rust, Ruby, PHP'
-        })
+        }
 
     lang_config = PISTON_LANGUAGES[language]
     file_ext = CODE_FILE_EXTENSIONS.get(lang_config['language'], 'txt')
@@ -77,31 +77,31 @@ def execute_code():
             # Check exit code
             exit_code = run_result.get('code', 0)
 
-            return jsonify({
+            return {
                 'success': True,
                 'output': output,
                 'error': error,
                 'exit_code': exit_code,
                 'execution_time': execution_time
-            })
+            }
         else:
-            return jsonify({
+            return {
                 'success': False,
                 'error': f'Execution service error: {response.status_code}'
-            })
+            }
 
     except requests.exceptions.Timeout:
-        return jsonify({
+        return {
             'success': False,
             'error': 'Code execution timed out (max 30 seconds)'
-        })
+        }
     except requests.exceptions.RequestException as e:
-        return jsonify({
+        return {
             'success': False,
             'error': f'Connection error: {str(e)}'
-        })
+        }
     except Exception as e:
-        return jsonify({
+        return {
             'success': False,
             'error': f'Execution failed: {str(e)}'
-        })
+        }

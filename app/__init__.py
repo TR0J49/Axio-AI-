@@ -1,20 +1,20 @@
 """
 Laplacian AI - Application Factory
 """
-from flask import Flask
-from datetime import timedelta
-import os
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 
 def create_app(config_name='development'):
-    """Create and configure the Flask application"""
-    app = Flask(__name__,
-                template_folder='../templates',
-                static_folder='../static')
+    """Create and configure the FastAPI application"""
+    app = FastAPI(title="Laplacian AI", docs_url="/docs", redoc_url=None)
 
-    # Load configuration
-    from app.config.settings import config
-    app.config.from_object(config[config_name])
+    # Mount static files
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
+    # Add session middleware
+    from app.middleware.session import SessionMiddleware
+    app.add_middleware(SessionMiddleware)
 
     # Initialize extensions and database
     from database import init_database, get_database
@@ -24,12 +24,12 @@ def create_app(config_name='development'):
     from app.config.settings import set_mongodb_status
     set_mongodb_status(use_mongodb)
 
-    # Store database reference in app
-    app.db = get_database()
+    # Store database reference on app state
+    app.state.db = get_database()
 
-    # Register blueprints
-    from app.routes import register_blueprints
-    register_blueprints(app)
+    # Register routers
+    from app.routes import register_routers
+    register_routers(app)
 
     # Print startup info
     _print_startup_info(app)
@@ -41,10 +41,12 @@ def _print_startup_info(app):
     """Print startup information"""
     from app.config.settings import AZURE_AVAILABLE, AZURE_OPENAI_DEPLOYMENT
 
+    db = app.state.db
+
     print("\n" + "="*50)
-    print("LAPLACIAN AI - Backend Server")
+    print("LAPLACIAN AI - Backend Server (FastAPI)")
     print("="*50)
     print(f"AI Backend: Azure OpenAI ({AZURE_OPENAI_DEPLOYMENT})")
     print(f"Azure OpenAI: {'Connected' if AZURE_AVAILABLE else 'Not Configured'}")
-    print(f"MongoDB: {'Connected' if app.db and app.db.is_connected() else 'Using in-memory fallback'}")
+    print(f"MongoDB: {'Connected' if db and db.is_connected() else 'Using in-memory fallback'}")
     print("="*50 + "\n")

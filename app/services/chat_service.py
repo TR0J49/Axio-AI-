@@ -1,8 +1,8 @@
 """
-Chat Service - Conversation management and AI chat
+Chat Service - Conversation management and AI chat (multi-session)
 """
 import re
-from flask import session
+import uuid
 from datetime import datetime
 
 from app.config.settings import USE_MONGODB
@@ -19,91 +19,179 @@ def parse_suggestions(ai_response_text):
 
     raw = match.group(1).strip()
     suggestions = [s.strip() for s in raw.split('|||') if s.strip()]
-    # Validate: max 3 suggestions, each max 80 chars
     suggestions = [s[:80] for s in suggestions[:3]]
 
     clean_text = ai_response_text[:match.start()].rstrip()
     return clean_text, suggestions
 
 
-# In-memory conversation storage (fallback when MongoDB unavailable)
-_memory_store = {}
+# ---------------------------------------------------------------------------
+# Multi-chat in-memory storage
+# Structure: { session_id: { chat_id: { "messages": [...], "title": str,
+#              "created_at": str, "updated_at": str } } }
+# ---------------------------------------------------------------------------
+_chat_sessions: dict[str, dict[str, dict]] = {}
 
 
-def get_conversation():
-    """Get or initialize conversation for current session"""
-    from database import get_database
-    db = get_database()
-    session_id = get_session_id()
+def _get_user_chats(session: dict) -> dict:
+    """Get or create the chat dict for this browser session."""
+    sid = get_session_id(session)
+    if sid not in _chat_sessions:
+        _chat_sessions[sid] = {}
+    return _chat_sessions[sid]
 
-    # Try to get from MongoDB first (primary storage)
-    if USE_MONGODB and db.is_connected():
-        messages = db.get_chat_history(session_id, limit=50)
-        if messages:
-            # Convert to conversation format
-            conversation = [{"role": "system", "content": get_system_prompt()}]
-            for msg in messages:
-                conversation.append({
-                    "role": msg.get("role"),
-                    "content": msg.get("content"),
-                    "_id": msg.get("id")  # Store MongoDB ID for editing
-                })
-            return conversation
+
+def _ensure_active_chat(session: dict) -> str:
+    """Make sure a current_chat_id exists; create one if not."""
+    if not session.get('current_chat_id'):
+        return create_new_chat(session)
+    # Also verify the chat_id still exists in the store
+    chats = _get_user_chats(session)
+    if session['current_chat_id'] not in chats:
+        return create_new_chat(session)
+    return session['current_chat_id']
+
+
+def _derive_title(message: str) -> str:
+    """Derive a short title from the first user message."""
+    title = message.strip().replace('\n', ' ')
+    return title[:60] + '…' if len(title) > 60 else title
+
+
+# ---------------------------------------------------------------------------
+# Public API — CRUD for chat sessions
+# ---------------------------------------------------------------------------
+
+def create_new_chat(session: dict) -> str:
+    """Create a brand-new chat session and make it active."""
+    chat_id = str(uuid.uuid4())
+    chats = _get_user_chats(session)
+    now = datetime.now().isoformat()
+    chats[chat_id] = {
+        "messages": [{"role": "system", "content": get_system_prompt()}],
+        "title": "New Chat",
+        "created_at": now,
+        "updated_at": now,
+    }
+    session['current_chat_id'] = chat_id
+    return chat_id
+
+
+def list_chats(session: dict) -> list[dict]:
+    """Return summaries of all chats, newest first."""
+    chats = _get_user_chats(session)
+    active = session.get('current_chat_id')
+    result = []
+    for cid, data in chats.items():
+        # Count only user+assistant messages (skip system)
+        msg_count = sum(1 for m in data["messages"] if m["role"] in ("user", "assistant"))
+        result.append({
+            "chat_id": cid,
+            "title": data["title"],
+            "created_at": data["created_at"],
+            "updated_at": data["updated_at"],
+            "message_count": msg_count,
+            "is_active": cid == active,
+        })
+    result.sort(key=lambda c: c["updated_at"], reverse=True)
+    return result
+
+
+def load_chat(session: dict, chat_id: str):
+    """Switch to an existing chat and return its messages (excluding system)."""
+    chats = _get_user_chats(session)
+    if chat_id not in chats:
+        return None, "Chat not found"
+
+    session['current_chat_id'] = chat_id
+    data = chats[chat_id]
+
+    # Return messages without the system prompt
+    messages = []
+    for i, m in enumerate(data["messages"]):
+        if m["role"] == "system":
+            continue
+        messages.append({
+            "role": m["role"],
+            "content": m["content"],
+            "index": i,
+        })
+
+    return {
+        "chat_id": chat_id,
+        "title": data["title"],
+        "messages": messages,
+    }, None
+
+
+def delete_chat(session: dict, chat_id: str) -> bool:
+    """Delete a chat session. If it was active, start a new one."""
+    chats = _get_user_chats(session)
+    if chat_id not in chats:
+        return False
+    del chats[chat_id]
+    if session.get('current_chat_id') == chat_id:
+        if chats:
+            # Switch to the most recent remaining chat
+            newest = max(chats, key=lambda c: chats[c]["updated_at"])
+            session['current_chat_id'] = newest
         else:
-            # No messages yet, return fresh conversation
-            return [{"role": "system", "content": get_system_prompt()}]
-
-    # Fallback to in-memory storage (not session cookie) when MongoDB unavailable
-    if session_id not in _memory_store:
-        _memory_store[session_id] = [
-            {"role": "system", "content": get_system_prompt()}
-        ]
-    return _memory_store[session_id]
+            create_new_chat(session)
+    return True
 
 
-def save_conversation(conversation):
-    """Save conversation to MongoDB (no longer uses session cookie to avoid size limits)"""
+# ---------------------------------------------------------------------------
+# Existing conversation helpers (now chat_id-aware)
+# ---------------------------------------------------------------------------
+
+def get_conversation(session: dict):
+    """Get the active conversation's message list."""
+    _ensure_active_chat(session)
+    chats = _get_user_chats(session)
+    chat_id = session['current_chat_id']
+    return chats[chat_id]["messages"]
+
+
+def save_conversation(session: dict, conversation):
+    """Persist the conversation list back into the store and update metadata."""
+    _ensure_active_chat(session)
+    chats = _get_user_chats(session)
+    chat_id = session['current_chat_id']
+    chats[chat_id]["messages"] = conversation
+    chats[chat_id]["updated_at"] = datetime.now().isoformat()
+
+    # Derive title from the first user message if still "New Chat"
+    if chats[chat_id]["title"] == "New Chat":
+        for m in conversation:
+            if m["role"] == "user":
+                chats[chat_id]["title"] = _derive_title(m["content"])
+                break
+
+    # Also save to MongoDB if connected
     from database import get_database
     db = get_database()
-    session_id = get_session_id()
-
-    # Save to MongoDB if connected (primary storage)
+    sid = get_session_id(session)
     if USE_MONGODB and db.is_connected():
-        # Get the last two messages (user + assistant) to save
         if len(conversation) >= 2:
-            # Check if these are new messages (don't have _id)
             for msg in conversation[-2:]:
                 if msg.get("role") in ["user", "assistant"] and "_id" not in msg:
                     msg_id = db.save_chat_message(
-                        session_id=session_id,
+                        session_id=sid,
                         role=msg["role"],
                         content=msg["content"],
-                        metadata={"searched": msg.get("searched", False)}
+                        metadata={"searched": msg.get("searched", False), "chat_id": chat_id}
                     )
                     msg["_id"] = msg_id
-    else:
-        # Fallback: save to in-memory storage
-        _memory_store[session_id] = conversation
 
 
-def clear_conversation():
-    """Clear conversation history"""
-    from database import get_database
-    db = get_database()
-    session_id = get_session_id()
-
-    # Clear from MongoDB
-    if USE_MONGODB and db.is_connected():
-        db.clear_chat_history(session_id)
-
-    # Clear from in-memory storage (fallback)
-    if session_id in _memory_store:
-        del _memory_store[session_id]
+def clear_conversation(session: dict):
+    """Reset = create a new chat (old one stays in history)."""
+    create_new_chat(session)
 
 
-def chat_with_ai(user_message: str, force_search: bool = False):
-    """Send message to AI and get response, with optional web search"""
-    conversation = get_conversation()
+def chat_with_ai(session: dict, user_message: str, force_search: bool = False):
+    """Send message to AI and get response, with optional web search."""
+    conversation = get_conversation(session)
 
     # Check if we should perform a web search
     search_results = None
@@ -137,7 +225,7 @@ def chat_with_ai(user_message: str, force_search: bool = False):
     temp_conversation[-1] = {"role": "user", "content": enhanced_message}
 
     # Get AI response
-    ai_response_text = generate_ai_response(temp_conversation)
+    ai_response_text = generate_ai_response(temp_conversation, session=session)
 
     # Parse follow-up suggestions from the response
     clean_response, suggestions = parse_suggestions(ai_response_text)
@@ -147,39 +235,30 @@ def chat_with_ai(user_message: str, force_search: bool = False):
     conversation.append(ai_msg_obj)
     ai_index = len(conversation) - 1
 
-    save_conversation(conversation)
+    save_conversation(session, conversation)
     return clean_response, user_index, ai_index, bool(search_results), suggestions
 
 
-def edit_message(message_index: int, new_content: str):
-    """Edit a message and regenerate AI response"""
-    conversation = get_conversation()
+def edit_message(session: dict, message_index: int, new_content: str):
+    """Edit a message and regenerate AI response."""
+    conversation = get_conversation(session)
 
-    # Validate index (must be >= 1 because index 0 is system message)
     if message_index < 1 or message_index >= len(conversation):
         return None, f"Invalid index - out of range. Index: {message_index}, Conversation length: {len(conversation)}"
 
-    # Verify we're editing a user message
     if conversation[message_index]['role'] != 'user':
         return None, "Can only edit user messages"
 
-    # Update the message
     conversation[message_index]['content'] = new_content
-
-    # Remove everything after this message (truncate history)
     del conversation[message_index+1:]
 
-    # Generate new response based on updated history
-    ai_response_text = generate_ai_response(conversation)
-
-    # Parse follow-up suggestions from the response
+    ai_response_text = generate_ai_response(conversation, session=session)
     clean_response, suggestions = parse_suggestions(ai_response_text)
 
-    # Append new AI response (clean, without suggestion markers)
     conversation.append({"role": "assistant", "content": clean_response})
     ai_index = len(conversation) - 1
 
-    save_conversation(conversation)
+    save_conversation(session, conversation)
 
     return {
         'response': clean_response,
@@ -190,10 +269,11 @@ def edit_message(message_index: int, new_content: str):
     }, None
 
 
-def get_debug_info():
-    """Get debug info about current conversation"""
-    conversation = get_conversation()
+def get_debug_info(session: dict):
+    """Get debug info about current conversation."""
+    conversation = get_conversation(session)
     return {
+        'chat_id': session.get('current_chat_id'),
         'length': len(conversation),
         'messages': [{'index': i, 'role': m['role'], 'content': m['content'][:100]} for i, m in enumerate(conversation)]
     }

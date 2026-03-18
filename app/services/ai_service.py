@@ -3,7 +3,6 @@ AI Service - Handles AI response generation via Azure OpenAI
 """
 import json
 from datetime import datetime
-from flask import session
 from openai import AzureOpenAI
 
 from app.config.settings import (
@@ -77,19 +76,17 @@ Rules:
 Current date and time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"""
 
 
-def get_current_model():
+def get_current_model(session: dict):
     """Get the current AI model from session"""
     if 'ai_model' not in session:
         session['ai_model'] = DEFAULT_AI_MODEL
-        session.modified = True
     return session['ai_model']
 
 
-def set_current_model(model):
+def set_current_model(session: dict, model: str):
     """Set the current AI model in session"""
     if model in AI_MODELS and AI_MODELS[model]['available']:
         session['ai_model'] = model
-        session.modified = True
         return True
     return False
 
@@ -103,7 +100,7 @@ def generate_azure_response(conversation, model_label="Core"):
         response = client.chat.completions.create(
             model=AZURE_OPENAI_DEPLOYMENT,
             messages=conversation,
-            max_completion_tokens=13107,
+            max_completion_tokens=32768,
             temperature=1.0,
             top_p=1.0,
             frequency_penalty=0.0,
@@ -130,9 +127,9 @@ def generate_azure_response(conversation, model_label="Core"):
             return f"Azure OpenAI error: {error_msg}"
 
 
-def generate_ai_response(conversation, model=None):
+def generate_ai_response(conversation, model=None, session: dict = None):
     """Generate AI response from conversation history using selected model"""
-    current_model = model or get_current_model()
+    current_model = model or (get_current_model(session) if session else DEFAULT_AI_MODEL)
 
     # Map model IDs to labels for logging
     label_map = {

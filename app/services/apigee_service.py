@@ -4,7 +4,6 @@ Apigee Service - Handles Apigee proxy bundle generation
 import io
 import json
 import zipfile
-from flask import session
 from openai import AzureOpenAI
 
 from app.config.settings import (
