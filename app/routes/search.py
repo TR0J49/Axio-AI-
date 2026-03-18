@@ -1,33 +1,34 @@
 """
-Search routes - Web search and speech endpoints
+Search routes - Web search endpoints
 """
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 from app.services.search_service import web_search
 from app.services.ai_service import generate_ai_response
 
-search_bp = Blueprint('search', __name__)
+search_router = APIRouter(tags=["search"])
 
 
-@search_bp.route('/search', methods=['POST'])
-def search():
+@search_router.post('/search')
+async def search(request: Request):
     """Perform web search and optionally get AI summary"""
-    data = request.json
+    data = await request.json()
     query = data.get('query', '')
     summarize = data.get('summarize', False)
 
     if not query:
-        return jsonify({'error': 'No query provided'}), 400
+        return JSONResponse({'error': 'No query provided'}, status_code=400)
 
     # Perform web search
     results = web_search(query)
 
     if not results:
-        return jsonify({
+        return {
             'results': [],
             'summary': 'No search results found.',
             'query': query
-        })
+        }
 
     # If summarize is requested, use AI to summarize results
     summary = None
@@ -54,9 +55,8 @@ def search():
         ]
         summary = generate_ai_response(summary_conversation)
 
-    return jsonify({
+    return {
         'results': results,
         'summary': summary,
         'query': query
-    })
-
+    }

@@ -1,34 +1,36 @@
 """
 Chat routes - AI conversation endpoints
 """
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse
 from datetime import datetime
 
 from app.config.constants import AI_MODELS
 from app.services.ai_service import get_current_model, generate_ai_response
 from app.services.chat_service import (
     chat_with_ai, get_conversation, save_conversation,
-    clear_conversation, get_debug_info, parse_suggestions
+    clear_conversation, get_debug_info, parse_suggestions,
+    create_new_chat, list_chats, load_chat, delete_chat
 )
-from app.utils.session import get_session_id
+from app.middleware.session import get_session
 
-chat_bp = Blueprint('chat', __name__)
+chat_router = APIRouter(tags=["chat"])
 
 
-@chat_bp.route('/chat', methods=['POST'])
-def chat():
+@chat_router.post('/chat')
+async def chat(request: Request, session: dict = Depends(get_session)):
     """Handle chat messages"""
-    data = request.json
+    data = await request.json()
     user_message = data.get('message', '')
     force_search = data.get('search', False)
 
     if not user_message:
-        return jsonify({'error': 'No message provided'}), 400
+        return JSONResponse({'error': 'No message provided'}, status_code=400)
 
-    ai_response, user_idx, ai_idx, searched, suggestions = chat_with_ai(user_message, force_search)
-    current_model = get_current_model()
+    ai_response, user_idx, ai_idx, searched, suggestions = chat_with_ai(session, user_message, force_search)
+    current_model = get_current_model(session)
 
-    return jsonify({
+    return {
         'response': ai_response,
         'user_index': user_idx,
         'ai_index': ai_idx,
@@ -37,13 +39,13 @@ def chat():
         'model': current_model,
         'model_name': AI_MODELS[current_model]['name'],
         'timestamp': datetime.now().isoformat()
-    })
+    }
 
 
-@chat_bp.route('/chat/edit', methods=['POST'])
-def edit_chat():
+@chat_router.post('/chat/edit')
+async def edit_chat(request: Request, session: dict = Depends(get_session)):
     """Edit a message and regenerate response"""
-    data = request.json
+    data = await request.json()
 
     # Debug logging
     print(f"Edit request data: {data}")
@@ -51,18 +53,18 @@ def edit_chat():
     # Handle index
     index_value = data.get('index')
     if index_value is None:
-        return jsonify({'error': 'Invalid index - index is None'}), 400
+        return JSONResponse({'error': 'Invalid index - index is None'}, status_code=400)
 
     try:
         message_index = int(index_value)
     except (ValueError, TypeError) as e:
-        return jsonify({'error': f'Invalid index - cannot convert: {index_value}'}), 400
+        return JSONResponse({'error': f'Invalid index - cannot convert: {index_value}'}, status_code=400)
 
     new_content = data.get('content')
     if not new_content:
-        return jsonify({'error': 'No content provided'}), 400
+        return JSONResponse({'error': 'No content provided'}, status_code=400)
 
-    conversation = get_conversation()
+    conversation = get_conversation(session)
 
     # Debug logging
     print(f"Conversation length: {len(conversation)}, Requested index: {message_index}")
@@ -71,11 +73,14 @@ def edit_chat():
 
     # Validate index (must be >= 1 because index 0 is system message)
     if message_index < 1 or message_index >= len(conversation):
-        return jsonify({'error': f'Invalid index - out of range. Index: {message_index}, Conversation length: {len(conversation)}'}), 400
+        return JSONResponse(
+            {'error': f'Invalid index - out of range. Index: {message_index}, Conversation length: {len(conversation)}'},
+            status_code=400
+        )
 
     # Verify we're editing a user message
     if conversation[message_index]['role'] != 'user':
-        return jsonify({'error': 'Can only edit user messages'}), 400
+        return JSONResponse({'error': 'Can only edit user messages'}, status_code=400)
 
     # Update the message
     conversation[message_index]['content'] = new_content
@@ -84,7 +89,7 @@ def edit_chat():
     del conversation[message_index+1:]
 
     # Generate new response based on updated history
-    ai_response_text = generate_ai_response(conversation)
+    ai_response_text = generate_ai_response(conversation, session=session)
 
     # Parse follow-up suggestions from the response
     clean_response, suggestions = parse_suggestions(ai_response_text)
@@ -93,25 +98,62 @@ def edit_chat():
     conversation.append({"role": "assistant", "content": clean_response})
     ai_index = len(conversation) - 1
 
-    save_conversation(conversation)
+    save_conversation(session, conversation)
 
-    return jsonify({
+    return {
         'response': clean_response,
         'user_index': message_index,
         'ai_index': ai_index,
         'suggestions': suggestions,
         'timestamp': datetime.now().isoformat()
-    })
+    }
 
 
-@chat_bp.route('/chat/reset', methods=['POST'])
-def reset_chat():
-    """Reset conversation"""
-    clear_conversation()
-    return jsonify({'status': 'success', 'message': 'Conversation reset'})
+@chat_router.post('/chat/reset')
+async def reset_chat(session: dict = Depends(get_session)):
+    """Reset conversation (creates a new chat)"""
+    chat_id = create_new_chat(session)
+    return {'status': 'success', 'message': 'Conversation reset', 'chat_id': chat_id}
 
 
-@chat_bp.route('/chat/debug', methods=['GET'])
-def debug_chat():
+@chat_router.get('/chat/history')
+async def chat_history(session: dict = Depends(get_session)):
+    """Get all chat sessions for this user"""
+    chats = list_chats(session)
+    return {'chats': chats}
+
+
+@chat_router.post('/chat/new')
+async def new_chat(session: dict = Depends(get_session)):
+    """Create a new chat session"""
+    chat_id = create_new_chat(session)
+    return {'status': 'success', 'chat_id': chat_id}
+
+
+@chat_router.post('/chat/load')
+async def load_chat_endpoint(request: Request, session: dict = Depends(get_session)):
+    """Load an existing chat session"""
+    data = await request.json()
+    chat_id = data.get('chat_id')
+    if not chat_id:
+        return JSONResponse({'error': 'No chat_id provided'}, status_code=400)
+
+    result, error = load_chat(session, chat_id)
+    if error:
+        return JSONResponse({'error': error}, status_code=404)
+    return result
+
+
+@chat_router.delete('/chat/{chat_id}')
+async def delete_chat_endpoint(chat_id: str, session: dict = Depends(get_session)):
+    """Delete a chat session"""
+    success = delete_chat(session, chat_id)
+    if not success:
+        return JSONResponse({'error': 'Chat not found'}, status_code=404)
+    return {'status': 'success'}
+
+
+@chat_router.get('/chat/debug')
+async def debug_chat(session: dict = Depends(get_session)):
     """Debug endpoint to check conversation state"""
-    return jsonify(get_debug_info())
+    return get_debug_info(session)

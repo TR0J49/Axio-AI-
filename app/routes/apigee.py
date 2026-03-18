@@ -1,24 +1,25 @@
 """
 Apigee routes - API Proxy Bundle Generation endpoints
 """
-from flask import Blueprint, request, jsonify, send_file
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse, StreamingResponse
 from datetime import datetime
 
 from app.services.apigee_service import process_apigee_request
 
-apigee_bp = Blueprint('apigee', __name__)
+apigee_router = APIRouter(tags=["apigee"])
 
 
-@apigee_bp.route('/generate', methods=['POST'])
-def generate_apigee_bundle():
+@apigee_router.post('/generate')
+async def generate_apigee_bundle(request: Request):
     """Generate an Apigee proxy bundle from natural language description"""
-    data = request.json
+    data = await request.json()
     message = data.get('message', '')
 
     print(f"[Apigee Route] Received request: {message[:100]}...")
 
     if not message:
-        return jsonify({'error': 'No message provided'}), 400
+        return JSONResponse({'error': 'No message provided'}, status_code=400)
 
     # Process the request
     zip_buffer, details, error = process_apigee_request(message)
@@ -26,44 +27,43 @@ def generate_apigee_bundle():
     if error:
         # Check if we have partial details that need confirmation
         if details:
-            return jsonify({
+            return JSONResponse({
                 'needs_confirmation': True,
                 'extracted': details,
                 'error': error,
                 'message': f"I extracted some details but {error}. Please provide the missing information."
-            }), 400
+            }, status_code=400)
 
-        return jsonify({
+        return JSONResponse({
             'error': error,
             'tips': [
                 'Specify the proxy name (e.g., "weather-api")',
                 'Include the target domain (e.g., "api.weather.com")',
                 'Optionally specify the endpoint path (e.g., "/v1/forecast")'
             ]
-        }), 400
+        }, status_code=400)
 
     if not zip_buffer:
-        return jsonify({'error': 'Failed to generate proxy bundle'}), 500
+        return JSONResponse({'error': 'Failed to generate proxy bundle'}, status_code=500)
 
     # Return the ZIP file
     filename = f"{details['proxy_name']}-bundle.zip"
 
-    return send_file(
+    return StreamingResponse(
         zip_buffer,
-        mimetype='application/zip',
-        as_attachment=True,
-        download_name=filename
+        media_type='application/zip',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
     )
 
 
-@apigee_bp.route('/preview', methods=['POST'])
-def preview_apigee_bundle():
+@apigee_router.post('/preview')
+async def preview_apigee_bundle(request: Request):
     """Preview the extracted proxy details without generating the bundle"""
-    data = request.json
+    data = await request.json()
     message = data.get('message', '')
 
     if not message:
-        return jsonify({'error': 'No message provided'}), 400
+        return JSONResponse({'error': 'No message provided'}, status_code=400)
 
     from app.services.apigee_service import extract_proxy_details, validate_proxy_details
 
@@ -71,15 +71,15 @@ def preview_apigee_bundle():
     details, error = extract_proxy_details(message)
 
     if error:
-        return jsonify({'error': error}), 400
+        return JSONResponse({'error': error}, status_code=400)
 
     if not details:
-        return jsonify({'error': 'Could not extract proxy details from the message'}), 400
+        return JSONResponse({'error': 'Could not extract proxy details from the message'}, status_code=400)
 
     # Validate and set defaults
     valid, validation_error = validate_proxy_details(details)
 
-    return jsonify({
+    return {
         'valid': valid,
         'details': details,
         'validation_error': validation_error,
@@ -90,4 +90,4 @@ def preview_apigee_bundle():
             "apiproxy/policies/.gitkeep",
             "apiproxy/resources/.gitkeep"
         ]
-    })
+    }

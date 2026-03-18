@@ -1,18 +1,20 @@
 """
 Model routes - AI model selection and management
 """
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse
 
 from app.config.constants import AI_MODELS
 from app.services.ai_service import get_current_model, set_current_model
+from app.middleware.session import get_session
 
-models_bp = Blueprint('models', __name__)
+models_router = APIRouter(tags=["models"])
 
 
-@models_bp.route('/models', methods=['GET'])
-def get_models():
+@models_router.get('/models')
+async def get_models(session: dict = Depends(get_session)):
     """Get available AI models"""
-    current_model = get_current_model()
+    current_model = get_current_model(session)
     models_info = []
 
     for model_id, model_data in AI_MODELS.items():
@@ -24,16 +26,16 @@ def get_models():
             'active': model_id == current_model
         })
 
-    return jsonify({
+    return {
         'models': models_info,
         'current': current_model
-    })
+    }
 
 
-@models_bp.route('/models/select', methods=['POST'])
-def select_model():
+@models_router.post('/models/select')
+async def select_model(request: Request, session: dict = Depends(get_session)):
     """Select an AI model"""
-    data = request.json
+    data = await request.json()
     model_id = data.get('model', '')
 
     print(f"[Model Select] Request to switch to model: '{model_id}'")
@@ -41,22 +43,25 @@ def select_model():
 
     if not model_id:
         print("[Model Select] Error: No model specified")
-        return jsonify({'error': 'No model specified'}), 400
+        return JSONResponse({'error': 'No model specified'}, status_code=400)
 
     if model_id not in AI_MODELS:
         print(f"[Model Select] Error: Invalid model '{model_id}'")
-        return jsonify({'error': 'Invalid model'}), 400
+        return JSONResponse({'error': 'Invalid model'}, status_code=400)
 
     if not AI_MODELS[model_id]['available']:
         print(f"[Model Select] Error: Model '{model_id}' is not available")
-        return jsonify({'error': f'{AI_MODELS[model_id]["name"]} is not available. Check API configuration.'}), 400
+        return JSONResponse(
+            {'error': f'{AI_MODELS[model_id]["name"]} is not available. Check API configuration.'},
+            status_code=400
+        )
 
-    if set_current_model(model_id):
-        return jsonify({
+    if set_current_model(session, model_id):
+        return {
             'success': True,
             'model': model_id,
             'name': AI_MODELS[model_id]['name'],
             'message': f'Switched to {AI_MODELS[model_id]["name"]}'
-        })
+        }
 
-    return jsonify({'error': 'Failed to switch model'}), 500
+    return JSONResponse({'error': 'Failed to switch model'}, status_code=500)

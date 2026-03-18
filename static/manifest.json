@@ -1,0 +1,25 @@
+{
+  "name": "Laplacian AI - Code Assistant",
+  "short_name": "Laplacian AI",
+  "description": "Your intelligent coding assistant by Perfionix AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4b5563",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/static/lap favivon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/New lap logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["developer", "productivity", "utilities"]
+}
