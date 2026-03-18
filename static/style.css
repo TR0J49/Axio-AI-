@@ -3494,99 +3494,7 @@ body::before {
     cursor: default;
 }
 
-/* Upload Icon Button */
-.dociq-upload-icon-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    width: 100%;
-    max-width: 150px;
-    padding: 1.2rem 1rem;
-    background: transparent;
-    border: 2px dashed var(--border-color);
-    border-radius: 16px;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    color: var(--text-muted);
-    position: relative;
-    overflow: hidden;
-}
-
-.dociq-upload-icon-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--primary-gradient);
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    border-radius: 14px;
-}
-
-.dociq-upload-icon-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.15);
-}
-
-.dociq-upload-icon-btn:hover::before {
-    opacity: 0.05;
-}
-
-.dociq-upload-icon-btn:active {
-    transform: translateY(0) scale(0.97);
-}
-
-.dociq-upload-icon-btn .upload-icon-main {
-    width: 32px;
-    height: 32px;
-    transition: all 0.25s ease;
-    position: relative;
-    z-index: 1;
-}
-
-.dociq-upload-icon-btn:hover .upload-icon-main {
-    transform: translateY(-3px);
-    filter: drop-shadow(0 3px 6px rgba(75, 85, 99, 0.3));
-}
-
-.dociq-upload-icon-btn .upload-icon-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    position: relative;
-    z-index: 1;
-}
-
-.dociq-upload-icon-btn .upload-icon-formats {
-    font-size: 0.62rem;
-    opacity: 0.55;
-    font-weight: 400;
-    position: relative;
-    z-index: 1;
-}
-
-/* Drag over state */
-.upload-area.drag-over .dociq-upload-icon-btn,
-.upload-area.dragover .dociq-upload-icon-btn {
-    border-color: var(--primary);
-    border-style: solid;
-    background: rgba(75, 85, 99, 0.06);
-    transform: scale(1.03);
-    box-shadow: 0 8px 24px rgba(75, 85, 99, 0.2);
-}
-
-.upload-area.drag-over .upload-icon-main,
-.upload-area.dragover .upload-icon-main {
-    animation: uploadBounce 0.6s ease infinite alternate;
-}
-
-@keyframes uploadBounce {
-    from { transform: translateY(0); }
-    to { transform: translateY(-5px); }
-}
+/* DocIQ upload uses .fancy-upload-btn — see fancy upload section below */
 
 /* Uploaded Documents List */
 .uploaded-docs {
@@ -3968,51 +3876,21 @@ body::before {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 60vh;
-    gap: var(--spacing-xl);
+    min-height: 50vh;
+    gap: var(--spacing-lg);
 }
 
 .viziq-upload-area {
-    background: linear-gradient(135deg, rgba(75, 85, 99, 0.1) 0%, rgba(107, 114, 128, 0.05) 100%);
-    border: 2px dashed rgba(75, 85, 99, 0.4);
-    border-radius: var(--radius-xl);
-    padding: var(--spacing-xl) calc(var(--spacing-xl) * 2);
-    text-align: center;
-    cursor: pointer;
-    transition: all var(--transition-base);
-    max-width: 600px;
-    width: 100%;
-}
-
-.viziq-upload-area:hover {
-    border-color: var(--primary);
-    background: linear-gradient(135deg, rgba(75, 85, 99, 0.15) 0%, rgba(107, 114, 128, 0.1) 100%);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(75, 85, 99, 0.25);
-}
-
-.viziq-upload-area.drag-over {
-    border-color: var(--success);
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(79, 172, 254, 0.1) 100%);
-    border-style: solid;
-}
-
-.viziq-icon {
-    background: linear-gradient(135deg, rgba(75, 85, 99, 0.2) 0%, rgba(55, 65, 81, 0.15) 100%);
-}
-
-.viziq-upload-buttons {
     display: flex;
-    gap: var(--spacing-md);
+    align-items: center;
     justify-content: center;
-    flex-wrap: wrap;
+    padding: 1rem;
+    background: transparent;
+    border: none;
+    cursor: default;
 }
 
-.viziq-subtitle {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    margin-bottom: 1.5rem;
-}
+/* VizIQ upload area uses .fancy-upload-btn.viziq-variant — see fancy upload section */
 
 .viziq-features {
     display: flex;
@@ -5680,54 +5558,11 @@ body::before {
             .viziq-upload-section {
                 min-height: auto;
                 padding: 20px 0;
-                gap: 16px;
+                gap: 12px;
             }
 
             .viziq-upload-area {
-                padding: 20px 16px;
-                max-width: 100%;
-                border-radius: 12px;
-            }
-
-            .viziq-upload-area .upload-icon {
-                width: 50px;
-                height: 50px;
-                margin-bottom: 12px;
-            }
-
-            .viziq-upload-area .upload-icon svg {
-                width: 24px;
-                height: 24px;
-            }
-
-            .viziq-upload-area h3 {
-                font-size: 0.95rem;
-                margin-bottom: 6px;
-            }
-
-            .viziq-upload-area p {
-                font-size: 0.8rem;
-                margin-bottom: 12px;
-            }
-
-            .viziq-upload-buttons {
-                flex-direction: column;
-                gap: 10px;
-                width: 100%;
-            }
-
-            .viziq-upload-buttons .btn-primary {
-                width: 100%;
-                padding: 10px 16px;
-                font-size: 0.85rem;
-            }
-
-            .viziq-upload-area .supported-formats {
-                margin-top: 12px;
-            }
-
-            .viziq-upload-area .supported-formats span {
-                font-size: 0.7rem;
+                padding: 0.5rem;
             }
 
             /* VizIQ Processing Mobile */
@@ -6491,95 +6326,275 @@ body::before {
     border: none;
 }
 
-.dociq-upload-icon-btn {
+/* ================================
+   FANCY UPLOAD BUTTON (DocIQ + VizIQ)
+   ================================ */
+
+.fancy-upload-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     width: 100%;
-    max-width: 160px;
-    padding: 1.2rem 1rem;
-    background: transparent;
-    border: 2px dashed var(--border-color);
-    border-radius: 16px;
+    max-width: 220px;
+    padding: 1.8rem 1.5rem 1.4rem;
+    background: linear-gradient(145deg, #ffffff 0%, #f3f4f6 100%);
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     color: var(--text-muted);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.dociq-upload-icon-btn::before {
+.fancy-upload-btn::before {
     content: '';
     position: absolute;
-    inset: 0;
-    background: var(--primary-gradient);
+    inset: -1px;
+    background: linear-gradient(135deg, #4b5563 0%, #6b7280 50%, #4b5563 100%);
+    border-radius: 20px;
     opacity: 0;
-    transition: opacity 0.25s ease;
-    border-radius: 14px;
+    transition: opacity 0.3s ease;
+    z-index: 0;
 }
 
-.dociq-upload-icon-btn:hover {
-    border-color: var(--primary);
+.fancy-upload-btn::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%);
+    border-radius: 18px;
+    z-index: 0;
+    transition: background 0.3s ease;
+}
+
+.fancy-upload-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(75, 85, 99, 0.2);
+    border-color: transparent;
+}
+
+.fancy-upload-btn:hover::before {
+    opacity: 1;
+}
+
+.fancy-upload-btn:hover::after {
+    background: linear-gradient(145deg, #ffffff 0%, #f3f4f6 100%);
+}
+
+.fancy-upload-btn:active {
+    transform: translateY(-1px) scale(0.98);
+    box-shadow: 0 4px 12px rgba(75, 85, 99, 0.15);
+}
+
+/* Animated Orb */
+.fancy-upload-orb {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.fancy-upload-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(75, 85, 99, 0.15);
+    animation: fancyRingSpin 8s linear infinite;
+}
+
+.fancy-upload-ring::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 8px rgba(75, 85, 99, 0.5);
+}
+
+.fancy-upload-ring.ring-2 {
+    inset: 6px;
+    border-color: rgba(75, 85, 99, 0.08);
+    animation: fancyRingSpin 6s linear infinite reverse;
+}
+
+.fancy-upload-ring.ring-2::before {
+    width: 6px;
+    height: 6px;
+    background: #6b7280;
+    box-shadow: 0 0 6px rgba(107, 114, 128, 0.4);
+}
+
+.fancy-upload-btn:hover .fancy-upload-ring {
+    border-color: rgba(75, 85, 99, 0.3);
+    animation-duration: 3s;
+}
+
+.fancy-upload-btn:hover .fancy-upload-ring.ring-2 {
+    border-color: rgba(75, 85, 99, 0.2);
+    animation-duration: 2s;
+}
+
+@keyframes fancyRingSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.fancy-upload-icon {
+    width: 28px;
+    height: 28px;
     color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.15);
-}
-
-.dociq-upload-icon-btn:hover::before {
-    opacity: 0.05;
-}
-
-.dociq-upload-icon-btn:active {
-    transform: translateY(0) scale(0.97);
-}
-
-.dociq-upload-icon-btn .upload-icon-main {
-    width: 36px;
-    height: 36px;
-    transition: all 0.25s ease;
-    position: relative;
     z-index: 1;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 1px 3px rgba(75, 85, 99, 0.2));
 }
 
-.dociq-upload-icon-btn:hover .upload-icon-main {
-    transform: translateY(-3px);
-    filter: drop-shadow(0 3px 6px rgba(75, 85, 99, 0.3));
+.fancy-upload-btn:hover .fancy-upload-icon {
+    transform: translateY(-3px) scale(1.1);
+    filter: drop-shadow(0 4px 8px rgba(75, 85, 99, 0.35));
+    color: var(--primary-dark);
 }
 
-.dociq-upload-icon-btn .upload-icon-label {
-    font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    position: relative;
+/* Text elements */
+.fancy-upload-text {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
     z-index: 1;
+    letter-spacing: 0.01em;
 }
 
-.dociq-upload-icon-btn .upload-icon-formats {
+.fancy-upload-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    z-index: 1;
+    opacity: 0.7;
+    margin-top: -0.3rem;
+}
+
+.fancy-upload-formats {
+    display: inline-block;
     font-size: 0.65rem;
-    opacity: 0.6;
-    font-weight: 400;
-    position: relative;
+    font-weight: 500;
+    color: var(--primary);
+    background: rgba(75, 85, 99, 0.08);
+    padding: 0.2rem 0.65rem;
+    border-radius: 100px;
     z-index: 1;
+    letter-spacing: 0.03em;
+}
+
+.fancy-upload-btn:hover .fancy-upload-formats {
+    background: rgba(75, 85, 99, 0.14);
+}
+
+/* VizIQ variant - slightly different accent */
+.fancy-upload-btn.viziq-variant {
+    max-width: 280px;
+    padding: 2.2rem 2rem 1.8rem;
+    border-radius: 24px;
+}
+
+.fancy-upload-btn.viziq-variant .fancy-upload-orb {
+    width: 80px;
+    height: 80px;
+}
+
+.fancy-upload-btn.viziq-variant .fancy-upload-icon {
+    width: 34px;
+    height: 34px;
+    color: #374151;
+}
+
+.fancy-upload-btn.viziq-variant .fancy-upload-text {
+    font-size: 1.05rem;
+}
+
+.fancy-upload-btn.viziq-variant .fancy-upload-hint {
+    font-size: 0.82rem;
+}
+
+.fancy-upload-btn.viziq-variant .fancy-upload-formats {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.8rem;
+}
+
+.fancy-upload-btn.viziq-variant .fancy-upload-ring::before {
+    background: #374151;
 }
 
 /* Drag over state */
-.upload-area.dragover .dociq-upload-icon-btn {
-    border-color: var(--primary);
-    border-style: solid;
-    background: rgba(75, 85, 99, 0.06);
-    transform: scale(1.03);
-    box-shadow: 0 8px 24px rgba(75, 85, 99, 0.2);
+.upload-area.drag-over .fancy-upload-btn,
+.upload-area.dragover .fancy-upload-btn,
+.viziq-upload-area.drag-over .fancy-upload-btn {
+    transform: scale(1.04);
+    border-color: transparent;
+    box-shadow: 0 14px 40px rgba(75, 85, 99, 0.25);
 }
 
-.upload-area.dragover .dociq-upload-icon-btn .upload-icon-main {
-    animation: uploadBounce 0.6s ease infinite alternate;
+.upload-area.drag-over .fancy-upload-btn::before,
+.upload-area.dragover .fancy-upload-btn::before,
+.viziq-upload-area.drag-over .fancy-upload-btn::before {
+    opacity: 1;
 }
 
-@keyframes uploadBounce {
-    from { transform: translateY(0); }
-    to { transform: translateY(-5px); }
+.upload-area.drag-over .fancy-upload-icon,
+.upload-area.dragover .fancy-upload-icon,
+.viziq-upload-area.drag-over .fancy-upload-icon {
+    animation: fancyBounce 0.6s ease infinite alternate;
+}
+
+.upload-area.drag-over .fancy-upload-ring,
+.upload-area.dragover .fancy-upload-ring,
+.viziq-upload-area.drag-over .fancy-upload-ring {
+    animation-duration: 1.5s;
+    border-color: rgba(75, 85, 99, 0.4);
+}
+
+@keyframes fancyBounce {
+    from { transform: translateY(0) scale(1); }
+    to { transform: translateY(-6px) scale(1.15); }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .fancy-upload-btn {
+        max-width: 180px;
+        padding: 1.4rem 1.2rem 1.1rem;
+        border-radius: 16px;
+    }
+
+    .fancy-upload-orb {
+        width: 52px;
+        height: 52px;
+    }
+
+    .fancy-upload-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .fancy-upload-text {
+        font-size: 0.82rem;
+    }
+
+    .fancy-upload-hint {
+        font-size: 0.68rem;
+    }
+
+    .fancy-upload-formats {
+        font-size: 0.6rem;
+    }
 }
 
 /* Uploaded docs list - minimal */

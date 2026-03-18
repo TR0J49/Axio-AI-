@@ -651,15 +651,20 @@
                         <!-- Upload Icon Button -->
                         <div class="upload-area" id="upload-area">
                             <input type="file" id="doc-file-input" accept=".pdf,.doc,.docx,.txt" multiple hidden>
-                            <button class="dociq-upload-icon-btn" id="browse-files" title="Upload Documents (PDF, DOC, DOCX, TXT)">
-                                <svg class="upload-icon-main" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                                </svg>
-                                <span class="upload-icon-label">Upload</span>
-                                <span class="upload-icon-formats">PDF, DOC, DOCX, TXT</span>
+                            <button class="fancy-upload-btn" id="browse-files" title="Upload Documents (PDF, DOC, DOCX, TXT)">
+                                <div class="fancy-upload-orb">
+                                    <div class="fancy-upload-ring"></div>
+                                    <div class="fancy-upload-ring ring-2"></div>
+                                    <svg class="fancy-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                                        <polyline points="9 15 12 12 15 15"></polyline>
+                                    </svg>
+                                </div>
+                                <span class="fancy-upload-text">Upload Documents</span>
+                                <span class="fancy-upload-hint">Drop files or click to browse</span>
+                                <span class="fancy-upload-formats">PDF, DOC, DOCX, TXT</span>
                             </button>
                         </div>
 
@@ -770,30 +775,22 @@
                     <!-- Upload Section (shown when no data) -->
                     <div class="viziq-upload-section" id="viziq-upload-section">
                         <div class="viziq-upload-area" id="viziq-upload-area">
-                            <div class="upload-icon viziq-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                                </svg>
-                            </div>
-                            <h3>Welcome to VizIQ — Your Data Intelligence Hub</h3>
-                            <p class="viziq-subtitle">Transform raw data into powerful insights with AI-generated
-                                dashboards</p>
                             <input type="file" id="viziq-file-input" accept=".csv,.xlsx,.xls,.json" multiple hidden>
-                            <div class="viziq-upload-buttons">
-                                <button class="btn-primary upload-btn" id="viziq-browse-files">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
+                            <button class="fancy-upload-btn viziq-variant" id="viziq-browse-files" title="Upload Data File (CSV, XLSX, XLS, JSON)">
+                                <div class="fancy-upload-orb">
+                                    <div class="fancy-upload-ring"></div>
+                                    <div class="fancy-upload-ring ring-2"></div>
+                                    <svg class="fancy-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 20V10"></path>
+                                        <path d="M18 20V4"></path>
+                                        <path d="M6 20v-4"></path>
+                                        <polyline points="9 7 12 4 15 7"></polyline>
                                     </svg>
-                                    Upload Data File
-                                </button>
-                            </div>
-                            <div class="supported-formats">
-                                <span>Drag & drop or browse — Supports CSV, XLSX, XLS, JSON</span>
-                            </div>
+                                </div>
+                                <span class="fancy-upload-text">Upload Data</span>
+                                <span class="fancy-upload-hint">Drop files or click to browse</span>
+                                <span class="fancy-upload-formats">CSV, XLSX, XLS, JSON</span>
+                            </button>
                         </div>
 
                         <!-- Processing Status -->
