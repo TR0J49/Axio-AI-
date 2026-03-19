@@ -139,109 +139,99 @@ def web_search_googlesearch(query):
         return []
 
 
-def image_search(query, num_images=6):
-    """Search for images related to the query"""
-    print(f"[IMAGE SEARCH] Searching images for: {query}")
+def image_search(query, search_results=None, num_images=6):
+    """Extract relevant images from the web search result pages (OG/meta images)"""
+    print(f"[IMAGE SEARCH] Extracting images from search results for: {query}")
 
-    # Method 1: Google Custom Search API with image search
-    if GOOGLE_API_KEY and GOOGLE_CSE_ID:
-        images = image_search_google_api(query, num_images)
-        if images:
-            print(f"[OK] Google image search returned {len(images)} images")
-            return images
-
-    # Method 2: DuckDuckGo image proxy (no API key needed)
-    images = image_search_duckduckgo(query, num_images)
-    if images:
-        print(f"[OK] DuckDuckGo image search returned {len(images)} images")
-        return images
-
-    print("[IMAGE SEARCH] No images found")
-    return []
-
-
-def image_search_google_api(query, num_images=6):
-    """Search images using Google Custom Search API"""
-    try:
-        url = "https://www.googleapis.com/customsearch/v1"
-        params = {
-            'key': GOOGLE_API_KEY,
-            'cx': GOOGLE_CSE_ID,
-            'q': query,
-            'searchType': 'image',
-            'num': min(num_images, 10),
-            'safe': 'active'
-        }
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-
-        images = []
-        for item in data.get('items', []):
-            images.append({
-                'url': item.get('link', ''),
-                'thumbnail': item.get('image', {}).get('thumbnailLink', item.get('link', '')),
-                'title': item.get('title', ''),
-                'source': item.get('displayLink', ''),
-                'context_link': item.get('image', {}).get('contextLink', '')
-            })
-        return images
-    except Exception as e:
-        print(f"[ERROR] Google image search failed: {str(e)}")
+    if not search_results:
         return []
 
+    images = []
+    seen_urls = set()
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
 
-def image_search_duckduckgo(query, num_images=6):
-    """Search images using DuckDuckGo"""
-    try:
-        # Get vqd token first
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        token_response = requests.get(
-            f"https://duckduckgo.com/?q={query}&iax=images&ia=images",
-            headers=headers, timeout=10
-        )
+    for result in search_results:
+        if len(images) >= num_images:
+            break
 
-        import re
-        vqd_match = re.search(r'vqd=["\']([^"\']+)["\']', token_response.text)
-        if not vqd_match:
-            # Fallback: try to get token from another endpoint
-            vqd_match = re.search(r'vqd=(\d+-\d+(?:-\d+)*)', token_response.text)
+        link = result.get('link', '').strip()
+        if not link:
+            continue
+        # Ensure link has protocol
+        if not link.startswith('http'):
+            link = 'https://' + link
 
-        if not vqd_match:
-            print("[IMAGE SEARCH] Could not get DuckDuckGo token")
-            return []
+        try:
+            page = requests.get(link, headers=headers, timeout=5, allow_redirects=True)
+            if page.status_code != 200:
+                continue
 
-        vqd = vqd_match.group(1)
+            page_soup = BeautifulSoup(page.text, 'html.parser')
+            img_url = None
+            title = result.get('title', '')
 
-        # Fetch images
-        img_url = "https://duckduckgo.com/i.js"
-        params = {
-            'l': 'us-en',
-            'o': 'json',
-            'q': query,
-            'vqd': vqd,
-            'f': ',,,,,',
-            'p': '1'
-        }
+            # Priority 1: Open Graph image (most reliable, used by social media)
+            og_img = page_soup.find('meta', property='og:image')
+            if og_img:
+                img_url = og_img.get('content', '')
 
-        img_response = requests.get(img_url, params=params, headers=headers, timeout=10)
-        img_data = img_response.json()
+            # Priority 2: Twitter card image
+            if not img_url:
+                tw_img = page_soup.find('meta', attrs={'name': 'twitter:image'})
+                if tw_img:
+                    img_url = tw_img.get('content', '')
 
-        images = []
-        for result in img_data.get('results', [])[:num_images]:
-            images.append({
-                'url': result.get('image', ''),
-                'thumbnail': result.get('thumbnail', result.get('image', '')),
-                'title': result.get('title', ''),
-                'source': result.get('source', ''),
-                'context_link': result.get('url', '')
-            })
-        return images
-    except Exception as e:
-        print(f"[ERROR] DuckDuckGo image search failed: {str(e)}")
-        return []
+            # Priority 3: First large image on the page
+            if not img_url:
+                for img_tag in page_soup.select('img[src]'):
+                    src = img_tag.get('src', '')
+                    # Skip tiny icons, tracking pixels, base64
+                    if (src.startswith('http') and
+                        not any(skip in src.lower() for skip in ['icon', 'logo', 'avatar', 'pixel', '1x1', 'tracking', 'badge', 'button']) and
+                        not src.startswith('data:')):
+                        # Check for reasonable size hints
+                        width = img_tag.get('width', '')
+                        height = img_tag.get('height', '')
+                        try:
+                            if width and int(width) < 80:
+                                continue
+                            if height and int(height) < 80:
+                                continue
+                        except ValueError:
+                            pass
+                        img_url = src
+                        break
+
+            # Handle relative URLs
+            if img_url and not img_url.startswith('http'):
+                if img_url.startswith('//'):
+                    img_url = 'https:' + img_url
+                elif img_url.startswith('/'):
+                    # Build absolute URL from page domain
+                    from urllib.parse import urlparse
+                    parsed = urlparse(link)
+                    img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
+
+            # Validate and add
+            if img_url and img_url.startswith('http') and img_url not in seen_urls:
+                seen_urls.add(img_url)
+                source_domain = link.split('/')[2] if len(link.split('/')) > 2 else ''
+                images.append({
+                    'url': img_url,
+                    'thumbnail': img_url,
+                    'title': title,
+                    'source': source_domain,
+                    'context_link': link
+                })
+
+        except Exception as e:
+            print(f"[IMAGE SEARCH] Failed to fetch {link[:50]}: {e}")
+            continue
+
+    print(f"[IMAGE SEARCH] Extracted {len(images)} images from search results")
+    return images
 
 
 def web_search_google_scrape(query):
