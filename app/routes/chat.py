@@ -23,11 +23,15 @@ async def chat(request: Request, session: dict = Depends(get_session)):
     data = await request.json()
     user_message = data.get('message', '')
     force_search = data.get('search', False)
+    image_data = data.get('image', None)  # { base64, mime_type }
 
-    if not user_message:
+    if not user_message and not image_data:
         return JSONResponse({'error': 'No message provided'}, status_code=400)
 
-    ai_response, user_idx, ai_idx, searched, suggestions = chat_with_ai(session, user_message, force_search)
+    if not user_message:
+        user_message = 'Analyze this image'
+
+    ai_response, user_idx, ai_idx, searched, suggestions = chat_with_ai(session, user_message, force_search, image_data)
     current_model = get_current_model(session)
 
     return {

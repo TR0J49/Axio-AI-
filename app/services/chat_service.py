@@ -189,8 +189,8 @@ def clear_conversation(session: dict):
     create_new_chat(session)
 
 
-def chat_with_ai(session: dict, user_message: str, force_search: bool = False):
-    """Send message to AI and get response, with optional web search."""
+def chat_with_ai(session: dict, user_message: str, force_search: bool = False, image_data: dict = None):
+    """Send message to AI and get response, with optional web search and image."""
     conversation = get_conversation(session)
 
     # Check if we should perform a web search
@@ -222,7 +222,23 @@ def chat_with_ai(session: dict, user_message: str, force_search: bool = False):
 
     # Create a temporary conversation with enhanced message for AI
     temp_conversation = conversation.copy()
-    temp_conversation[-1] = {"role": "user", "content": enhanced_message}
+
+    # Build the last user message content — with image if provided
+    if image_data and image_data.get('base64'):
+        # Use multimodal content format for vision
+        user_content = [
+            {"type": "text", "text": enhanced_message},
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{image_data.get('mime_type', 'image/png')};base64,{image_data['base64']}"
+                }
+            }
+        ]
+        temp_conversation[-1] = {"role": "user", "content": user_content}
+        print(f"[Chat] Sending message with image ({image_data.get('mime_type')})")
+    else:
+        temp_conversation[-1] = {"role": "user", "content": enhanced_message}
 
     # Get AI response
     ai_response_text = generate_ai_response(temp_conversation, session=session)
