@@ -11,8 +11,24 @@ from app.services.search_service import should_search_web, web_search, image_sea
 from app.utils.session import get_session_id
 
 
+def clean_citation_markers(text):
+    """Remove raw citation markers like [^1^], [^2^][^3^], etc. from AI response"""
+    # Remove [^N^] patterns (single or grouped)
+    text = re.sub(r'\[\^(\d+)\^\]', '', text)
+    # Remove leftover empty parenthetical refs like ()
+    text = re.sub(r'\(\s*\)', '', text)
+    # Clean up extra spaces left behind
+    text = re.sub(r'  +', ' ', text)
+    # Clean trailing spaces before punctuation
+    text = re.sub(r'\s+([.,;:!?])', r'\1', text)
+    return text.strip()
+
+
 def parse_suggestions(ai_response_text):
     """Extract follow-up suggestions from AI response and return clean text + suggestions list"""
+    # Clean citation markers first
+    ai_response_text = clean_citation_markers(ai_response_text)
+
     match = re.search(r'<<<SUGGESTIONS>>>(.*?)<<<END_SUGGESTIONS>>>', ai_response_text, re.DOTALL)
     if not match:
         return ai_response_text, []
@@ -201,9 +217,10 @@ def chat_with_ai(session: dict, user_message: str, force_search: bool = False, i
         search_results = web_search(user_message)
         print(f"Search results: {len(search_results) if search_results else 0} results found")
 
-        # Also fetch related images
-        search_images = image_search(user_message)
-        print(f"Search images: {len(search_images)} images found")
+        # Extract images from the search result pages
+        if search_results:
+            search_images = image_search(user_message, search_results=search_results)
+            print(f"Search images: {len(search_images)} images found")
 
     # Build the user message with search results if available
     if search_results:
