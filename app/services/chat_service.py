@@ -7,7 +7,7 @@ from datetime import datetime
 
 from app.config.settings import USE_MONGODB
 from app.services.ai_service import get_system_prompt, generate_ai_response
-from app.services.search_service import should_search_web, web_search
+from app.services.search_service import should_search_web, web_search, image_search
 from app.utils.session import get_session_id
 
 
@@ -195,10 +195,15 @@ def chat_with_ai(session: dict, user_message: str, force_search: bool = False, i
 
     # Check if we should perform a web search
     search_results = None
+    search_images = []
     if force_search or should_search_web(user_message):
         print(f"Performing web search for: {user_message}")
         search_results = web_search(user_message)
         print(f"Search results: {len(search_results) if search_results else 0} results found")
+
+        # Also fetch related images
+        search_images = image_search(user_message)
+        print(f"Search images: {len(search_images)} images found")
 
     # Build the user message with search results if available
     if search_results:
@@ -252,7 +257,7 @@ def chat_with_ai(session: dict, user_message: str, force_search: bool = False, i
     ai_index = len(conversation) - 1
 
     save_conversation(session, conversation)
-    return clean_response, user_index, ai_index, bool(search_results), suggestions
+    return clean_response, user_index, ai_index, bool(search_results), suggestions, search_images
 
 
 def edit_message(session: dict, message_index: int, new_content: str):

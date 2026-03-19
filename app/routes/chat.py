@@ -31,7 +31,7 @@ async def chat(request: Request, session: dict = Depends(get_session)):
     if not user_message:
         user_message = 'Analyze this image'
 
-    ai_response, user_idx, ai_idx, searched, suggestions = chat_with_ai(session, user_message, force_search, image_data)
+    ai_response, user_idx, ai_idx, searched, suggestions, search_images = chat_with_ai(session, user_message, force_search, image_data)
     current_model = get_current_model(session)
 
     return {
@@ -40,6 +40,7 @@ async def chat(request: Request, session: dict = Depends(get_session)):
         'ai_index': ai_idx,
         'searched': searched,
         'suggestions': suggestions,
+        'search_images': search_images,
         'model': current_model,
         'model_name': AI_MODELS[current_model]['name'],
         'timestamp': datetime.now().isoformat()

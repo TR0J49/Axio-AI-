@@ -139,6 +139,111 @@ def web_search_googlesearch(query):
         return []
 
 
+def image_search(query, num_images=6):
+    """Search for images related to the query"""
+    print(f"[IMAGE SEARCH] Searching images for: {query}")
+
+    # Method 1: Google Custom Search API with image search
+    if GOOGLE_API_KEY and GOOGLE_CSE_ID:
+        images = image_search_google_api(query, num_images)
+        if images:
+            print(f"[OK] Google image search returned {len(images)} images")
+            return images
+
+    # Method 2: DuckDuckGo image proxy (no API key needed)
+    images = image_search_duckduckgo(query, num_images)
+    if images:
+        print(f"[OK] DuckDuckGo image search returned {len(images)} images")
+        return images
+
+    print("[IMAGE SEARCH] No images found")
+    return []
+
+
+def image_search_google_api(query, num_images=6):
+    """Search images using Google Custom Search API"""
+    try:
+        url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            'key': GOOGLE_API_KEY,
+            'cx': GOOGLE_CSE_ID,
+            'q': query,
+            'searchType': 'image',
+            'num': min(num_images, 10),
+            'safe': 'active'
+        }
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        images = []
+        for item in data.get('items', []):
+            images.append({
+                'url': item.get('link', ''),
+                'thumbnail': item.get('image', {}).get('thumbnailLink', item.get('link', '')),
+                'title': item.get('title', ''),
+                'source': item.get('displayLink', ''),
+                'context_link': item.get('image', {}).get('contextLink', '')
+            })
+        return images
+    except Exception as e:
+        print(f"[ERROR] Google image search failed: {str(e)}")
+        return []
+
+
+def image_search_duckduckgo(query, num_images=6):
+    """Search images using DuckDuckGo"""
+    try:
+        # Get vqd token first
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        token_response = requests.get(
+            f"https://duckduckgo.com/?q={query}&iax=images&ia=images",
+            headers=headers, timeout=10
+        )
+
+        import re
+        vqd_match = re.search(r'vqd=["\']([^"\']+)["\']', token_response.text)
+        if not vqd_match:
+            # Fallback: try to get token from another endpoint
+            vqd_match = re.search(r'vqd=(\d+-\d+(?:-\d+)*)', token_response.text)
+
+        if not vqd_match:
+            print("[IMAGE SEARCH] Could not get DuckDuckGo token")
+            return []
+
+        vqd = vqd_match.group(1)
+
+        # Fetch images
+        img_url = "https://duckduckgo.com/i.js"
+        params = {
+            'l': 'us-en',
+            'o': 'json',
+            'q': query,
+            'vqd': vqd,
+            'f': ',,,,,',
+            'p': '1'
+        }
+
+        img_response = requests.get(img_url, params=params, headers=headers, timeout=10)
+        img_data = img_response.json()
+
+        images = []
+        for result in img_data.get('results', [])[:num_images]:
+            images.append({
+                'url': result.get('image', ''),
+                'thumbnail': result.get('thumbnail', result.get('image', '')),
+                'title': result.get('title', ''),
+                'source': result.get('source', ''),
+                'context_link': result.get('url', '')
+            })
+        return images
+    except Exception as e:
+        print(f"[ERROR] DuckDuckGo image search failed: {str(e)}")
+        return []
+
+
 def web_search_google_scrape(query):
     """Fallback: Direct Google scraping"""
     try:

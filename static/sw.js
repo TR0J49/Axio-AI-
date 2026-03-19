@@ -1,4 +1,4 @@
-const CACHE_NAME = 'laplacian-v2';
+const CACHE_NAME = 'laplacian-v3';
 const STATIC_ASSETS = [
   '/',
   '/static/style.css',
