@@ -6649,7 +6649,7 @@ body::before {
 
 .chat-history-section {
     border-top: 1px solid var(--border-color);
-    margin-top: auto;
+    margin-top: 0;
     padding: 0.6rem 0.5rem;
 }
 
