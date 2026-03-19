@@ -25,6 +25,7 @@ class LaplacianAssistant {
 
         // Follow-up suggestion chips state
         this.pendingSuggestions = [];
+        this.pendingSearchImages = [];
 
         // Apigee mode state
         this.apigeeMode = false;
@@ -927,8 +928,9 @@ class LaplacianAssistant {
             this.removeTypingIndicator();
 
             if (data.response) {
-                // Store pending suggestions to render after typewriter finishes
+                // Store pending suggestions and search images to render after typewriter finishes
                 this.pendingSuggestions = data.suggestions || [];
+                this.pendingSearchImages = data.search_images || [];
 
                 // Show response with typing effect
                 this.addMessageToUI(data.response, 'assistant', data.ai_index, data.searched, true);
@@ -1019,6 +1021,56 @@ class LaplacianAssistant {
         const input = document.getElementById('chat-input');
         input.value = text;
         this.sendMessage();
+    }
+
+    renderSearchImages(messageDiv, images) {
+        if (!images || images.length === 0) return;
+
+        const gallery = document.createElement('div');
+        gallery.className = 'search-images-gallery';
+
+        const label = document.createElement('div');
+        label.className = 'search-images-label';
+        label.textContent = 'Related Images';
+        gallery.appendChild(label);
+
+        const grid = document.createElement('div');
+        grid.className = 'search-images-grid';
+
+        images.forEach((img, i) => {
+            const card = document.createElement('a');
+            card.className = 'search-image-card';
+            card.href = img.context_link || img.url;
+            card.target = '_blank';
+            card.rel = 'noopener noreferrer';
+            card.style.animationDelay = `${i * 0.08}s`;
+
+            const imgEl = document.createElement('img');
+            imgEl.src = img.thumbnail || img.url;
+            imgEl.alt = img.title || 'Search result';
+            imgEl.loading = 'lazy';
+            imgEl.onerror = () => card.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'search-image-overlay';
+            overlay.innerHTML = `<span>${img.source || ''}</span>`;
+
+            card.appendChild(imgEl);
+            card.appendChild(overlay);
+            grid.appendChild(card);
+        });
+
+        gallery.appendChild(grid);
+
+        // Insert after the message content
+        const content = messageDiv.querySelector('.message-content');
+        if (content) {
+            content.appendChild(gallery);
+        }
+
+        // Scroll to show images
+        const messagesContainer = document.getElementById('chat-messages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     renderFollowUpChips(messageDiv, suggestions) {
@@ -2635,6 +2687,17 @@ class LaplacianAssistant {
         this.isStopped = false;
         this.pauseResolve = null;
         this.hideGenerationControls();
+
+        // Render search images after typewriter finishes
+        if (this.pendingSearchImages && this.pendingSearchImages.length > 0) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const assistantMsgs = messagesContainer.querySelectorAll('.message.assistant');
+            const lastAssistantMsg = assistantMsgs[assistantMsgs.length - 1];
+            if (lastAssistantMsg) {
+                this.renderSearchImages(lastAssistantMsg, this.pendingSearchImages);
+            }
+            this.pendingSearchImages = [];
+        }
 
         // Render follow-up suggestion chips after typewriter finishes
         if (this.pendingSuggestions && this.pendingSuggestions.length > 0) {
