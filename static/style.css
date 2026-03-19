@@ -2094,6 +2094,79 @@ body::before {
     border-color: var(--text-muted);
 }
 
+/* ================================
+   WELCOME HERO
+   ================================ */
+
+.welcome-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 60vh;
+    text-align: center;
+    animation: welcomeFadeIn 1s ease-out;
+    user-select: none;
+}
+
+@keyframes welcomeFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Company logo */
+.welcome-logo {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    margin-bottom: 1.8rem;
+    animation: logoFloat 4s ease-in-out infinite, welcomeFadeIn 1s ease-out;
+    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes logoFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+/* Title */
+.welcome-title {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+    animation: welcomeFadeIn 1s ease-out 0.3s both;
+}
+
+.welcome-brand {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Tagline */
+.welcome-tagline {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    animation: welcomeFadeIn 1s ease-out 0.6s both;
+}
+
 /* Chat Input */
 .chat-input-container {
     padding: 1rem 1.5rem;
@@ -2242,6 +2315,159 @@ body::before {
 
 .btn-search:active {
     transform: scale(0.95);
+}
+
+/* ================================
+   ATTACHMENT / IMAGE UPLOAD
+   ================================ */
+
+.attachment-btn-wrapper {
+    position: relative;
+}
+
+.btn-attach {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.btn-attach:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    transform: scale(1.1);
+}
+
+.btn-attach:active {
+    transform: scale(0.95);
+}
+
+/* Attachment popup menu */
+.attachment-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 6px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px) scale(0.95);
+    transition: all 0.2s ease;
+    z-index: 100;
+    min-width: 130px;
+}
+
+.attachment-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.attachment-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    background: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    transition: var(--transition-fast);
+    white-space: nowrap;
+}
+
+.attachment-option:hover {
+    background: var(--bg-tertiary);
+    color: var(--primary);
+}
+
+.attachment-option svg {
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.attachment-option:hover svg {
+    color: var(--primary);
+}
+
+/* Image preview above input */
+.image-preview-container {
+    display: flex;
+    padding: 0 1.5rem 0.5rem;
+}
+
+.image-preview-wrapper {
+    position: relative;
+    display: inline-block;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 2px solid var(--border-color);
+    background: var(--bg-tertiary);
+    max-width: 180px;
+}
+
+.image-preview-wrapper img {
+    display: block;
+    max-width: 180px;
+    max-height: 120px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.image-preview-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+}
+
+.image-preview-remove:hover {
+    background: rgba(220, 38, 38, 0.9);
+    transform: scale(1.1);
+}
+
+/* Image thumbnail in user message */
+.message-image-thumb {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    transition: var(--transition-fast);
+    object-fit: cover;
+}
+
+.message-image-thumb:hover {
+    opacity: 0.85;
+    box-shadow: var(--shadow-md);
 }
 
 /* Voice Input Button */

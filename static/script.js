@@ -35,6 +35,9 @@ class LaplacianAssistant {
         this.recognition = null;
         this.ttsAudio = null;
 
+        // Image attachment state
+        this.attachedImage = null; // { base64, mimeType, name }
+
         this.init();
     }
 
@@ -52,6 +55,7 @@ class LaplacianAssistant {
         this.setupUploadSectionToggle();
         this.setupVizIQ();
         this.setupVoiceInput();
+        this.setupImageUpload();
         this.setupClock();
         this.setupChatHistory();
         this.loadData();
@@ -873,20 +877,37 @@ class LaplacianAssistant {
         const input = document.getElementById('chat-input');
         const message = input.value.trim();
 
-        if (!message) return;
+        if (!message && !this.attachedImage) return;
 
         // Check if Apigee mode is active
         if (this.apigeeMode) {
             return this.sendApigeeRequest(message);
         }
 
+        // Remove welcome hero if present
+        const welcomeHero = document.getElementById('welcome-hero');
+        if (welcomeHero) welcomeHero.remove();
+
         // Remove existing follow-up suggestion chips
         document.querySelectorAll('.followup-suggestions').forEach(el => el.remove());
 
-        // Add user message to UI
-        this.addMessageToUI(message, 'user');
+        // Add user message to UI (with image preview if attached)
+        const displayMessage = message || 'Analyze this image';
+        this.addMessageToUI(displayMessage, 'user', null, false, false, this.attachedImage?.dataUrl);
         input.value = '';
         input.style.height = 'auto';
+
+        // Prepare request body
+        const requestBody = { message: displayMessage, search: forceSearch };
+
+        // Attach image data if present
+        if (this.attachedImage) {
+            requestBody.image = {
+                base64: this.attachedImage.base64,
+                mime_type: this.attachedImage.mimeType
+            };
+            this.clearAttachedImage();
+        }
 
         // Show typing indicator (with search indicator if force search)
         this.showTypingIndicator(forceSearch ? 'Searching the web...' : null);
@@ -897,7 +918,7 @@ class LaplacianAssistant {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ message, search: forceSearch })
+                body: JSON.stringify(requestBody)
             });
 
             const data = await response.json();
@@ -1023,7 +1044,7 @@ class LaplacianAssistant {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    addMessageToUI(text, role, index = null, searched = false, typeEffect = false) {
+    addMessageToUI(text, role, index = null, searched = false, typeEffect = false, imageUrl = null) {
         const messagesContainer = document.getElementById('chat-messages');
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${role}${searched ? ' searched' : ''}`;
@@ -1077,7 +1098,16 @@ class LaplacianAssistant {
 
             content.appendChild(actionsDiv);
         } else {
-            // For user messages, just escape HTML
+            // For user messages — show attached image if any
+            if (imageUrl) {
+                const imgThumb = document.createElement('img');
+                imgThumb.src = imageUrl;
+                imgThumb.className = 'message-image-thumb';
+                imgThumb.alt = 'Uploaded image';
+                imgThumb.onclick = () => window.open(imageUrl, '_blank');
+                content.insertBefore(imgThumb, content.firstChild);
+            }
+            // Escape HTML
             textDiv.textContent = text;
 
             // Only add edit button if we have a valid index
@@ -2719,23 +2749,14 @@ class LaplacianAssistant {
             const messagesContainer = document.getElementById('chat-messages');
             messagesContainer.innerHTML = '';
 
-            // Add welcome message
+            // Add welcome hero
             const welcomeDiv = document.createElement('div');
-            welcomeDiv.className = 'message assistant';
+            welcomeDiv.className = 'welcome-hero';
+            welcomeDiv.id = 'welcome-hero';
             welcomeDiv.innerHTML = `
-                <div class="message-avatar ai-avatar">
-                    <div class="ai-icon">
-                        <div class="ai-core"></div>
-                        <div class="ai-ring"></div>
-                        <div class="ai-particles">
-                            <span></span><span></span><span></span><span></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="message-content">
-                    <div class="message-text"><strong>Welcome to Laplacian</strong> — your private AI workspace by Perfionix AI.<br><br>I'm here to help you:<br>• <strong>Code</strong> — write, debug, and optimize with expert assistance<br>• <strong>Analyze</strong> — transform your data into actionable insights<br>• <strong>Research</strong> — extract knowledge from documents instantly<br>• <strong>Create</strong> — generate diagrams, visualizations, and more<br><br>How can I assist you today?</div>
-                    <span class="message-time">${this.formatTime(new Date())}</span>
-                </div>
+                <img src="/static/New lap logo.png" alt="Laplacian AI" class="welcome-logo">
+                <h1 class="welcome-title">Welcome to <span class="welcome-brand">Laplacian</span></h1>
+                <p class="welcome-tagline">Think deeper. Build faster. Know more.</p>
             `;
             messagesContainer.appendChild(welcomeDiv);
 
@@ -2785,20 +2806,10 @@ class LaplacianAssistant {
 
             const messagesContainer = document.getElementById('chat-messages');
             messagesContainer.innerHTML = `
-                <div class="message assistant">
-                    <div class="message-avatar ai-avatar">
-                        <div class="ai-icon">
-                            <div class="ai-core"></div>
-                            <div class="ai-ring"></div>
-                            <div class="ai-particles">
-                                <span></span><span></span><span></span><span></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="message-content">
-                        <div class="message-text"><strong>Welcome to Laplacian</strong> — your private AI workspace by Perfionix AI.<br><br>I'm here to help you:<br>• <strong>Code</strong> — write, debug, and optimize with expert assistance<br>• <strong>Analyze</strong> — transform your data into actionable insights<br>• <strong>Research</strong> — extract knowledge from documents instantly<br>• <strong>Create</strong> — generate diagrams, visualizations, and more<br><br>How can I assist you today?</div>
-                        <span class="message-time">${this.formatTime(new Date())}</span>
-                    </div>
+                <div class="welcome-hero" id="welcome-hero">
+                    <img src="/static/New lap logo.png" alt="Laplacian AI" class="welcome-logo">
+                    <h1 class="welcome-title">Welcome to <span class="welcome-brand">Laplacian</span></h1>
+                    <p class="welcome-tagline">Think deeper. Build faster. Know more.</p>
                 </div>
             `;
             // Refresh chat history sidebar
@@ -4343,6 +4354,125 @@ class LaplacianAssistant {
         } catch (error) {
             console.error('Error updating stats:', error);
         }
+    }
+
+    // ================================
+    // IMAGE UPLOAD
+    // ================================
+
+    setupImageUpload() {
+        const attachBtn = document.getElementById('attach-btn');
+        const attachMenu = document.getElementById('attachment-menu');
+        const attachImageBtn = document.getElementById('attach-image-btn');
+        const imageInput = document.getElementById('image-upload-input');
+        const previewContainer = document.getElementById('image-preview-container');
+        const previewImg = document.getElementById('image-preview-img');
+        const previewRemove = document.getElementById('image-preview-remove');
+
+        if (!attachBtn) return;
+
+        // Toggle attachment menu on + click
+        attachBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            attachMenu.classList.toggle('show');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.attachment-btn-wrapper')) {
+                attachMenu.classList.remove('show');
+            }
+        });
+
+        // Click "Image" option → open file picker
+        attachImageBtn.addEventListener('click', () => {
+            imageInput.click();
+            attachMenu.classList.remove('show');
+        });
+
+        // Handle file selection
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            // Max 20MB
+            if (file.size > 20 * 1024 * 1024) {
+                alert('Image must be under 20MB.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const base64Full = ev.target.result; // data:image/...;base64,...
+                const base64Data = base64Full.split(',')[1];
+
+                this.attachedImage = {
+                    base64: base64Data,
+                    mimeType: file.type,
+                    name: file.name,
+                    dataUrl: base64Full
+                };
+
+                // Show preview
+                previewImg.src = base64Full;
+                previewContainer.style.display = 'flex';
+
+                // Update placeholder
+                document.getElementById('chat-input').placeholder = 'Ask about this image...';
+            };
+            reader.readAsDataURL(file);
+
+            // Reset input so same file can be re-selected
+            imageInput.value = '';
+        });
+
+        // Remove image
+        previewRemove.addEventListener('click', () => {
+            this.clearAttachedImage();
+        });
+
+        // Support paste image from clipboard
+        document.getElementById('chat-input').addEventListener('paste', (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const base64Full = ev.target.result;
+                        const base64Data = base64Full.split(',')[1];
+
+                        this.attachedImage = {
+                            base64: base64Data,
+                            mimeType: file.type,
+                            name: 'pasted-image.png',
+                            dataUrl: base64Full
+                        };
+
+                        previewImg.src = base64Full;
+                        previewContainer.style.display = 'flex';
+                        document.getElementById('chat-input').placeholder = 'Ask about this image...';
+                    };
+                    reader.readAsDataURL(file);
+                    break;
+                }
+            }
+        });
+    }
+
+    clearAttachedImage() {
+        this.attachedImage = null;
+        const previewContainer = document.getElementById('image-preview-container');
+        if (previewContainer) previewContainer.style.display = 'none';
+        document.getElementById('chat-input').placeholder = 'Ask me anything...';
     }
 
     // ================================
