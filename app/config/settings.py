@@ -31,6 +31,10 @@ VOICE_ID = os.getenv('VOICE_ID', '21m00Tcm4TlvDq8ikWAM')
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', '')
 GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID', '')
 
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
+
 # Check Azure OpenAI availability at startup
 AZURE_AVAILABLE = bool(AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY)
 if AZURE_AVAILABLE:
