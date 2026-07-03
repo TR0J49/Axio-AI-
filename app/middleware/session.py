@@ -24,6 +24,8 @@ class SessionMiddleware(BaseHTTPMiddleware):
 
         request.state.session = _sessions[session_cookie]
         request.state.session_cookie = session_cookie
+        # Authlib requires request.session for OAuth state storage
+        request.scope['session'] = _sessions[session_cookie]
 
         response = await call_next(request)
         response.set_cookie(

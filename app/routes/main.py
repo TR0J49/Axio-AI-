@@ -2,7 +2,7 @@
 Main routes - Index page
 """
 from fastapi import APIRouter, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 main_router = APIRouter(tags=["main"])
@@ -11,8 +11,21 @@ templates = Jinja2Templates(directory="templates")
 
 @main_router.get('/')
 async def index(request: Request):
-    """Main page"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    """Main page - requires login"""
+    session = request.state.session
+    if not session.get('logged_in'):
+        return RedirectResponse(url='/login')
+    user = session.get('user', {})
+    return templates.TemplateResponse("index.html", {"request": request, "user": user})
+
+
+@main_router.get('/login')
+async def login_page(request: Request):
+    """Login page"""
+    session = request.state.session
+    if session.get('logged_in'):
+        return RedirectResponse(url='/')
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @main_router.get('/favicon.ico')
