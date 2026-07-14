@@ -3,7 +3,11 @@ Chat routes - AI conversation endpoints
 """
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from datetime import datetime
+from datetime import datetime, timezone
+
+
+def _utcnow_iso():
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f') + 'Z'
 
 from app.config.constants import AI_MODELS
 from app.services.ai_service import get_current_model, generate_ai_response
@@ -51,7 +55,7 @@ async def chat(request: Request, session: dict = Depends(get_session)):
         'search_images': search_images,
         'model': current_model,
         'model_name': AI_MODELS[current_model]['name'],
-        'timestamp': datetime.now().isoformat()
+        'timestamp': _utcnow_iso()
     }
 
 
@@ -118,7 +122,7 @@ async def edit_chat(request: Request, session: dict = Depends(get_session)):
         'user_index': message_index,
         'ai_index': ai_index,
         'suggestions': suggestions,
-        'timestamp': datetime.now().isoformat()
+        'timestamp': _utcnow_iso()
     }
 
 

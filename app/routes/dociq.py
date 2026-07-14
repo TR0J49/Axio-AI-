@@ -3,9 +3,9 @@ DocIQ routes - Document Intelligence endpoints
 """
 from fastapi import APIRouter, Depends, Request, UploadFile, File
 from fastapi.responses import JSONResponse
-from datetime import datetime
+from datetime import datetime, timezone
 
-from app.config.settings import UPLOAD_FOLDER
+from app.config.settings import UPLOAD_FOLDER, MAX_UPLOAD_SIZE
 from app.utils.file_helpers import allowed_file
 from app.services.dociq_service import (
     get_dociq_documents, get_dociq_session_id,
@@ -31,6 +31,11 @@ async def dociq_upload(file: UploadFile = File(...), session: dict = Depends(get
 
     try:
         file_bytes = await file.read()
+        if len(file_bytes) > MAX_UPLOAD_SIZE:
+            return JSONResponse(
+                {'error': f'File too large. Maximum size is {MAX_UPLOAD_SIZE // (1024*1024)} MB.'},
+                status_code=413
+            )
         doc_info, error = process_document_upload(file_bytes, file.filename, UPLOAD_FOLDER, session)
 
         if error:
@@ -137,7 +142,7 @@ async def dociq_chat(request: Request, session: dict = Depends(get_session)):
         'response': ai_response,
         'has_documents': True,
         'document_count': len(session_data['documents']),
-        'timestamp': datetime.now().isoformat()
+        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f') + 'Z'
     }
 
 

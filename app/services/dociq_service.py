@@ -3,7 +3,11 @@ DocIQ Service - Document Intelligence and RAG functionality
 """
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+
+
+def _utcnow_iso() -> str:
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f') + 'Z'
 
 from app.config.settings import USE_MONGODB, DOCIQ_MODEL
 from app.services.ai_service import generate_ai_response
@@ -11,11 +15,14 @@ from app.utils.text_processing import extract_text_from_document, chunk_text
 from app.utils.file_helpers import secure_filename
 
 
-# Fallback in-memory storage
-dociq_single_user_storage = {
-    'documents': [],
-    'conversation': []
-}
+# Fallback in-memory storage keyed by session_id to isolate users
+_dociq_storage: dict[str, dict] = {}
+
+
+def _get_fallback_storage(session_id: str) -> dict:
+    if session_id not in _dociq_storage:
+        _dociq_storage[session_id] = {'documents': [], 'conversation': []}
+    return _dociq_storage[session_id]
 
 
 def get_dociq_session_id(session: dict):
@@ -43,10 +50,11 @@ def get_dociq_documents(session: dict):
             'conversation': [{'role': msg['role'], 'content': msg['content']} for msg in conversation]
         }
 
-    # Fallback to in-memory storage
-    doc_count = len(dociq_single_user_storage['documents'])
-    print(f"[DocIQ] Using single-user mode storage with {doc_count} documents")
-    return dociq_single_user_storage
+    # Fallback to per-session in-memory storage
+    storage = _get_fallback_storage(session_id)
+    doc_count = len(storage['documents'])
+    print(f"[DocIQ] Using in-memory storage for session {session_id[:8]} with {doc_count} documents")
+    return storage
 
 
 def get_combined_document_context(session_data, max_context_length=8000):
@@ -214,7 +222,7 @@ def process_document_upload(file_bytes: bytes, original_filename: str, upload_fo
         'text_length': len(text),
         'chunks': chunks,
         'chunk_count': len(chunks),
-        'uploaded_at': datetime.now().isoformat(),
+        'uploaded_at': _utcnow_iso(),
         'status': 'ready'
     }
 
