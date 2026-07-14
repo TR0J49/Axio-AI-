@@ -20,6 +20,14 @@ chat_router = APIRouter(tags=["chat"])
 @chat_router.post('/chat')
 async def chat(request: Request, session: dict = Depends(get_session)):
     """Handle chat messages"""
+    from app.utils.usage import check_and_increment
+    exceeded, used, limit = check_and_increment(session)
+    if exceeded:
+        return JSONResponse(
+            {'error': 'free_tier_limit_reached', 'payment_required': True, 'used': used, 'limit': limit},
+            status_code=402
+        )
+
     data = await request.json()
     user_message = data.get('message', '')
     force_search = data.get('search', False)

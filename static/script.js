@@ -927,6 +927,11 @@ class LaplacianAssistant {
             // Remove typing indicator
             this.removeTypingIndicator();
 
+            if (data.payment_required) {
+                window.location.href = '/payment';
+                return;
+            }
+
             if (data.response) {
                 // Store pending suggestions and search images to render after typewriter finishes
                 this.pendingSuggestions = data.suggestions || [];
@@ -3704,6 +3709,11 @@ class LaplacianAssistant {
             // Remove typing indicator
             this.removeDocIQTypingIndicator();
 
+            if (data.payment_required) {
+                window.location.href = '/payment';
+                return;
+            }
+
             if (data.response) {
                 this.addDocIQMessageToUI(data.response, 'assistant', true);
             } else if (data.error) {
@@ -3967,6 +3977,11 @@ class LaplacianAssistant {
             });
 
             const data = await response.json();
+
+            if (data.payment_required) {
+                window.location.href = '/payment';
+                return;
+            }
 
             if (data.success) {
                 this.viziqData = data;

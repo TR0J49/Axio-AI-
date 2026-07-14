@@ -14,6 +14,7 @@ def register_routers(app: FastAPI):
     from app.routes.dociq import dociq_router
     from app.routes.viziq import viziq_router
     from app.routes.apigee import apigee_router
+    from app.routes.payment import payment_router
 
     # Register routers
     app.include_router(auth_router)
@@ -26,3 +27,4 @@ def register_routers(app: FastAPI):
     app.include_router(dociq_router, prefix='/api/dociq')
     app.include_router(viziq_router, prefix='/api/viziq')
     app.include_router(apigee_router, prefix='/api/apigee')
+    app.include_router(payment_router)

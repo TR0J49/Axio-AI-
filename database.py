@@ -442,6 +442,32 @@ class Database:
         return result.deleted_count > 0
 
     # ========================
+    # User Usage Operations
+    # ========================
+
+    def get_user_usage(self, email: str) -> int:
+        """Get request usage count for a user"""
+        if not self.is_connected():
+            return 0
+        doc = self.db.user_usage.find_one({"email": email})
+        return doc.get("request_count", 0) if doc else 0
+
+    def increment_user_usage(self, email: str) -> int:
+        """Increment usage count and return new count"""
+        if not self.is_connected():
+            return 0
+        result = self.db.user_usage.find_one_and_update(
+            {"email": email},
+            {
+                "$inc": {"request_count": 1},
+                "$setOnInsert": {"email": email, "created_at": datetime.utcnow()}
+            },
+            upsert=True,
+            return_document=True
+        )
+        return result.get("request_count", 1) if result else 1
+
+    # ========================
     # Statistics Operations
     # ========================
 
