@@ -3,7 +3,12 @@ Chat Service - Conversation management and AI chat (multi-session)
 """
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+
+
+def _utcnow_iso() -> str:
+    """Return current UTC time as ISO string with Z suffix for correct browser parsing."""
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f') + 'Z'
 
 from app.config.settings import USE_MONGODB
 from app.services.ai_service import get_system_prompt, generate_ai_response
@@ -82,7 +87,7 @@ def create_new_chat(session: dict) -> str:
     """Create a brand-new chat session and make it active."""
     chat_id = str(uuid.uuid4())
     chats = _get_user_chats(session)
-    now = datetime.now().isoformat()
+    now = _utcnow_iso()
     chats[chat_id] = {
         "messages": [{"role": "system", "content": get_system_prompt()}],
         "title": "New Chat",
@@ -174,7 +179,7 @@ def save_conversation(session: dict, conversation):
     chats = _get_user_chats(session)
     chat_id = session['current_chat_id']
     chats[chat_id]["messages"] = conversation
-    chats[chat_id]["updated_at"] = datetime.now().isoformat()
+    chats[chat_id]["updated_at"] = _utcnow_iso()
 
     # Derive title from the first user message if still "New Chat"
     if chats[chat_id]["title"] == "New Chat":
@@ -303,7 +308,7 @@ def edit_message(session: dict, message_index: int, new_content: str):
         'user_index': message_index,
         'ai_index': ai_index,
         'suggestions': suggestions,
-        'timestamp': datetime.now().isoformat()
+        'timestamp': _utcnow_iso()
     }, None
 
 
