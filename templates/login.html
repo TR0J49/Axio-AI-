@@ -66,11 +66,48 @@
             z-index: 1;
         }
 
+        .brand-logo-wrap {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        /* Glowing ring behind logo */
+        .brand-logo-wrap::before {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.06));
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Subtle animated glow */
+        .brand-logo-wrap::after {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            border-radius: 24px;
+            background: radial-gradient(ellipse at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: logoGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes logoGlow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
         .brand img {
-            width: 54px;
-            height: 54px;
-            border-radius: 14px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.15);
+            position: relative;
+            z-index: 1;
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            background: #ffffff;
+            padding: 2px;
         }
 
         .brand-name {
@@ -79,7 +116,8 @@
             font-weight: 700;
             color: #ffffff;
             letter-spacing: -0.5px;
-            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.15));
         }
 
         .hero-content {
@@ -375,7 +413,9 @@
     <!-- Left Branding Panel -->
     <div class="left-panel">
         <div class="brand">
-            <img src="{{ url_for('static', path='New lap logo.png') }}" alt="Laplacian AI">
+            <div class="brand-logo-wrap">
+                <img src="{{ url_for('static', path='New lap logo.png') }}" alt="Laplacian AI">
+            </div>
             <span class="brand-name">Laplacian AI</span>
         </div>
 
