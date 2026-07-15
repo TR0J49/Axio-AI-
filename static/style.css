@@ -7491,3 +7491,154 @@ body::before {
         font-size: 0.9rem;
     }
 }
+
+/* ============================================================
+   VizIQ Dynamic Dashboard — new elements
+   ============================================================ */
+
+/* KPI trend badge */
+.kpi-trend-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin: 4px 0 2px;
+}
+.kpi-trend-badge.kpi-trend-positive {
+    background: rgba(0, 210, 130, 0.18);
+    color: #00d282;
+}
+.kpi-trend-badge.kpi-trend-negative {
+    background: rgba(245, 87, 108, 0.18);
+    color: #f5576c;
+}
+.kpi-trend-badge.kpi-trend-neutral {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255,255,255,0.45);
+}
+
+/* Chart header controls */
+.chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.chart-type-toggles {
+    display: flex;
+    gap: 4px;
+}
+.chart-type-btn {
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: transparent;
+    color: rgba(255,255,255,0.45);
+    font-size: 0.68rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.chart-type-btn:hover { background: rgba(102,126,234,0.15); color: #fff; }
+.chart-type-btn.active { background: rgba(102,126,234,0.3); color: #a8b8ff; border-color: rgba(102,126,234,0.5); }
+
+.chart-dl-btn {
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.chart-dl-btn:hover { background: rgba(0,242,254,0.12); color: #00f2fe; border-color: rgba(0,242,254,0.3); }
+
+.chart-insight-dot { color: #667eea; margin-right: 4px; font-size: 0.6rem; }
+
+/* VizIQ Filter / Slicer Bar */
+.viziq-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+.vf-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+}
+.vf-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.vf-col-label {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.vf-select {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 7px;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.78rem;
+    padding: 5px 10px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.vf-select:focus, .vf-select:hover { border-color: rgba(102,126,234,0.5); }
+.vf-select option { background: #1a1b2e; color: #fff; }
+
+/* Export CSV button (in dashboard meta) */
+.viziq-export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,242,254,0.25);
+    background: rgba(0,242,254,0.08);
+    color: #00f2fe;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.viziq-export-btn:hover { background: rgba(0,242,254,0.18); border-color: rgba(0,242,254,0.5); }
+
+/* Data preview header row (title + search side by side) */
+.data-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.table-search-input {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: rgba(255,255,255,0.85);
+    font-size: 0.78rem;
+    padding: 6px 12px;
+    width: 200px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.table-search-input::placeholder { color: rgba(255,255,255,0.3); }
+.table-search-input:focus { border-color: rgba(102,126,234,0.5); }

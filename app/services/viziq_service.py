@@ -7,275 +7,331 @@ from app.utils.data_processing import (
 )
 
 
-def generate_kpis(data, columns, dtypes, stats, filename):
-    """Generate KPIs from data"""
-    kpis = []
+def _trend_direction(data, col):
+    """Compare first-half vs second-half average to compute trend direction and %."""
+    half = max(1, len(data) // 2)
+    first_vals = [v for v in (clean_numeric_value(r.get(col)) for r in data[:half]) if v is not None]
+    second_vals = [v for v in (clean_numeric_value(r.get(col)) for r in data[half:]) if v is not None]
+    if not first_vals or not second_vals:
+        return 'neutral', None
+    first_avg = sum(first_vals) / len(first_vals)
+    second_avg = sum(second_vals) / len(second_vals)
+    if first_avg == 0:
+        return ('positive' if second_avg > 0 else 'neutral'), None
+    pct = round((second_avg - first_avg) / abs(first_avg) * 100, 1)
+    trend = 'positive' if pct > 1 else 'negative' if pct < -1 else 'neutral'
+    return trend, pct
 
-    # Total rows KPI
+
+def generate_kpis(data, columns, dtypes, stats, filename):
+    """Generate rich KPIs with trend indicators across all numeric columns."""
+    kpis = []
+    numeric_cols = [c for c in columns if c in stats]
+    categorical_cols = [c for c in columns if dtypes.get(c) == 'categorical']
+
+    total_cells = len(data) * len(columns)
+    null_cells = sum(1 for r in data for c in columns if r.get(c) in (None, ''))
+    completeness = round((1 - null_cells / max(1, total_cells)) * 100, 1)
+
     kpis.append({
         'label': 'Total Records',
         'value': len(data),
         'icon': 'database',
-        'description': f'Total rows in {filename}'
+        'description': f'{len(numeric_cols)} numeric cols · {completeness}% complete',
+        'trend': 'neutral',
+        'trend_pct': None
     })
 
-    # Find numeric columns and create KPIs
-    for col in columns[:6]:  # Limit to first 6 columns
-        if col in stats:
-            s = stats[col]
-            kpis.append({
-                'label': f'Total {col}',
-                'value': round(s['sum'], 2),
-                'icon': 'trending-up',
-                'description': f"Sum of all {col} values",
-                'change': None
-            })
-            kpis.append({
-                'label': f'Avg {col}',
-                'value': round(s['mean'], 2),
-                'icon': 'bar-chart',
-                'description': f"Average {col}",
-                'change': None
-            })
-            break  # Just one numeric column for now
+    for col in numeric_cols[:3]:
+        s = stats[col]
+        trend, trend_pct = _trend_direction(data, col)
 
-    # Count unique values for categorical columns
-    for col in columns:
-        if dtypes.get(col) == 'categorical':
-            unique_vals = set(row.get(col) for row in data if row.get(col))
-            kpis.append({
-                'label': f'Unique {col}',
-                'value': len(unique_vals),
-                'icon': 'layers',
-                'description': f'Distinct values in {col}'
-            })
-            break  # Just one categorical column
+        kpis.append({
+            'label': f'Total {col}',
+            'value': round(s['sum'], 2),
+            'icon': 'trending-up',
+            'description': f'Max: {round(s["max"], 2):,}',
+            'trend': trend,
+            'trend_pct': trend_pct
+        })
 
-    return kpis[:6]  # Return max 6 KPIs
+        kpis.append({
+            'label': f'Avg {col}',
+            'value': round(s['mean'], 2),
+            'icon': 'bar-chart',
+            'description': f'Median: {round(s["median"], 2):,}',
+            'trend': trend,
+            'trend_pct': trend_pct
+        })
+
+        if len(kpis) >= 7:
+            break
+
+    for col in categorical_cols[:1]:
+        unique_vals = len(set(str(r.get(col)) for r in data if r.get(col)))
+        kpis.append({
+            'label': f'Unique {col}',
+            'value': unique_vals,
+            'icon': 'layers',
+            'description': f'Distinct {col} values',
+            'trend': 'neutral',
+            'trend_pct': None
+        })
+
+    return kpis[:8]
 
 
 def generate_chart_configs(data, columns, dtypes, stats):
-    """Generate chart configurations based on data - 3 charts in first row, 1 trend chart in second row"""
+    """Generate chart configurations with type-toggle options and richer data coverage."""
     charts = []
 
     numeric_cols = [c for c in columns if dtypes.get(c) == 'numeric']
     categorical_cols = [c for c in columns if dtypes.get(c) == 'categorical']
 
-    # ============ ROW 1: Column Chart, Distribution Chart, Comparison Chart ============
-
-    # 1. COLUMN CHART - Bar chart for categorical data with numeric values
+    # 1. Bar chart — top categories by numeric value
     if categorical_cols and numeric_cols:
         cat_col = categorical_cols[0]
         num_col = numeric_cols[0]
-
-        # Aggregate data by category
         aggregated = {}
         for row in data:
             cat_val = str(row.get(cat_col, 'Unknown'))
             num_val = clean_numeric_value(row.get(num_col))
             if num_val is not None:
-                if cat_val not in aggregated:
-                    aggregated[cat_val] = 0
-                aggregated[cat_val] += num_val
+                aggregated[cat_val] = aggregated.get(cat_val, 0) + num_val
 
-        # Sort and limit to top 8
-        sorted_items = sorted(aggregated.items(), key=lambda x: x[1], reverse=True)[:8]
+        sorted_items = sorted(aggregated.items(), key=lambda x: x[1], reverse=True)[:12]
 
         if sorted_items:
             charts.append({
                 'id': 'column-chart',
                 'type': 'bar',
-                'title': f'Column: {num_col} by {cat_col}',
-                'labels': [item[0][:12] for item in sorted_items],  # Truncate labels
+                'chartTypes': ['bar', 'line', 'doughnut'],
+                'title': f'{num_col} by {cat_col}',
+                'labels': [item[0][:15] for item in sorted_items],
                 'data': [round(item[1], 2) for item in sorted_items],
-                'insight': f"Top: {sorted_items[0][0]} ({round(sorted_items[0][1], 2)})"
+                'insight': f"Top: {sorted_items[0][0]} ({round(sorted_items[0][1], 2):,})"
             })
 
-    # 2. DISTRIBUTION CHART - Doughnut/Pie chart for categorical distribution
+    # 2. Doughnut — category distribution
     if categorical_cols:
-        cat_col = categorical_cols[0] if len(categorical_cols) == 1 else categorical_cols[1] if len(categorical_cols) > 1 else categorical_cols[0]
+        cat_col = categorical_cols[min(1, len(categorical_cols) - 1)]
         counts = {}
         for row in data:
             val = str(row.get(cat_col, 'Unknown'))
             counts[val] = counts.get(val, 0) + 1
-
-        sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:6]
+        sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:8]
 
         if sorted_counts:
             total = sum(item[1] for item in sorted_counts)
             charts.append({
                 'id': 'distribution-chart',
                 'type': 'doughnut',
+                'chartTypes': ['doughnut', 'bar'],
                 'title': f'Distribution: {cat_col}',
-                'labels': [item[0][:15] for item in sorted_counts],
+                'labels': [item[0][:18] for item in sorted_counts],
                 'data': [item[1] for item in sorted_counts],
-                'insight': f"Largest: {sorted_counts[0][0]} ({round(sorted_counts[0][1]/total*100, 1)}%)"
+                'insight': f"Top: {sorted_counts[0][0]} — {round(sorted_counts[0][1]/total*100, 1)}% of total"
             })
 
-    # 3. COMPARISON CHART - Compare multiple numeric columns
-    if numeric_cols and len(numeric_cols) >= 2:
+    # 3. Multi-series bar — compare two numeric columns across stats
+    if len(numeric_cols) >= 2:
         col1, col2 = numeric_cols[0], numeric_cols[1]
-
         if col1 in stats and col2 in stats:
             charts.append({
                 'id': 'comparison-chart',
                 'type': 'bar',
-                'title': f'Comparison: Metrics',
-                'labels': ['Average', 'Maximum', 'Minimum'],
+                'chartTypes': ['bar', 'line'],
+                'title': f'{col1} vs {col2}',
+                'labels': ['Average', 'Maximum', 'Minimum', 'Median'],
                 'datasets': [
                     {
-                        'label': col1[:15],
-                        'data': [round(stats[col1]['mean'], 2), round(stats[col1]['max'], 2), round(stats[col1]['min'], 2)]
+                        'label': col1[:20],
+                        'data': [round(stats[col1]['mean'], 2), round(stats[col1]['max'], 2),
+                                 round(stats[col1]['min'], 2), round(stats[col1]['median'], 2)]
                     },
                     {
-                        'label': col2[:15],
-                        'data': [round(stats[col2]['mean'], 2), round(stats[col2]['max'], 2), round(stats[col2]['min'], 2)]
+                        'label': col2[:20],
+                        'data': [round(stats[col2]['mean'], 2), round(stats[col2]['max'], 2),
+                                 round(stats[col2]['min'], 2), round(stats[col2]['median'], 2)]
                     }
                 ],
-                'insight': f"Comparing {col1} vs {col2} metrics"
+                'insight': f"Comparing {col1} and {col2} across key statistics"
             })
-    elif numeric_cols and len(numeric_cols) == 1:
-        # Single numeric column - show stats as bar chart
+    elif len(numeric_cols) == 1:
         col = numeric_cols[0]
         if col in stats:
             charts.append({
                 'id': 'comparison-chart',
                 'type': 'bar',
+                'chartTypes': ['bar', 'line'],
                 'title': f'Statistics: {col}',
-                'labels': ['Average', 'Maximum', 'Minimum'],
-                'data': [round(stats[col]['mean'], 2), round(stats[col]['max'], 2), round(stats[col]['min'], 2)],
-                'insight': f"Range: {round(stats[col]['min'], 2)} to {round(stats[col]['max'], 2)}"
+                'labels': ['Average', 'Maximum', 'Minimum', 'Median'],
+                'data': [round(stats[col]['mean'], 2), round(stats[col]['max'], 2),
+                         round(stats[col]['min'], 2), round(stats[col]['median'], 2)],
+                'insight': f"Range: {round(stats[col]['min'], 2):,} to {round(stats[col]['max'], 2):,}"
             })
 
-    # ============ ROW 2: Trend Chart (Full Width) ============
+    # 4. Scatter plot — correlation between two numeric columns
+    if len(numeric_cols) >= 2:
+        col1, col2 = numeric_cols[0], numeric_cols[1]
+        scatter_pts = []
+        for row in data[:300]:
+            x = clean_numeric_value(row.get(col1))
+            y = clean_numeric_value(row.get(col2))
+            if x is not None and y is not None:
+                scatter_pts.append({'x': round(x, 2), 'y': round(y, 2)})
+        if len(scatter_pts) >= 5:
+            charts.append({
+                'id': 'scatter-chart',
+                'type': 'scatter',
+                'chartTypes': ['scatter'],
+                'title': f'Correlation: {col1} vs {col2}',
+                'scatterData': scatter_pts,
+                'insight': f"{len(scatter_pts)} data points — {col1} (x-axis) vs {col2} (y-axis)"
+            })
 
-    # 4. TREND CHART - Line chart for time series or sequential data
+    # 5. Trend line — full width, up to 100 data points
     if numeric_cols and len(data) > 5:
         num_col = numeric_cols[0]
-        values = []
-        labels = []
-
-        # Check for date column
         date_cols = [c for c in columns if dtypes.get(c) == 'date']
+        values, labels = [], []
 
-        for i, row in enumerate(data[:30]):  # Limit to 30 points for clarity
+        for i, row in enumerate(data[:100]):
             val = clean_numeric_value(row.get(num_col))
             if val is not None:
-                values.append(val)
-                if date_cols:
-                    labels.append(str(row.get(date_cols[0], i+1))[:10])
-                else:
-                    labels.append(f'P{i+1}')
+                values.append(round(val, 2))
+                labels.append(str(row.get(date_cols[0], i + 1))[:10] if date_cols else f'#{i + 1}')
 
-        if values and len(values) >= 3:
-            # Calculate trend direction
-            avg_first_half = sum(values[:len(values)//2]) / (len(values)//2) if len(values) >= 2 else 0
-            avg_second_half = sum(values[len(values)//2:]) / (len(values) - len(values)//2) if len(values) >= 2 else 0
-            trend = "Upward" if avg_second_half > avg_first_half else "Downward" if avg_second_half < avg_first_half else "Stable"
+        if len(values) >= 3:
+            half = len(values) // 2
+            avg1 = sum(values[:half]) / half
+            avg2 = sum(values[half:]) / (len(values) - half)
+            trend_label = "Upward ↑" if avg2 > avg1 * 1.01 else "Downward ↓" if avg2 < avg1 * 0.99 else "Stable →"
 
             charts.append({
                 'id': 'trend-chart',
                 'type': 'line',
-                'title': f'Trend Analysis: {num_col}',
+                'chartTypes': ['line', 'bar'],
+                'title': f'Trend: {num_col}',
                 'labels': labels,
-                'data': [round(v, 2) for v in values],
-                'insight': f"{trend} trend detected. Range: {round(min(values), 2)} - {round(max(values), 2)}"
+                'data': values,
+                'insight': f"{trend_label}  ·  Min {min(values):,}  ·  Max {max(values):,}  ·  Range {round(max(values)-min(values),2):,}"
             })
 
-    # Ensure we have at least some charts
-    if len(charts) < 3 and numeric_cols:
-        # Add a simple bar chart if we don't have enough
+    # Fallback: simple bar when no charts generated
+    if not charts and numeric_cols:
         col = numeric_cols[0]
-        if col in stats and 'column-chart' not in [c['id'] for c in charts]:
-            values = []
-            for row in data[:10]:
-                val = clean_numeric_value(row.get(col))
-                if val is not None:
-                    values.append(val)
-            if values:
-                charts.insert(0, {
-                    'id': 'column-chart',
-                    'type': 'bar',
-                    'title': f'Values: {col}',
-                    'labels': [f'Row {i+1}' for i in range(len(values))],
-                    'data': [round(v, 2) for v in values],
-                    'insight': f"Showing first {len(values)} values"
-                })
+        values = [clean_numeric_value(r.get(col)) for r in data[:15]]
+        values = [round(v, 2) for v in values if v is not None]
+        if values:
+            charts.append({
+                'id': 'column-chart',
+                'type': 'bar',
+                'chartTypes': ['bar', 'line'],
+                'title': f'Values: {col}',
+                'labels': [f'#{i+1}' for i in range(len(values))],
+                'data': values,
+                'insight': f'First {len(values)} values of {col}'
+            })
 
     return charts
 
 
 def generate_insights(data, columns, dtypes, stats, filename):
-    """Generate AI insights from data"""
+    """Generate rich insights: data quality, growth, outliers, summaries, category leaders."""
     insights = []
+    numeric_cols = [c for c in columns if c in stats]
+    categorical_cols = [c for c in columns if dtypes.get(c) == 'categorical']
 
-    # Data quality insight
-    null_counts = {}
-    for col in columns:
-        null_count = sum(1 for row in data if row.get(col) is None or row.get(col) == '')
-        if null_count > 0:
-            null_counts[col] = null_count
+    # 1. Data completeness
+    total_cells = len(data) * len(columns)
+    null_cells = sum(1 for r in data for c in columns if r.get(c) in (None, ''))
+    completeness = round((1 - null_cells / max(1, total_cells)) * 100, 1)
 
-    if null_counts:
-        most_nulls = max(null_counts.items(), key=lambda x: x[1])
+    if null_cells > 0:
+        worst_col = max(
+            ((c, sum(1 for r in data if r.get(c) in (None, ''))) for c in columns),
+            key=lambda x: x[1]
+        )
         insights.append({
-            'icon': '⚠️',
-            'type': 'warning',
-            'title': 'Data Quality Alert',
-            'description': f"'{most_nulls[0]}' has {most_nulls[1]} missing values ({round(most_nulls[1]/len(data)*100, 1)}% of data)"
+            'icon': '⚠️', 'type': 'warning',
+            'title': 'Data Quality',
+            'description': f'{completeness}% complete. "{worst_col[0]}" has {worst_col[1]} missing values ({round(worst_col[1]/len(data)*100,1)}%)'
+        })
+    else:
+        insights.append({
+            'icon': '✅', 'type': 'trend-up',
+            'title': 'Clean Dataset',
+            'description': f'100% data completeness — no missing values across {len(data):,} records and {len(columns)} columns'
         })
 
-    # Numeric insights
-    for col in columns:
-        if col in stats:
-            s = stats[col]
-
-            # High variance insight
-            if s['max'] > s['mean'] * 5:
+    # 2. Growth rate: first 10% vs last 10% of rows
+    for col in numeric_cols[:2]:
+        window = max(1, len(data) // 10)
+        first_vals = [v for v in (clean_numeric_value(r.get(col)) for r in data[:window]) if v is not None]
+        last_vals = [v for v in (clean_numeric_value(r.get(col)) for r in data[-window:]) if v is not None]
+        if first_vals and last_vals:
+            first_avg = sum(first_vals) / len(first_vals)
+            last_avg = sum(last_vals) / len(last_vals)
+            if first_avg != 0:
+                growth = round((last_avg - first_avg) / abs(first_avg) * 100, 1)
+                direction = "grew" if growth > 0 else "declined"
                 insights.append({
-                    'icon': '📈',
-                    'type': 'trend-up',
-                    'title': f'High Variance in {col}',
-                    'description': f"Maximum value ({round(s['max'], 2)}) is significantly higher than average ({round(s['mean'], 2)})"
+                    'icon': '📈' if growth > 0 else '📉',
+                    'type': 'trend-up' if growth > 0 else 'warning',
+                    'title': f'{col} Growth',
+                    'description': f'{col} {direction} by {abs(growth)}% from the start to the end of the dataset'
                 })
 
-            # Summary insight
+    # 3. Outlier detection (IQR method) for first numeric column
+    for col in numeric_cols[:1]:
+        values = sorted(v for v in (clean_numeric_value(r.get(col)) for r in data) if v is not None)
+        if len(values) >= 8:
+            q1 = values[len(values) // 4]
+            q3 = values[3 * len(values) // 4]
+            iqr = q3 - q1
+            lower, upper = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+            outliers = [v for v in values if v < lower or v > upper]
+            if outliers:
+                insights.append({
+                    'icon': '🎯', 'type': 'warning',
+                    'title': f'Outliers in {col}',
+                    'description': f'{len(outliers)} outlier(s) detected outside the expected range ({round(lower,1):,} – {round(upper,1):,})'
+                })
+
+    # 4. Summary for each numeric column (up to 3)
+    for col in numeric_cols[:3]:
+        s = stats[col]
+        insights.append({
+            'icon': '📊', 'type': 'info',
+            'title': f'{col} Summary',
+            'description': f'Sum: {round(s["sum"],2):,}  ·  Mean: {round(s["mean"],2):,}  ·  Median: {round(s["median"],2):,}  ·  Range: {round(s["min"],2):,} – {round(s["max"],2):,}'
+        })
+
+    # 5. Top and bottom category leaders
+    for col in categorical_cols[:1]:
+        counts = {}
+        for row in data:
+            val = row.get(col)
+            if val:
+                counts[str(val)] = counts.get(str(val), 0) + 1
+        if counts:
+            top = max(counts.items(), key=lambda x: x[1])
+            bottom = min(counts.items(), key=lambda x: x[1])
             insights.append({
-                'icon': '📊',
-                'type': 'info',
-                'title': f'{col} Summary',
-                'description': f"Total: {round(s['sum'], 2)}, Average: {round(s['mean'], 2)}, Median: {round(s['median'], 2)}"
+                'icon': '🏆', 'type': 'trend-up',
+                'title': f'Top {col}',
+                'description': f'"{top[0]}" leads with {top[1]:,} records ({round(top[1]/len(data)*100,1)}%). "{bottom[0]}" is lowest at {bottom[1]:,}.'
             })
-            break
 
-    # Categorical insights
-    for col in columns:
-        if dtypes.get(col) == 'categorical':
-            counts = {}
-            for row in data:
-                val = row.get(col)
-                if val:
-                    counts[str(val)] = counts.get(str(val), 0) + 1
-
-            if counts:
-                top_item = max(counts.items(), key=lambda x: x[1])
-                insights.append({
-                    'icon': '🏆',
-                    'type': 'trend-up',
-                    'title': f'Top {col}',
-                    'description': f"'{top_item[0]}' is most frequent with {top_item[1]} occurrences ({round(top_item[1]/len(data)*100, 1)}%)"
-                })
-            break
-
-    # Row count insight
+    # 6. Dataset overview
     insights.append({
-        'icon': '📁',
-        'type': 'info',
-        'title': 'Dataset Size',
-        'description': f"Your dataset contains {len(data)} records across {len(columns)} columns"
+        'icon': '📁', 'type': 'info',
+        'title': 'Dataset Overview',
+        'description': f'{len(data):,} records  ·  {len(numeric_cols)} numeric columns  ·  {len(categorical_cols)} categorical columns'
     })
 
-    return insights[:6]
+    return insights[:8]
 
 
 def generate_dashboard_name(filename, columns):

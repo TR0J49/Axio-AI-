@@ -13,6 +13,9 @@ class LaplacianAssistant {
         this.dociqDocuments = [];
         this.viziqCharts = [];
         this.viziqData = null;
+        this.viziqChartConfigs = {};
+        this._filterOriginalData = null;
+        this._chartsGridClickHandler = null;
         this.currentModel = 'gpt';
 
         // Generation control state
@@ -4037,24 +4040,35 @@ class LaplacianAssistant {
     }
 
     renderVizIQDashboard(data) {
-        // Update header
         document.getElementById('dashboard-name').textContent = data.dashboard_name;
         document.getElementById('dashboard-description').textContent = data.description;
         document.getElementById('data-rows').innerHTML = `<strong>${data.rows.toLocaleString()}</strong> Rows`;
         document.getElementById('data-cols').innerHTML = `<strong>${data.cols}</strong> Columns`;
         document.getElementById('data-updated').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
 
-        // Render KPIs
         this.renderKPIs(data.kpis);
-
-        // Render Charts
         this.renderCharts(data.charts);
-
-        // Render Insights
         this.renderInsights(data.insights);
-
-        // Render Data Preview
         this.renderDataPreview(data.columns, data.preview, 1);
+        this.renderFilterBar(data.preview, data.columns, data.dtypes);
+
+        // Export CSV button
+        const exportBtn = document.getElementById('export-viziq-csv');
+        if (exportBtn) {
+            exportBtn.onclick = () => this.exportVizIQCSV(data.columns, data.preview, data.dashboard_name);
+        }
+
+        // Table search
+        const searchInput = document.getElementById('table-search-input');
+        if (searchInput) {
+            searchInput.oninput = (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = (this._filterOriginalData || data.preview).filter(row =>
+                    data.columns.some(col => String(row[col] ?? '').toLowerCase().includes(term))
+                );
+                this.renderDataPreview(data.columns, filtered, 1);
+            };
+        }
     }
 
     renderKPIs(kpis) {
@@ -4070,7 +4084,14 @@ class LaplacianAssistant {
 
         kpis.forEach(kpi => {
             const card = document.createElement('div');
-            card.className = 'kpi-card';
+            card.className = `kpi-card kpi-trend-${kpi.trend || 'neutral'}`;
+
+            const trendHtml = (kpi.trend_pct !== null && kpi.trend_pct !== undefined)
+                ? `<div class="kpi-trend-badge kpi-trend-${kpi.trend}">
+                       <span>${kpi.trend === 'positive' ? '▲' : kpi.trend === 'negative' ? '▼' : '→'}</span>
+                       <span>${Math.abs(kpi.trend_pct)}%</span>
+                   </div>`
+                : '';
 
             card.innerHTML = `
                 <div class="kpi-header">
@@ -4078,6 +4099,7 @@ class LaplacianAssistant {
                     <div class="kpi-icon">${icons[kpi.icon] || icons['bar-chart']}</div>
                 </div>
                 <div class="kpi-value">${this.formatKPIValue(kpi.value)}</div>
+                ${trendHtml}
                 <div class="kpi-description">${kpi.description}</div>
             `;
 
@@ -4094,53 +4116,115 @@ class LaplacianAssistant {
 
     renderCharts(charts) {
         const grid = document.getElementById('charts-grid');
-        grid.innerHTML = '';
 
-        // Destroy existing charts
+        // Remove old event listener
+        if (this._chartsGridClickHandler) {
+            grid.removeEventListener('click', this._chartsGridClickHandler);
+            this._chartsGridClickHandler = null;
+        }
+
+        grid.innerHTML = '';
         this.viziqCharts.forEach(chart => chart.destroy());
         this.viziqCharts = [];
+        this.viziqChartConfigs = {};
 
         const colors = this.getChartColors();
+        const typeLabels = { bar: '▦ Bar', line: '📈 Line', doughnut: '◕ Pie', scatter: '⬤ Scatter' };
 
         charts.forEach((chartConfig, index) => {
             const card = document.createElement('div');
-            card.className = 'chart-card' + (chartConfig.type === 'line' ? ' full-width' : '');
+            const isFullWidth = chartConfig.type === 'line' || chartConfig.type === 'scatter';
+            card.className = 'chart-card' + (isFullWidth ? ' full-width' : '');
 
             const canvasId = `chart-${chartConfig.id}-${index}`;
+
+            const typeToggles = (chartConfig.chartTypes || [chartConfig.type]).map(t =>
+                `<button class="chart-type-btn ${t === chartConfig.type ? 'active' : ''}" data-canvas="${canvasId}" data-type="${t}">${typeLabels[t] || t}</button>`
+            ).join('');
 
             card.innerHTML = `
                 <div class="chart-header">
                     <span class="chart-title">${chartConfig.title}</span>
-                    <span class="chart-type-badge">${chartConfig.type}</span>
+                    <div class="chart-controls">
+                        <div class="chart-type-toggles">${typeToggles}</div>
+                        <button class="chart-dl-btn" data-canvas="${canvasId}" data-title="${chartConfig.title}" title="Download PNG">⬇</button>
+                    </div>
                 </div>
                 <div class="chart-container">
                     <canvas id="${canvasId}"></canvas>
                 </div>
                 <div class="chart-insight">
-                    <p><strong>Insight:</strong> ${chartConfig.insight}</p>
+                    <span class="chart-insight-dot">●</span> ${chartConfig.insight || ''}
                 </div>
             `;
 
             grid.appendChild(card);
+            this.viziqChartConfigs[canvasId] = { ...chartConfig };
 
-            // Create chart after DOM update
             setTimeout(() => {
                 const ctx = document.getElementById(canvasId);
                 if (ctx) {
                     const chart = this.createChart(ctx, chartConfig, colors);
                     this.viziqCharts.push(chart);
+                    ctx._chartInstance = chart;
                 }
             }, 100);
         });
 
-        // Resize charts on window resize for mobile responsiveness
+        // Single event delegation handler for all chart interactions
+        this._chartsGridClickHandler = (e) => {
+            const typeBtn = e.target.closest('.chart-type-btn');
+            if (typeBtn) {
+                const canvasId = typeBtn.dataset.canvas;
+                const newType = typeBtn.dataset.type;
+                this.switchChartType(canvasId, newType, colors);
+                typeBtn.closest('.chart-type-toggles').querySelectorAll('.chart-type-btn')
+                    .forEach(b => b.classList.remove('active'));
+                typeBtn.classList.add('active');
+                return;
+            }
+            const dlBtn = e.target.closest('.chart-dl-btn');
+            if (dlBtn) {
+                this.downloadChart(dlBtn.dataset.canvas, dlBtn.dataset.title);
+            }
+        };
+        grid.addEventListener('click', this._chartsGridClickHandler);
+
         window.addEventListener('resize', () => {
-            this.viziqCharts.forEach(chart => {
-                if (chart && chart.resize) {
-                    chart.resize();
-                }
-            });
+            this.viziqCharts.forEach(chart => chart && chart.resize && chart.resize());
         });
+    }
+
+    switchChartType(canvasId, newType, colors) {
+        const config = this.viziqChartConfigs[canvasId];
+        if (!config) return;
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+
+        const oldChart = ctx._chartInstance;
+        if (oldChart) {
+            const idx = this.viziqCharts.indexOf(oldChart);
+            if (idx > -1) this.viziqCharts.splice(idx, 1);
+            oldChart.destroy();
+        }
+
+        // Scatter can only show scatterData
+        if (newType === 'scatter' && !config.scatterData) return;
+
+        const newConfig = { ...config, type: newType };
+        const chart = this.createChart(ctx, newConfig, colors || this.getChartColors());
+        this.viziqCharts.push(chart);
+        ctx._chartInstance = chart;
+        this.viziqChartConfigs[canvasId] = newConfig;
+    }
+
+    downloadChart(canvasId, title) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const link = document.createElement('a');
+        link.download = `${(title || 'chart').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     }
 
     getChartColors() {
@@ -4164,55 +4248,64 @@ class LaplacianAssistant {
     }
 
     createChart(ctx, config, colors) {
+        const isDoughnut = config.type === 'doughnut';
+        const isLine = config.type === 'line';
+        const isScatter = config.type === 'scatter';
+
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
+            animation: { duration: 600, easing: 'easeInOutQuart' },
             plugins: {
                 legend: {
-                    display: config.type === 'doughnut' || config.datasets,
+                    display: isDoughnut || !!config.datasets,
                     position: 'bottom',
                     labels: {
                         color: 'rgba(255, 255, 255, 0.7)',
                         padding: 15,
-                        usePointStyle: true
+                        usePointStyle: true,
+                        font: { size: 11 }
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(26, 27, 46, 0.95)',
+                    backgroundColor: 'rgba(15, 16, 35, 0.97)',
                     titleColor: '#fff',
-                    bodyColor: 'rgba(255, 255, 255, 0.8)',
-                    borderColor: 'rgba(102, 126, 234, 0.3)',
+                    bodyColor: 'rgba(255, 255, 255, 0.85)',
+                    borderColor: 'rgba(102, 126, 234, 0.4)',
                     borderWidth: 1,
                     padding: 12,
                     displayColors: true,
                     callbacks: {
                         label: function (context) {
                             let label = context.dataset.label || context.label || '';
-                            let value = context.parsed.y !== undefined ? context.parsed.y : context.parsed;
-                            if (typeof value === 'number') {
-                                value = value.toLocaleString();
+                            let value = isScatter
+                                ? `(${context.parsed.x}, ${context.parsed.y})`
+                                : (context.parsed.y !== undefined ? context.parsed.y : context.parsed);
+                            if (typeof value === 'number') value = value.toLocaleString();
+                            return label ? `${label}: ${value}` : value;
+                        },
+                        afterLabel: function (context) {
+                            if (isDoughnut) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                return `Share: ${pct}%`;
                             }
-                            return `${label}: ${value}`;
                         }
                     }
                 }
             },
-            scales: config.type !== 'doughnut' ? {
+            scales: !isDoughnut ? {
                 x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        maxRotation: 45
-                    }
+                    grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                    ticks: { color: 'rgba(255, 255, 255, 0.55)', maxRotation: 40, font: { size: 11 } },
+                    title: isScatter ? { display: true, color: 'rgba(255,255,255,0.4)', font: { size: 11 } } : undefined
                 },
                 y: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.04)' },
                     ticks: {
-                        color: 'rgba(255, 255, 255, 0.6)'
+                        color: 'rgba(255, 255, 255, 0.55)',
+                        font: { size: 11 },
+                        callback: v => typeof v === 'number' ? v.toLocaleString() : v
                     }
                 }
             } : undefined
@@ -4220,37 +4313,54 @@ class LaplacianAssistant {
 
         let chartData;
 
-        if (config.datasets) {
-            // Multi-dataset chart
+        if (isScatter) {
+            chartData = {
+                datasets: [{
+                    label: config.title,
+                    data: config.scatterData || [],
+                    backgroundColor: colors.gradient.map(c => c.replace('0.8', '0.65')),
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointBorderColor: 'rgba(255,255,255,0.4)',
+                    pointBorderWidth: 1
+                }]
+            };
+        } else if (config.datasets) {
             chartData = {
                 labels: config.labels,
                 datasets: config.datasets.map((ds, i) => ({
                     label: ds.label,
                     data: ds.data,
                     backgroundColor: colors.gradient[i % colors.gradient.length],
-                    borderColor: colors.gradient[i % colors.gradient.length],
-                    borderWidth: 2
+                    borderColor: colors.gradient[i % colors.gradient.length].replace('0.8', '1'),
+                    borderWidth: 2,
+                    borderRadius: isLine ? 0 : 4
                 }))
             };
         } else {
-            // Single dataset chart
+            const dataLen = (config.data || []).length;
             chartData = {
                 labels: config.labels,
                 datasets: [{
                     data: config.data,
-                    backgroundColor: config.type === 'doughnut'
-                        ? colors.gradient.slice(0, config.data.length)
-                        : colors.primary,
-                    borderColor: config.type === 'line' ? colors.primary : 'transparent',
-                    borderWidth: config.type === 'line' ? 3 : 1,
-                    fill: config.type === 'line' ? {
-                        target: 'origin',
-                        above: 'rgba(102, 126, 234, 0.1)'
-                    } : false,
+                    backgroundColor: isDoughnut
+                        ? colors.gradient.slice(0, dataLen)
+                        : isLine
+                            ? 'rgba(102, 126, 234, 0.15)'
+                            : colors.gradient.slice(0, dataLen),  // multi-color bars
+                    borderColor: isLine
+                        ? colors.primary
+                        : isDoughnut
+                            ? 'transparent'
+                            : colors.gradient.slice(0, dataLen).map(c => c.replace('0.8', '1')),
+                    borderWidth: isLine ? 2.5 : isDoughnut ? 0 : 1,
+                    borderRadius: isLine ? 0 : 5,
+                    fill: isLine ? { target: 'origin', above: 'rgba(102, 126, 234, 0.12)' } : false,
                     tension: 0.4,
                     pointBackgroundColor: colors.primary,
                     pointBorderColor: '#fff',
-                    pointHoverRadius: 8
+                    pointRadius: isLine ? 3 : 0,
+                    pointHoverRadius: isLine ? 7 : 0
                 }]
             };
         }
@@ -4280,6 +4390,90 @@ class LaplacianAssistant {
 
             list.appendChild(card);
         });
+    }
+
+    renderFilterBar(data, columns, dtypes) {
+        const bar = document.getElementById('viziq-filter-bar');
+        if (!bar) return;
+
+        this._filterOriginalData = [...data];
+
+        const categoricalCols = columns.filter(c => dtypes && dtypes[c] === 'categorical');
+        if (categoricalCols.length === 0) {
+            bar.style.display = 'none';
+            return;
+        }
+
+        bar.style.display = 'flex';
+        bar.innerHTML = '<span class="vf-label">Filters:</span>';
+
+        categoricalCols.slice(0, 4).forEach(col => {
+            const counts = {};
+            data.forEach(row => {
+                const val = row[col];
+                if (val !== null && val !== undefined && val !== '') {
+                    counts[String(val)] = (counts[String(val)] || 0) + 1;
+                }
+            });
+            const uniqueVals = Object.keys(counts).sort();
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'vf-item';
+
+            const select = document.createElement('select');
+            select.className = 'vf-select';
+            select.dataset.filterCol = col;
+            select.innerHTML =
+                `<option value="">All ${col}</option>` +
+                uniqueVals.map(v => `<option value="${v}">${v} (${counts[v]})</option>`).join('');
+
+            select.addEventListener('change', () => this.applyVizIQFilters(columns));
+
+            wrapper.innerHTML = `<label class="vf-col-label">${col}</label>`;
+            wrapper.appendChild(select);
+            bar.appendChild(wrapper);
+        });
+    }
+
+    applyVizIQFilters(columns) {
+        if (!this._filterOriginalData) return;
+
+        const bar = document.getElementById('viziq-filter-bar');
+        const selects = bar ? bar.querySelectorAll('.vf-select') : [];
+        let filtered = [...this._filterOriginalData];
+
+        selects.forEach(sel => {
+            const col = sel.dataset.filterCol;
+            const val = sel.value;
+            if (val) filtered = filtered.filter(row => String(row[col] ?? '') === val);
+        });
+
+        this.renderDataPreview(columns || Object.keys(this._filterOriginalData[0] || {}), filtered, 1);
+
+        const rowsEl = document.getElementById('data-rows');
+        if (rowsEl) {
+            rowsEl.innerHTML = filtered.length < this._filterOriginalData.length
+                ? `<strong>${filtered.length.toLocaleString()}</strong> Rows <span style="font-size:11px;opacity:0.6">(filtered)</span>`
+                : `<strong>${this._filterOriginalData.length.toLocaleString()}</strong> Rows`;
+        }
+    }
+
+    exportVizIQCSV(columns, data, name) {
+        if (!columns || !data || !data.length) return;
+        const header = columns.join(',');
+        const rows = data.map(row =>
+            columns.map(col => {
+                const val = row[col] ?? '';
+                return typeof val === 'string' && val.includes(',') ? `"${val}"` : val;
+            }).join(',')
+        );
+        const csv = [header, ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const link = document.createElement('a');
+        link.download = `${(name || 'data').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
     }
 
     renderDataPreview(columns, data, page = 1) {
