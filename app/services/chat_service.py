@@ -48,18 +48,29 @@ def parse_suggestions(ai_response_text):
 
 # ---------------------------------------------------------------------------
 # Multi-chat in-memory storage
-# Structure: { session_id: { chat_id: { "messages": [...], "title": str,
+# Structure: { user_key: { chat_id: { "messages": [...], "title": str,
 #              "created_at": str, "updated_at": str } } }
+# user_key is the Google email when logged in, else a session UUID fallback.
 # ---------------------------------------------------------------------------
 _chat_sessions: dict[str, dict[str, dict]] = {}
 
 
+def _get_user_key(session: dict) -> str:
+    """Return a stable key for this user.
+    Uses Google email when logged in so chat history persists across
+    login sessions. Falls back to a session UUID for unauthenticated use.
+    """
+    user = session.get('user', {})
+    email = user.get('email') if user else None
+    return email if email else get_session_id(session)
+
+
 def _get_user_chats(session: dict) -> dict:
-    """Get or create the chat dict for this browser session."""
-    sid = get_session_id(session)
-    if sid not in _chat_sessions:
-        _chat_sessions[sid] = {}
-    return _chat_sessions[sid]
+    """Get or create the chat dict for this user."""
+    key = _get_user_key(session)
+    if key not in _chat_sessions:
+        _chat_sessions[key] = {}
+    return _chat_sessions[key]
 
 
 def _ensure_active_chat(session: dict) -> str:
@@ -191,7 +202,7 @@ def save_conversation(session: dict, conversation):
     # Also save to MongoDB if connected
     from database import get_database
     db = get_database()
-    sid = get_session_id(session)
+    sid = _get_user_key(session)
     if USE_MONGODB and db.is_connected():
         if len(conversation) >= 2:
             for msg in conversation[-2:]:
