@@ -109,31 +109,14 @@ Indian schools are producing some of the world's brightest students. But inside 
 
 <br>
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                   COMMON STUDENT STRUGGLES                          │
-├────────────────────────┬────────────────────────────────────────────┤
-│  😟 Problem            │  📌 Real Impact                            │
-├────────────────────────┼────────────────────────────────────────────┤
-│ Doubt not cleared      │ Concepts remain weak, exam fear increases  │
-│ in class               │                                            │
-├────────────────────────┼────────────────────────────────────────────┤
-│ No access to tutor     │ Students from smaller towns fall behind    │
-│ after school hours     │                                            │
-├────────────────────────┼────────────────────────────────────────────┤
-│ Project research is    │ Students copy-paste without understanding  │
-│ just copy-paste        │                                            │
-├────────────────────────┼────────────────────────────────────────────┤
-│ No hands-on coding     │ Students learn theory but cannot code      │
-│ practice               │                                            │
-├────────────────────────┼────────────────────────────────────────────┤
-│ Data analysis in       │ Students cannot process or visualize data  │
-│ projects is manual     │                                            │
-├────────────────────────┼────────────────────────────────────────────┤
-│ Teachers spend too     │ Less time for personal student attention   │
-│ much time on content   │                                            │
-└────────────────────────┴────────────────────────────────────────────┘
-```
+| 😟 Problem | 📌 Real Impact |
+|---|---|
+| Doubt not cleared in class | Concepts remain weak, exam fear increases |
+| No access to tutor after school hours | Students from smaller towns fall behind |
+| Project research is just copy-paste | Students copy-paste without understanding |
+| No hands-on coding practice | Students learn theory but cannot code |
+| Data analysis in projects is manual | Students cannot process or visualize data |
+| Teachers spend too much time on content prep | Less time for personal student attention |
 
 <br>
 
@@ -155,25 +138,16 @@ Laplacian AI is a **secure, AI-powered digital workspace** that students and tea
 
 <br>
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                                                                     │
-│                       LAPLACIAN AI                                  │
-│              Your School's Digital Intelligence Hub                 │
-│                                                                     │
-│   ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐      │
-│   │  💬 Chat  │  │ 📄 DocIQ  │  │ 📊 VizIQ  │  │ 💻 Code   │      │
-│   │           │  │           │  │           │  │           │      │
-│   │   AI      │  │ Document  │  │   Data    │  │   Code    │      │
-│   │  Tutor    │  │  Reader   │  │ Analyzer  │  │  Runner   │      │
-│   └───────────┘  └───────────┘  └───────────┘  └───────────┘      │
-│                                                                     │
-│   ┌───────────────────────────────────────────────────────────┐    │
-│   │  📝 Productivity  —  Notes · Tasks · Reminders · Stats    │    │
-│   └───────────────────────────────────────────────────────────┘    │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+### Laplacian AI — Your School's Digital Intelligence Hub
+
+| 💬 AI Chat | 📄 DocIQ | 📊 VizIQ | 💻 Code Runner |
+|:---:|:---:|:---:|:---:|
+| AI Tutor | Document Reader | Data Analyzer | Code Runner |
+| Ask any question, get instant answers | Upload notes & PDFs, ask questions | Upload data, get charts & insights | Write & run code in the browser |
+
+| 📝 Productivity Suite |
+|:---:|
+| Notes &nbsp;·&nbsp; Tasks &nbsp;·&nbsp; Reminders &nbsp;·&nbsp; Stats |
 
 <br>
 
@@ -352,46 +326,13 @@ Laplacian AI is not just for students. It is a powerful tool that **saves teache
 
 <br>
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    TEACHER USE CASES                                │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  📋 LESSON PREPARATION                                              │
-│     → "Create a 45-minute lesson plan for Class 8 on Cell Division" │
-│     → "Give me 5 real-life examples of Newton's Laws"              │
-│     → "Generate an analogy to explain photosynthesis to Class 6"   │
-│                                                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  📝 QUESTION PAPER CREATION                                         │
-│     → Upload the syllabus PDF → "Generate 30 MCQs for Chapter 5"  │
-│     → "Create 5 long answer questions on the Mughal Empire"        │
-│     → "Give me 10 application-based questions on quadratic eqs"    │
-│                                                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  📊 STUDENT PERFORMANCE ANALYSIS                                    │
-│     → Upload marks sheet CSV → VizIQ shows class performance       │
-│     → Identify which students are below average                    │
-│     → Visualize subject-wise performance trends                    │
-│                                                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  📄 REPORT & DOCUMENT DRAFTING                                      │
-│     → "Draft a parent communication letter about exam schedule"    │
-│     → "Summarize this 20-page curriculum document for me"          │
-│     → "Write feedback comments for student progress reports"       │
-│                                                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  🔍 INSTANT RESEARCH                                                │
-│     → Real-time web search integrated — AI cites sources           │
-│     → "What are the latest changes in CBSE Class 10 syllabus?"    │
-│     → "Find current statistics on climate change for my lesson"    │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+| Use Case | Example Prompts |
+|---|---|
+| 📋 **Lesson Preparation** | "Create a 45-minute lesson plan for Class 8 on Cell Division" · "Give me 5 real-life examples of Newton's Laws" · "Generate an analogy to explain photosynthesis to Class 6" |
+| 📝 **Question Paper Creation** | Upload the syllabus PDF → "Generate 30 MCQs for Chapter 5" · "Create 5 long answer questions on the Mughal Empire" · "Give me 10 application-based questions on quadratic equations" |
+| 📊 **Student Performance Analysis** | Upload marks sheet CSV → VizIQ shows class performance · Identify students below average · Visualize subject-wise performance trends |
+| 📄 **Report & Document Drafting** | "Draft a parent communication letter about exam schedule" · "Summarize this 20-page curriculum document for me" · "Write feedback comments for student progress reports" |
+| 🔍 **Instant Research** | Real-time web search integrated — AI cites sources · "What are the latest changes in CBSE Class 10 syllabus?" · "Find current statistics on climate change for my lesson" |
 
 <br>
 
@@ -514,28 +455,24 @@ AI:      → Deep literary analysis with textual evidence
 
 ### Feature Overview
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│  FEATURE              │  STUDENT BENEFIT                           │
-├───────────────────────┼────────────────────────────────────────────┤
-│  AI Chat              │  24/7 doubt clearing, any subject          │
-│  Multi-session Chat   │  Separate chats for each subject/topic     │
-│  Web Search           │  Latest information with cited sources     │
-│  Image Upload         │  Take photo of textbook problem, get help  │
-│  DocIQ                │  Ask questions about uploaded PDFs/notes   │
-│  Document Summary     │  Summarize entire chapters in seconds      │
-│  VizIQ Dashboard      │  Professional data charts for projects     │
-│  Chart Download       │  Save charts as images for reports         │
-│  Filter & Slicers     │  Explore data interactively like Power BI  │
-│  Export CSV           │  Download analyzed data for reports        │
-│  Code Execution       │  Run Python, C++, Java in the browser      │
-│  Mermaid Diagrams     │  Auto-generate flowcharts and timelines    │
-│  Notes                │  Organized digital notes per subject       │
-│  Tasks                │  Assignment tracking with priorities       │
-│  Reminders            │  Exam and deadline alerts                  │
-│  PWA Support          │  Install on phone like an app              │
-└────────────────────────────────────────────────────────────────────┘
-```
+| Feature | Student Benefit |
+|---|---|
+| 💬 AI Chat | 24/7 doubt clearing, any subject |
+| 🗂️ Multi-session Chat | Separate chats for each subject/topic |
+| 🔍 Web Search | Latest information with cited sources |
+| 🖼️ Image Upload | Take photo of textbook problem, get help |
+| 📄 DocIQ | Ask questions about uploaded PDFs/notes |
+| 📋 Document Summary | Summarize entire chapters in seconds |
+| 📊 VizIQ Dashboard | Professional data charts for projects |
+| ⬇️ Chart Download | Save charts as images for reports |
+| 🎛️ Filter & Slicers | Explore data interactively like Power BI |
+| 📁 Export CSV | Download analyzed data for reports |
+| 💻 Code Execution | Run Python, C++, Java in the browser |
+| 🔀 Mermaid Diagrams | Auto-generate flowcharts and timelines |
+| 📓 Notes | Organized digital notes per subject |
+| ✅ Tasks | Assignment tracking with priorities |
+| ⏰ Reminders | Exam and deadline alerts |
+| 📱 PWA Support | Install on phone like an app |
 
 <br>
 
@@ -562,32 +499,15 @@ We understand that schools and parents have serious concerns about student safet
 
 <br>
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     SAFETY COMMITMENTS                              │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  🔐  LOGIN via Google — No new username/password to remember        │
-│      Students login with their school Google account safely         │
-│                                                                     │
-│  🛡️  NO DATA SHARING — Student conversations are not shared         │
-│      or sold to any third party                                     │
-│                                                                     │
-│  👤  SESSION ISOLATED — Each student's data is completely           │
-│      separate from others                                           │
-│                                                                     │
-│  🚫  NO ADS — Laplacian AI shows zero advertisements               │
-│                                                                     │
-│  📵  NO SOCIAL FEATURES — No chat between students,                 │
-│      no public feed, no social pressure                             │
-│                                                                     │
-│  🔒  ENCRYPTED — All data transmitted securely (HTTPS)             │
-│                                                                     │
-│  🇮🇳  INDIA-FIRST — Built and operated by an Indian company,        │
-│      aligned with DPDP Act 2023 data protection principles          │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+| # | Commitment | What It Means |
+|:---:|---|---|
+| 🔐 | **Login via Google** | No new username or password — students log in with their school Google account |
+| 🛡️ | **No Data Sharing** | Student conversations are never shared or sold to any third party |
+| 👤 | **Session Isolated** | Each student's data is completely separate from every other student |
+| 🚫 | **No Ads** | Laplacian AI shows zero advertisements — ever |
+| 📵 | **No Social Features** | No chat between students, no public feed, no social pressure |
+| 🔒 | **Encrypted** | All data is transmitted securely over HTTPS |
+| 🇮🇳 | **India-First** | Built and operated by an Indian company, aligned with DPDP Act 2023 |
 
 <br>
 
@@ -616,40 +536,11 @@ The platform is designed to:
 
 <br>
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                                                                     │
-│   STEP 1                                                            │
-│   ───────────────────────────────────────────────────              │
-│   Contact Perfionix AI for a School Demo                           │
-│   📧  connect@perfionixai.com                                       │
-│   🌐  www.perfionixai.com                                           │
-│                                                                     │
-│   We will schedule a free 30-minute live demonstration             │
-│   for your teachers and students.                                  │
-│                                                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   STEP 2                                                            │
-│   ───────────────────────────────────────────────────              │
-│   Pilot Program in Your School                                      │
-│                                                                     │
-│   We onboard one class or one department first.                    │
-│   Students get access via their Google school account.             │
-│   Teachers get a guided walkthrough and support.                   │
-│                                                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   STEP 3                                                            │
-│   ───────────────────────────────────────────────────              │
-│   School-Wide Rollout                                               │
-│                                                                     │
-│   Based on pilot feedback, expand to all classes.                  │
-│   Dedicated support from our team.                                 │
-│   Regular updates and new features — at no extra cost.             │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+| Step | Action | Details |
+|:---:|---|---|
+| **1** | **Contact Perfionix AI for a School Demo** | 📧 connect@perfionixai.com · 🌐 www.perfionixai.com · We will schedule a free 30-minute live demonstration for your teachers and students. |
+| **2** | **Pilot Program in Your School** | We onboard one class or one department first. Students get access via their Google school account. Teachers get a guided walkthrough and support. |
+| **3** | **School-Wide Rollout** | Based on pilot feedback, expand to all classes. Dedicated support from our team. Regular updates and new features — at no extra cost. |
 
 <br>
 
@@ -753,25 +644,17 @@ Laplacian AI is our answer to that challenge — a tool that gives every student
 
 <br>
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                                                                     │
-│   🏢  Perfionix AI Technology Pvt Ltd                               │
-│                                                                     │
-│   🧑‍💼  Founder & CEO   :  Shubham Rahangdale                        │
-│   🇮🇳  Headquarters    :  India                                      │
-│   🌐  Website         :  www.perfionixai.com                        │
-│   📧  Email           :  connect@perfionixai.com                    │
-│   🏷️  Product         :  Laplacian AI — Enterprise AI Workspace     │
-│                                                                     │
-│   Our Mission:                                                      │
-│   ─────────────────────────────────────────────────────────        │
-│   To democratize AI tools for every Indian — from the boardroom    │
-│   to the classroom — building technology that is safe, powerful,   │
-│   and proudly Made in India.                                        │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+### 🏢 Perfionix AI Technology Pvt Ltd
+
+| | |
+|---|---|
+| 🧑‍💼 **Founder & CEO** | Shubham Rahangdale |
+| 🇮🇳 **Headquarters** | India |
+| 🌐 **Website** | www.perfionixai.com |
+| 📧 **Email** | connect@perfionixai.com |
+| 🏷️ **Product** | Laplacian AI — Enterprise AI Workspace |
+
+> **Our Mission:** To democratize AI tools for every Indian — from the boardroom to the classroom — building technology that is safe, powerful, and proudly Made in India.
 
 <br>
 
