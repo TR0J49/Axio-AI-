@@ -198,13 +198,13 @@ Students can **upload any PDF, textbook chapter, or notes file** and ask questio
 
 **How it works for students:**
 
-```
-Step 1 → Upload your PDF textbook chapter, handout, or notes
-Step 2 → Ask any question: "What are the main causes of World War 1?"
-Step 3 → Laplacian AI reads your document and answers with structured points
-Step 4 → Ask follow-up: "Compare the roles of Britain and Germany"
-Step 5 → Get a table comparison with key facts
-```
+| Step | Action |
+|:---:|---|
+| **1** | Upload your PDF textbook chapter, handout, or notes |
+| **2** | Ask any question: *"What are the main causes of World War 1?"* |
+| **3** | Laplacian AI reads your document and answers with structured points |
+| **4** | Ask follow-up: *"Compare the roles of Britain and Germany"* |
+| **5** | Get a table comparison with key facts |
 
 <br>
 
@@ -238,17 +238,13 @@ For students doing **science projects, surveys, economics assignments, or statis
 
 **How it helps students:**
 
-```
-Step 1 → Collect survey data (Google Form results, Excel, CSV)
-Step 2 → Upload the file to VizIQ
-Step 3 → Laplacian AI generates:
-         → KPI Summary Cards (Total responses, averages, trends)
-         → Bar Charts, Pie Charts, Line Graphs
-         → Scatter Plot (correlation analysis)
-         → AI Insights ("60% of respondents prefer...")
-Step 4 → Download charts as PNG images for the project
-Step 5 → Export the data as CSV for the report
-```
+| Step | Action |
+|:---:|---|
+| **1** | Collect survey data (Google Form results, Excel, CSV) |
+| **2** | Upload the file to VizIQ |
+| **3** | Laplacian AI generates: KPI Summary Cards (totals, averages, trends) · Bar Charts · Pie Charts · Line Graphs · Scatter Plot · AI Insights |
+| **4** | Download charts as PNG images for your project report |
+| **5** | Export the analyzed data as CSV |
 
 <br>
 
@@ -363,87 +359,58 @@ Laplacian AI is not just for students. It is a powerful tool that **saves teache
 
 ### 🔬 Science (Physics, Chemistry, Biology)
 
-```
-Student: "Explain the difference between mitosis and meiosis with a diagram"
-AI:      → Clear explanation with bullet points
-          → Auto-generated Mermaid diagram showing the two processes
-          → Comparison table
-
-Student: "I got 72% in my bio test but don't know what to revise"
-AI:      → "Which chapters were tested? Tell me your weak topics"
-          → Generates a targeted revision plan
-```
+| Student Query | What Laplacian AI Does |
+|---|---|
+| "Explain the difference between mitosis and meiosis with a diagram" | Clear explanation with bullet points · Auto-generated diagram · Comparison table |
+| "I got 72% in my bio test but don't know what to revise" | Asks about weak topics → Generates a targeted revision plan |
 
 <br>
 
 ### ➗ Mathematics
 
-```
-Student: "Solve this: If 2x + 3y = 12 and x - y = 1, find x and y"
-AI:      → Step-by-step solution with explanation at each step
-          → "Let me check if you understand — what is the first step?"
-
-Student: "Explain integration for beginners"
-AI:      → Simple analogy, worked examples, practice questions
-          → "Try this problem and I will check your approach"
-```
+| Student Query | What Laplacian AI Does |
+|---|---|
+| "Solve this: If 2x + 3y = 12 and x - y = 1, find x and y" | Step-by-step solution with explanation at each step · Checks if student understood |
+| "Explain integration for beginners" | Simple analogy · Worked examples · Practice questions · Interactive follow-up |
 
 <br>
 
 ### 📚 Social Science & History
 
-```
-Student: "Summarize the causes of the First World War in 5 bullet points"
-AI:      → Clean, exam-ready bullet point summary
-
-Student: "Create a timeline of Indian Independence Movement"
-AI:      → Auto-generates a visual Mermaid timeline diagram
-          → Key dates, events, and leaders — structured for revision
-```
+| Student Query | What Laplacian AI Does |
+|---|---|
+| "Summarize the causes of the First World War in 5 bullet points" | Clean, exam-ready bullet point summary |
+| "Create a timeline of Indian Independence Movement" | Auto-generates a visual timeline diagram · Key dates, events, and leaders structured for revision |
 
 <br>
 
 ### 💻 Computer Science
 
-```
-Student: "Write a Python program to find the factorial of a number"
-AI:      → Clean, commented Python code
-          → Runs the code instantly → Shows output
-          → "Now try to modify it to handle negative numbers"
-
-Student: "Explain what a stack data structure is"
-AI:      → Simple analogy ("like a stack of plates")
-          → Code example in Python
-          → Visual ASCII diagram
-```
+| Student Query | What Laplacian AI Does |
+|---|---|
+| "Write a Python program to find the factorial of a number" | Clean, commented Python code · Runs instantly and shows output · Gives a follow-up challenge to extend learning |
+| "Explain what a stack data structure is" | Simple real-life analogy · Python code example · Visual diagram |
 
 <br>
 
 ### 📈 Commerce & Economics
 
-```
-Student: Upload survey data CSV → VizIQ generates:
-          → Bar chart: "Consumer preference by age group"
-          → Pie chart: "Market share distribution"
-          → Trend line: "Monthly spending patterns"
-          → AI Insight: "18–25 age group drives 48% of spending"
-          → Download all charts for the economics project report
-```
+| Action | Output |
+|---|---|
+| Student uploads survey data CSV to VizIQ | Bar chart: Consumer preference by age group |
+| | Pie chart: Market share distribution |
+| | Trend line: Monthly spending patterns |
+| | AI Insight: *"18–25 age group drives 48% of spending"* |
+| | All charts downloadable for the economics project report |
 
 <br>
 
 ### 🌍 English & Languages
 
-```
-Student: "Check my essay on climate change and suggest improvements"
-AI:      → Identifies weak arguments, unclear sentences
-          → Suggests better vocabulary and structure
-          → Rewrites weak paragraphs as examples
-
-Student: "Explain the theme of loss in the poem 'The Road Not Taken'"
-AI:      → Deep literary analysis with textual evidence
-          → Comparison with the poet's life context
-```
+| Student Query | What Laplacian AI Does |
+|---|---|
+| "Check my essay on climate change and suggest improvements" | Identifies weak arguments and unclear sentences · Suggests better vocabulary and structure · Rewrites weak paragraphs as examples |
+| "Explain the theme of loss in the poem 'The Road Not Taken'" | Deep literary analysis with textual evidence · Connects to the poet's life context |
 
 <br>
 
@@ -546,13 +513,13 @@ The platform is designed to:
 
 ### For Individual Students — Start in 60 Seconds
 
-```
-1. Open any web browser
-2. Go to the Laplacian AI link provided by your school
-3. Click "Sign in with Google"
-4. Use your school Google account
-5. Start asking questions — your AI tutor is ready
-```
+| Step | Action |
+|:---:|---|
+| **1** | Open any web browser |
+| **2** | Go to the Laplacian AI link provided by your school |
+| **3** | Click **"Sign in with Google"** |
+| **4** | Use your school Google account |
+| **5** | Start asking questions — your AI tutor is ready |
 
 <br>
 
@@ -593,48 +560,6 @@ Please contact us at connect@perfionixai.com for school pricing, partnership pro
 
 **Q: Can teachers control what students access?**
 Yes. School administrators can configure access levels. We also provide teacher dashboards in our upcoming enterprise version.
-
-<br>
-
----
-
-## The Bigger Picture — Why This Matters for India
-
-<br>
-
-```mermaid
-flowchart TB
-    subgraph PROBLEM["❌ Today's Reality"]
-        P1["Top students have\ncostly private tutors"]
-        P2["Students in Tier 2/3 cities\nhave no extra help"]
-        P3["Digital gap between\nurban and rural schools"]
-    end
-
-    subgraph SOLUTION["✅ With Laplacian AI"]
-        S1["Every student gets\na personal AI tutor"]
-        S2["Available 24/7\nno matter the location"]
-        S3["Same quality help\nfor every school in India"]
-    end
-
-    subgraph OUTCOME["🏆 Outcome for India"]
-        O1["Higher academic\nperformance"]
-        O2["Equal opportunity\nfor all students"]
-        O3["India's next generation\nAI-ready workforce"]
-    end
-
-    PROBLEM --> SOLUTION
-    SOLUTION --> OUTCOME
-
-    style PROBLEM fill:#7c2d12,stroke:#ef4444,color:#fff
-    style SOLUTION fill:#1a472a,stroke:#22c55e,color:#fff
-    style OUTCOME fill:#1e3a5f,stroke:#667eea,color:#fff
-```
-
-<br>
-
-India has **26 crore school students**. The gap between students who can afford extra coaching and those who cannot is one of the most urgent education challenges of our time.
-
-Laplacian AI is our answer to that challenge — a tool that gives every student in every corner of India access to the same quality of guidance, explanation, and support that previously only money could buy.
 
 <br>
 
