@@ -16,7 +16,11 @@ async def index(request: Request):
     if not session.get('logged_in'):
         return RedirectResponse(url='/login')
     user = session.get('user', {})
-    return templates.TemplateResponse("index.html", {"request": request, "user": user})
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"user": user},
+    )
 
 
 @main_router.get('/login')
@@ -25,7 +29,10 @@ async def login_page(request: Request):
     session = request.state.session
     if session.get('logged_in'):
         return RedirectResponse(url='/')
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+    )
 
 
 @main_router.get('/favicon.ico')

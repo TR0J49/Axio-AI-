@@ -17,7 +17,11 @@ async def payment_page(request: Request):
     """Upgrade / payment page shown when free tier is exhausted."""
     session = request.state.session
     user = session.get('user', {})
-    return templates.TemplateResponse("payment.html", {"request": request, "user": user})
+    return templates.TemplateResponse(
+        request=request,
+        name="payment.html",
+        context={"user": user},
+    )
 
 
 @payment_router.get('/api/usage')
