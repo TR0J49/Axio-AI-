@@ -22,7 +22,11 @@ async def index(request: Request):
         return RedirectResponse(url='/login')
     user = session.get('user', {})
     seo = build_seo(page="workspace", path="/", index=False)
-    return templates.TemplateResponse("index.html", {"request": request, "user": user, "seo": seo})
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"user": user, "seo": seo},
+    )
 
 
 @main_router.get('/login')
@@ -34,7 +38,11 @@ async def login_page(request: Request):
     # Canonical is the site root: `/` 307-redirects here for anonymous visitors,
     # so search engines consolidate ranking signals on the homepage URL.
     seo = build_seo(page="home", path="/")
-    return templates.TemplateResponse("login.html", {"request": request, "seo": seo})
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={"seo": seo},
+    )
 
 
 @main_router.get('/favicon.ico')
