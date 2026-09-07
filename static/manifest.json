@@ -1,12 +1,16 @@
 {
-  "name": "Laplacian AI - Code Assistant",
+  "id": "/?source=pwa",
+  "name": "Laplacian AI - AI Workspace by Perfionix AI",
   "short_name": "Laplacian AI",
-  "description": "Your intelligent coding assistant by Perfionix AI",
+  "description": "Laplacian AI is an enterprise AI workspace by Perfionix AI, an AI startup founded by Shubham Rahangdale in Nagpur, India - AI chat, DocIQ document intelligence, VizIQ data visualisation, code execution and an Apigee proxy generator in one private platform.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4b5563",
+  "theme_color": "#1f2937",
   "orientation": "any",
+  "lang": "en-IN",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/static/lap favivon.png",
@@ -21,5 +25,5 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["developer", "productivity", "utilities"]
+  "categories": ["productivity", "business", "developer", "utilities"]
 }

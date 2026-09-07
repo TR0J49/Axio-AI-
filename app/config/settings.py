@@ -56,3 +56,7 @@ def set_mongodb_status(status):
 
 # Max upload size (16 MB)
 MAX_UPLOAD_SIZE = 16 * 1024 * 1024
+
+# Public site URL - used for SEO canonical URLs, sitemap, Open Graph and JSON-LD.
+# Override in .env when the production domain changes.
+SITE_URL = os.getenv('SITE_URL', 'https://laplacian.perfionixai.com').rstrip('/')

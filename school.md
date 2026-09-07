@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">LAPLACIAN AI</h1>
-<h3 align="center">by Perfionix AI Technology Pvt Ltd</h3>
+<h3 align="center">by Perfionix AI </h3>
 
 <p align="center">
   <em>Empowering Every Student. Elevating Every Classroom.</em>
@@ -20,7 +20,7 @@
 <p align="center">
   <strong>OFFICIAL SCHOOL OUTREACH DOCUMENT</strong><br>
   Prepared for School Teachers, Principals & Academic Coordinators<br>
-  <em>Perfionix AI Technology Pvt Ltd · www.perfionixai.com · connect@perfionixai.com</em>
+  <em>Perfionix AI  · www.perfionixai.com · connect@perfionixai.com</em>
 </p>
 
 ---
@@ -70,7 +70,7 @@
 > *Together, let us give every Indian student the education they deserve.*
 >
 > — **Shubham Rahangdale**
-> Founder & CEO, Perfionix AI Technology Pvt Ltd
+> Founder & CEO, Perfionix AI 
 
 <br>
 
@@ -83,7 +83,7 @@
 | | |
 |---|---|
 | **Product Name** | Laplacian AI |
-| **Developed By** | Perfionix AI Technology Pvt Ltd |
+| **Developed By** | Perfionix AI  |
 | **Founder** | Shubham Rahangdale |
 | **Target Users** | School Students (Class 6–12), Teachers, Academic Staff |
 | **Core Purpose** | AI-powered digital learning assistant |
@@ -569,12 +569,12 @@ Yes. School administrators can configure access levels. We also provide teacher 
 
 <br>
 
-### 🏢 Perfionix AI Technology Pvt Ltd
+### 🏢 Perfionix AI 
 
 | | |
 |---|---|
 | 🧑‍💼 **Founder & CEO** | Shubham Rahangdale |
-| 🇮🇳 **Headquarters** | India |
+| 🇮🇳 **Headquarters** | Nagpur Maharastra India |
 | 🌐 **Website** | www.perfionixai.com |
 | 📧 **Email** | connect@perfionixai.com |
 | 🏷️ **Product** | Laplacian AI — Enterprise AI Workspace |
@@ -609,7 +609,7 @@ We would love to bring Laplacian AI to your school. Reach out to us for a **free
 |---|---|
 | 📧 **Email** | connect@perfionixai.com |
 | 🌐 **Website** | www.perfionixai.com |
-| 📍 **Location** | India |
+| 📍 **Location** | Nagpur Maharastra India |
 | 👤 **Founder** | Shubham Rahangdale |
 
 <br>
@@ -626,7 +626,7 @@ We would love to bring Laplacian AI to your school. Reach out to us for a **free
 </p>
 
 <p align="center">
-  <strong>LAPLACIAN AI</strong> — by Perfionix AI Technology Pvt Ltd<br>
+  <strong>LAPLACIAN AI</strong> — by Perfionix AI <br>
   <em>Empowering Every Student. Elevating Every Classroom.</em>
 </p>
 
@@ -635,6 +635,6 @@ We would love to bring Laplacian AI to your school. Reach out to us for a **free
 </p>
 
 <p align="center">
-  <strong>© 2026 Perfionix AI Technology Pvt Ltd. All rights reserved.</strong><br>
+  <strong>© 2026 Perfionix AI . All rights reserved.</strong><br>
   <em>Made with ❤️ in India</em>
 </p>

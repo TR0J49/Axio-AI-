@@ -1,11 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laplacian AI - Sign In</title>
+    <title>{{ seo.title if seo else 'Laplacian AI - India\'s First AI Workspace by Perfionix AI' }}</title>
+
+    {% include 'partials/seo_head.html' %}
+
     <link rel="icon" type="image/png" href="{{ url_for('static', path='lap favivon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='lap favivon.png') }}">
+    <link rel="manifest" href="/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -20,6 +25,9 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #ffffff;
             color: #111827;
+        }
+
+        .auth-shell {
             min-height: 100vh;
             display: flex;
         }
@@ -378,7 +386,7 @@
 
         /* ── Mobile ── */
         @media (max-width: 768px) {
-            body {
+            .auth-shell {
                 flex-direction: column;
             }
 
@@ -405,10 +413,145 @@
                 padding: 36px 28px;
             }
         }
+
+        /* ── SEO / About content (below the fold, crawlable) ── */
+        .seo-section {
+            background: #0f172a;
+            color: rgba(255, 255, 255, 0.72);
+            padding: 72px 24px;
+        }
+
+        .seo-inner {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .seo-section h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.4px;
+            margin: 0 0 16px;
+        }
+
+        .seo-section h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 24px 0 6px;
+        }
+
+        .seo-section p {
+            font-size: 14.5px;
+            line-height: 1.7;
+            margin: 0 0 14px;
+        }
+
+        .seo-section a {
+            color: #93c5fd;
+            text-decoration: none;
+        }
+
+        .seo-section a:hover {
+            text-decoration: underline;
+        }
+
+        .seo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin: 20px 0 8px;
+        }
+
+        .seo-grid div {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+
+        .seo-grid strong {
+            display: block;
+            color: #ffffff;
+            font-size: 13.5px;
+            margin-bottom: 4px;
+        }
+
+        .seo-grid span {
+            font-size: 12.5px;
+            line-height: 1.5;
+        }
+
+        .seo-faq {
+            margin-top: 28px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 8px;
+        }
+
+        .seo-faq details {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px 0;
+        }
+
+        .seo-faq summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #ffffff;
+            font-size: 14.5px;
+            list-style: none;
+        }
+
+        .seo-faq summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .seo-faq summary::before {
+            content: '+';
+            display: inline-block;
+            width: 18px;
+            color: #93c5fd;
+            font-weight: 700;
+        }
+
+        .seo-faq details[open] summary::before {
+            content: '\2212';
+        }
+
+        .seo-faq details p {
+            margin: 10px 0 0 18px;
+            font-size: 14px;
+        }
+
+        .site-footer {
+            background: #0b1220;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 12.5px;
+            line-height: 1.7;
+            text-align: center;
+            padding: 28px 24px;
+        }
+
+        .site-footer a {
+            color: rgba(255, 255, 255, 0.55);
+            text-decoration: none;
+        }
+
+        .site-footer a:hover {
+            color: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+            .seo-section {
+                padding: 48px 20px;
+            }
+        }
     </style>
 </head>
 
 <body>
+
+  <main class="auth-shell">
 
     <!-- Left Branding Panel -->
     <div class="left-panel">
@@ -514,6 +657,56 @@
             </div>
         </div>
     </div>
+
+  </main>
+
+  <!-- ── About / SEO content (crawlable) ── -->
+  <section class="seo-section" aria-label="About Laplacian AI">
+    <div class="seo-inner">
+      <h2>Laplacian AI — an enterprise AI workspace by Perfionix AI</h2>
+      {% if seo %}
+        {% for para in seo.about_paragraphs %}<p>{{ para }}</p>{% endfor %}
+      {% else %}
+        <p>Laplacian AI is a product of Perfionix AI, an AI startup based in Nagpur, India, founded by Shubham Rahangdale.</p>
+      {% endif %}
+
+      <h3>What Laplacian AI includes</h3>
+      <div class="seo-grid">
+        {% for name, desc in (seo.features if seo else []) %}
+        <div><strong>{{ name }}</strong><span>{{ desc }}</span></div>
+        {% endfor %}
+      </div>
+
+      <h3>About Perfionix AI &amp; founder Shubham Rahangdale</h3>
+      <p>
+        <strong>Perfionix AI</strong> is an artificial-intelligence company headquartered in
+        <strong>Nagpur, Maharashtra, India</strong>. It was founded by
+        <strong>Shubham Rahangdale</strong> (Founder &amp; CEO), and builds Laplacian AI as its
+        flagship AI SaaS product for Indian businesses, teams and developers. As an emerging
+        Indian AI startup, Perfionix AI focuses on generative AI, document intelligence and
+        data visualisation with strong data-sovereignty guarantees.
+      </p>
+
+      <div class="seo-faq" aria-label="Frequently asked questions">
+        <h3>Frequently asked questions</h3>
+        {% for question, answer in (seo.faq if seo else []) %}
+        <details{% if loop.first %} open{% endif %}>
+          <summary>{{ question }}</summary>
+          <p>{{ answer }}</p>
+        </details>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p>
+      <strong>Laplacian AI</strong> — {{ seo.tagline if seo else "India's First AI Workspace" }} ·
+      A product of <a href="/">Perfionix AI</a>, Nagpur, India ·
+      Founded by Shubham Rahangdale
+    </p>
+    <p>&copy; 2026 Perfionix AI. All rights reserved. · <a href="/sitemap.xml">Sitemap</a></p>
+  </footer>
 
 </body>
 

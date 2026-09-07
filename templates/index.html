@@ -4,9 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laplacian - AI Code Assistant</title>
-    <meta name="description"
-        content="Laplacian - Your intelligent coding assistant with syntax highlighting, code formatting, and smart conversations">
+    <title>{{ seo.title if seo else 'Laplacian AI - Workspace by Perfionix AI' }}</title>
+
+    {% if seo %}{% include 'partials/seo_head.html' %}{% else %}
+    <meta name="description" content="Laplacian AI - AI workspace by Perfionix AI.">
+    <meta name="robots" content="noindex, follow">
+    {% endif %}
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', path='lap favivon.png') }}">
@@ -14,10 +17,6 @@
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#4b5563">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Laplacian AI">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
